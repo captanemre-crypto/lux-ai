@@ -1,0 +1,26 @@
+{
+  "name": "lux-ai",
+  "productName": "Lux AI",
+  "version": "1.0.0",
+  "description": "Lux AI - Agentic Desktop Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron ."
+  },
+  "keywords": [
+    "lux-ai",
+    "agentic-ai",
+    "desktop-ide"
+  ],
+  "author": "Lux AI Team",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "marked": "^15.0.7",
+    "monaco-editor": "^0.57.0"
+  },
+  "devDependencies": {
+    "electron": "^45.2.3"
+  }
+}

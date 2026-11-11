@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark" style="color-scheme: dark;">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="color-scheme" content="dark" />
+  <title>Lux AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+
+  <!-- Stylesheets (System / Local Fonts for zero network blocking at boot) -->
+  <link rel="stylesheet" href="css/jetbox.css" />
+  <link rel="stylesheet" href="css/compiled_tailwind.css" />
+  <link rel="stylesheet" href="css/theme.css" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body class="bg-background text-foreground antialiased select-none overflow-hidden h-screen w-screen flex flex-col font-sans" style="background-color: #070709;">
+
+  <!-- 1. Üst Pencere Menü Çubuğu (Satır 1, Yükseklik 35px) -->
+  <div class="shrink-0" style="height: 35px; background-color: var(--sidebar);">
+    <div data-testid="title-menu-bar" class="flex items-center gap-1 px-2 h-full bg-sidebar w-full app-drag-region">
+      <!-- Lux AI Menüsü -->
+      <div class="relative app-no-drag">
+        <button class="agy-button agy-button-sm inline-flex items-center font-medium transition-colors select-none outline-none cursor-pointer justify-center disabled:opacity-50 bg-transparent text-muted-foreground hover:text-foreground hover:bg-secondary h-7 text-sm rounded-md gap-1.5 px-2.5 select-none lux-menu-btn" data-menu="menu-lux-ai" data-testid="title-menu-bar-item">Lux AI</button>
+        <div id="menu-lux-ai" class="lux-dropdown-menu">
+          <div class="lux-dropdown-item" onclick="window.openSettingsModal()">
+            <span>Tercihler...</span>
+            <span class="text-[10px] text-muted-foreground">Ctrl+,</span>
+          </div>
+          <div class="lux-dropdown-item" onclick="window.luxAPI?.window.devtools()">
+            <span>Geliştirici Araçları</span>
+            <span class="text-[10px] text-muted-foreground">Ctrl+Shift+I</span>
+          </div>
+          <div class="lux-dropdown-item" onclick="window.location.reload()">
+            <span>Pencereyi Yenile</span>
+            <span class="text-[10px] text-muted-foreground">Ctrl+R</span>
+          </div>
+          <div class="lux-dropdown-divider"></div>
+          <div class="lux-dropdown-item" onclick="window.openAboutModal()">
+            <span>Lux AI Hakkında</span>
+          </div>
+          <div class="lux-dropdown-divider"></div>
+          <div class="lux-dropdown-item text-red-400 hover:text-red-300" onclick="window.luxAPI?.window.close()">
+            <span>Lux AI'dan Çıkış</span>
+            <span class="text-[10px] text-muted-foreground">Alt+F4</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Çalışma Alanı Menüsü -->
+      <div class="relative app-no-drag">
+        <button class="agy-button agy-button-sm inline-flex items-center font-medium transition-colors select-none outline-none cursor-pointer justify-center disabled:opacity-50 bg-transparent text-muted-foreground hover:text-foreground hover:bg-secondary h-7 text-sm rounded-md gap-1.5 px-2.5 select-none lux-menu-btn" data-menu="menu-workspace" data-testid="title-menu-bar-item">Çalışma Alanı</button>
+        <div id="menu-workspace" class="lux-dropdown-menu">
+          <div class="lux-dropdown-item" onclick="window.appStore.createConversation('Yeni Sohbet'); window.renderApp();">
+            <span>Yeni Sohbet</span>
+            <span class="text-[10px] text-muted-foreground">Ctrl+N</span>
+          </div>
+          <div class="lux-dropdown-item" onclick="window.appStore.toggleIdeSplit(); window.renderApp();">
+            <span>Proje Klasörü Aç...</span>
+            <span class="text-[10px] text-muted-foreground">Ctrl+O</span>
+          </div>
+          <div class="lux-dropdown-divider"></div>
+          <div class="lux-dropdown-item" onclick="window.clearActiveChat()">
+            <span>Geçerli Sohbeti Temizle</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Görünüm Menüsü -->
+      <div class="relative app-no-drag">
+        <button class="agy-button agy-button-sm inline-flex items-center font-medium transition-colors select-none outline-none cursor-pointer justify-center disabled:opacity-50 bg-transparent text-muted-foreground hover:text-foreground hover:bg-secondary h-7 text-sm rounded-md gap-1.5 px-2.5 select-none lux-menu-btn" data-menu="menu-view" data-testid="title-menu-bar-item">Görünüm</button>
+        <div id="menu-view" class="lux-dropdown-menu">
+          <div class="lux-dropdown-item" onclick="window.appStore.toggleSidebar(); window.renderApp();">
+            <span>Kenar Çubuğunu Aç/Kapat</span>
+            <span class="text-[10px] text-muted-foreground">Ctrl+B</span>
+          </div>
+          <div class="lux-dropdown-item" onclick="window.appStore.toggleRightPanel(); window.renderApp();">
+            <span>Genel Bakış Panelini Aç/Kapat</span>
+            <span class="text-[10px] text-muted-foreground">Ctrl+J</span>
+          </div>
+          <div class="lux-dropdown-item" onclick="window.appStore.toggleIdeSplit(); window.renderApp();">
+            <span>Bölünmüş IDE Modu</span>
+            <span class="text-[10px] text-muted-foreground">Ctrl+I</span>
+          </div>
+          <div class="lux-dropdown-divider"></div>
+          <div class="lux-dropdown-item" onclick="window.zoomIn()">
+            <span>Yakınlaştır</span>
+            <span class="text-[10px] text-muted-foreground">Ctrl+=</span>
+          </div>
+          <div class="lux-dropdown-item" onclick="window.zoomOut()">
+            <span>Uzaklaştır</span>
+            <span class="text-[10px] text-muted-foreground">Ctrl+-</span>
+          </div>
+          <div class="lux-dropdown-item" onclick="window.resetZoom()">
+            <span>Yakınlaştırmayı Sıfırla</span>
+            <span class="text-[10px] text-muted-foreground">Ctrl+0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pencere Menüsü -->
+      <div class="relative app-no-drag">
+        <button class="agy-button agy-button-sm inline-flex items-center font-medium transition-colors select-none outline-none cursor-pointer justify-center disabled:opacity-50 bg-transparent text-muted-foreground hover:text-foreground hover:bg-secondary h-7 text-sm rounded-md gap-1.5 px-2.5 select-none lux-menu-btn" data-menu="menu-window" data-testid="title-menu-bar-item">Pencere</button>
+        <div id="menu-window" class="lux-dropdown-menu">
+          <div class="lux-dropdown-item" onclick="window.luxAPI?.window.minimize()">
+            <span>Simge Durumuna Küçült</span>
+            <span class="text-[10px] text-muted-foreground">Ctrl+M</span>
+          </div>
+          <div class="lux-dropdown-item" onclick="window.luxAPI?.window.maximize()">
+            <span>Ekranı Kapla</span>
+          </div>
+          <div class="lux-dropdown-divider"></div>
+          <div class="lux-dropdown-item text-red-400" onclick="window.luxAPI?.window.close()">
+            <span>Pencereyi Kapat</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center Spacer for Windows TitleBarOverlay -->
+      <div class="flex-1 h-full"></div>
+    </div>
+  </div>
+
+  <!-- 2. Main Sheet: Sidebar + Main Content (Seamless Antigravity Hierarchy) -->
+  <div class="flex-1 flex min-h-0 relative overflow-hidden" id="main-sheet-container">
+    
+    <!-- FLOATING TOP-LEFT STATIC CLUSTER (Height 40px, Always visible, 1:1 Antigravity) -->
+    <div id="static-nav-cluster" class="absolute left-0 top-0 flex items-center shrink-0 z-50 pl-2 select-none" style="height: 40px;">
+      <div class="flex items-center gap-1">
+        <!-- App Logo (Click starts new conversation) -->
+        <button type="button" aria-label="Yeni Sohbet" id="btn-app-logo" data-testid="app-icon-new-conversation-button" class="shrink-0 pl-1 pr-1 flex items-center text-foreground cursor-pointer outline-none" title="Yeni Sohbet Başlat">
+          <svg viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg" width="22" height="22">
+            <path d="M144.248 149.062C151.748 154.688 162.998 150.938 152.685 140.625C121.748 110.625 128.31 28.125 89.8727 28.125C51.4352 28.125 57.9977 110.625 27.0602 140.625C15.8102 151.875 27.9977 154.688 35.4977 149.062C64.5602 129.375 62.6852 94.6875 89.8727 94.6875C117.06 94.6875 115.185 129.375 144.248 149.062Z" fill="currentColor"/>
+          </svg>
+        </button>
+
+        <!-- Toggle Sidebar -->
+        <button id="btn-toggle-sidebar" class="agy-button h-7 w-7 shrink-0 flex items-center justify-center rounded-lg bg-transparent text-secondary-foreground hover:text-foreground hover:bg-secondary cursor-pointer" aria-label="Kenar Çubuğunu Aç/Kapat" title="Kenar Çubuğunu Aç/Kapat (Ctrl+B)" data-testid="sidebar-toggle">
+          <span class="relative flex items-center justify-center" style="width: 18px; height: 18px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor">
+              <path d="M212.31-140q-29.92,0-51.11-21.19T140-212.31V-747.69q0-29.92 21.19-51.11T212.31-820H747.69q29.92,0 51.11,21.19T820-747.69v535.38q0,29.92-21.19,51.11T747.69-140H212.31ZM380-200H747.69q4.62,0 8.46-3.85t3.85-8.46V-747.69q0-4.62-3.85-8.46T747.69-760H380v560Z"/>
+            </svg>
+          </span>
+        </button>
+
+        <!-- Go Back / Go Forward -->
+        <button id="btn-nav-back" class="agy-button h-7 w-7 shrink-0 flex items-center justify-center rounded-lg bg-transparent text-secondary-foreground hover:text-foreground hover:bg-secondary cursor-pointer" aria-label="Geri Git" title="Geri Git">
+          <span class="relative flex items-center justify-center" style="width: 18px; height: 18px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor">
+              <path d="M294.92-450L522.77-222.15L480-180L180-480L480-780l42.77,42.15L294.92-510H780v60H294.92Z"/>
+            </svg>
+          </span>
+        </button>
+        <button id="btn-nav-forward" disabled class="agy-button h-7 w-7 shrink-0 flex items-center justify-center rounded-lg bg-transparent text-secondary-foreground/30 pointer-events-none" aria-label="İleri Git" title="İleri Git">
+          <span class="relative flex items-center justify-center" style="width: 18px; height: 18px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor">
+              <path d="M665.08-450H180v-60H665.08L437.23-737.85L480-780L780-480L480-180l-42.77-42.15L665.08-450Z"/>
+            </svg>
+          </span>
+        </button>
+
+        <!-- Search Conversations Button -->
+        <button id="btn-search-palette" class="agy-button h-7 w-7 shrink-0 flex items-center justify-center rounded-lg bg-transparent text-secondary-foreground hover:text-foreground hover:bg-secondary cursor-pointer" aria-label="Sohbetlerde Ara" title="Sohbetlerde Ara (Ctrl+P)" data-testid="sidebar-search-button">
+          <span class="relative flex items-center justify-center" style="width: 18px; height: 18px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor">
+              <path d="M781.69-136.92L530.46-388.16q-30,24.77-69,38.77t-80.69,14q-102.46,0-173.54-71.08T136.16-580t71.08-173.54t173.54-71.08t173.54,71.08t71.08,173.54q0,41.69-14,80.69t-38.77,69l251.24,251.23l-42.16,42.16ZM380.77-395.38q76.92,0 130.38-53.47t53.47-130.38q0-76.93-53.47-130.39t-130.38-53.46q-76.93,0-130.39,53.46t-53.46,130.39q0,76.91 53.46,130.38t130.39,53.47Z"/>
+            </svg>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Left Sidebar (Collapsible, Width 256px) -->
+    <aside id="sidebar-wrapper" class="w-64 shrink-0 h-full flex flex-col z-20 relative border-r border-border" style="background-color: var(--sidebar);">
+      <!-- Top 40px Spacer for the floating cluster -->
+      <div class="shrink-0" style="height: 40px;"></div>
+
+      <!-- Main Sidebar Content (Nav items, Projects, Settings) -->
+      <div id="sidebar-container" class="flex-1 flex flex-col min-h-0 w-full"></div>
+
+      <!-- Sash resizer handle on right border -->
+      <div data-testid="sidebar-sash" id="sidebar-sash" class="absolute z-10 bg-transparent flex items-center justify-center touch-none flex-row top-0 h-full cursor-col-resize shrink-0 group -right-1 w-2">
+        <div class="bg-border transition-all opacity-0 group-hover:opacity-70 w-[2px] h-full"></div>
+      </div>
+    </aside>
+
+    <!-- Center Workspace (Full-bleed #070709) -->
+    <main class="flex-1 flex flex-col min-w-0 h-full relative z-10 overflow-hidden" id="center-chat-area" style="background-color: #070709;">
+      
+      <!-- Top Chat Header Bar (Seamless, Height 40px, no border-b) -->
+      <div id="chat-header-bar" class="shrink-0 flex items-center justify-between px-3 select-none" style="height: 40px; background-color: #070709;">
+        <!-- Left: Breadcrumb -->
+        <div id="breadcrumb-container" class="flex items-center min-w-0 text-secondary-foreground transition-all duration-150">
+          <span id="breadcrumb-project" data-testid="breadcrumb-segment" class="text-sm px-1.5 h-7 flex items-center min-w-0 overflow-hidden cursor-pointer text-secondary-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors font-medium">LUX_ai</span>
+          <span class="font-light text-secondary-foreground mx-1 flex-shrink-0 -translate-y-px opacity-60">/</span>
+          <span id="breadcrumb-conv" data-testid="breadcrumb-segment" class="text-sm px-1.5 h-7 flex items-center min-w-0 overflow-hidden cursor-pointer text-secondary-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors truncate">Yeni Sohbet</span>
+        </div>
+
+        <!-- Right: Actions Cluster (⋮, Open IDE, Overview Toggle) -->
+        <div class="flex items-center gap-1 shrink-0" data-testid="pane-titlebar-toolbar">
+          <!-- More Actions (⋮) -->
+          <div class="relative">
+            <button id="btn-more-actions" class="agy-button h-7 w-7 shrink-0 flex items-center justify-center rounded-lg bg-transparent text-secondary-foreground hover:text-foreground hover:bg-secondary cursor-pointer lux-menu-btn" data-menu="menu-more-actions" aria-label="Diğer İşlemler" title="Diğer İşlemler" data-testid="titlebar-more-actions">
+              <span class="relative flex items-center justify-center" style="width: 18px; height: 18px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor">
+                  <path d="M480-189.23q-24.75,0-42.37-17.62T420-249.23t17.62-42.37T480-309.23t42.37,17.62T540-249.23t-17.62,42.37T480-189.23ZM480-420q-24.75,0-42.37-17.62T420-480t17.62-42.37T480-540t42.37,17.62T540-480t-17.62,42.37T480-420Zm0-230.77q-24.75,0-42.37-17.62T420-710.77t17.62-42.37T480-770.77t42.37,17.62T540-710.77t-17.62,42.37T480-650.77Z"/>
+                </svg>
+              </span>
+            </button>
+            <div id="menu-more-actions" class="lux-dropdown-menu" style="right: 0; left: auto; min-width: 210px;">
+              <div class="lux-dropdown-item" onclick="window.openModelParamsModal()">
+                <span>Model Parametreleri</span>
+                <span class="text-[10px] text-muted-foreground">Yapılandır</span>
+              </div>
+              <div class="lux-dropdown-item" onclick="window.exportChatMarkdown()">
+                <span>Markdown Olarak Dışa Aktar</span>
+              </div>
+              <div class="lux-dropdown-item" onclick="window.exportChatJson()">
+                <span>JSON Olarak Dışa Aktar</span>
+              </div>
+              <div class="lux-dropdown-divider"></div>
+              <div class="lux-dropdown-item text-red-400" onclick="window.clearActiveChat()">
+                <span>Sohbeti Temizle</span>
+              </div>
+              <div class="lux-dropdown-divider"></div>
+              <div class="lux-dropdown-item" onclick="window.openSettingsModal()">
+                <span>Ayarlar</span>
+                <span class="text-[10px] text-muted-foreground">Ctrl+,</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Open IDE Button -->
+          <button id="btn-open-ide" class="agy-button h-7 text-sm rounded-md gap-1.5 px-2.5 flex items-center border border-border text-[13px] whitespace-nowrap hover:bg-secondary text-secondary-foreground hover:text-foreground cursor-pointer transition-colors" data-testid="open-editor-single">Open IDE</button>
+
+          <!-- Toggle Overview Panel Button (Document lines SVG) -->
+          <button id="btn-toggle-right-panel" class="agy-button h-7 w-7 shrink-0 flex items-center justify-center rounded-lg bg-secondary text-secondary-foreground hover:text-foreground cursor-pointer transition-colors" aria-label="Genel Bakış Panelini Aç/Kapat" title="Genel Bakış Panelini Aç/Kapat" data-testid="toggle-overview-panel">
+            <span class="relative flex items-center justify-center" style="width: 18px; height: 18px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor">
+                <path d="M290-290H550v-60H290v60Zm0-160H670v-60H290v60Zm0-160H670v-60H290v60ZM212.31-140Q182-140 161-161t-21-51.31V-747.69Q140-778 161-799t51.31-21H747.69Q778-820 799-799t21,51.31v535.38Q820-182 799-161t-51.31,21H212.31Zm0-60H747.69q4.62,0 8.46-3.85t3.85-8.46V-747.69q0-4.62-3.85-8.46T747.69-760H212.31q-4.62,0-8.46,3.85T200-747.69v535.38q0,4.62 3.85,8.46t8.46,3.85ZM200-760q0,0 0,3.46t0,8.85v535.38q0,5.39 0,8.85t0,3.46q0,0 0-3.46t0-8.85V-747.69q0-5.39 0-8.85t0-3.46Z"/>
+              </svg>
+            </span>
+          </button>
+
+          <!-- Toggle Split Window Button (Dock to Right [|] SVG - Image exact) -->
+          <button id="btn-toggle-split-window" class="agy-button h-7 w-7 shrink-0 flex items-center justify-center rounded-lg bg-transparent text-secondary-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors" aria-label="Bölünmüş Pencereyi Aç/Kapat" title="Bölünmüş Pencereyi Aç/Kapat" data-testid="toggle-split-window">
+            <span class="relative flex items-center justify-center" style="width: 18px; height: 18px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor">
+                <path d="M212.31-140Q182-140 161-161t-21-51.31V-747.69Q140-778 161-799t51.31-21H747.69Q778-820 799-799t21,51.31v535.38Q820-182 799-161t-51.31,21H212.31Zm0-60H580v-560H212.31q-4.62,0-8.46,3.85T200-747.69v535.38q0,4.62 3.85,8.46t8.46,3.85Zm427.69 0H747.69q4.62,0 8.46-3.85t3.85-8.46V-747.69q0-4.62-3.85-8.46T747.69-760H640v560Z"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Content Viewport (Holds scrollable chat, composer, and floating overview card) -->
+      <div class="flex-1 flex flex-col min-h-0 relative w-full overflow-hidden" id="chat-content-viewport">
+        <!-- Chat Messages Scrollable Feed Container -->
+        <div id="chat-messages-container" class="flex-1 overflow-y-auto min-h-0 relative px-4" style="padding-right: calc(var(--overview-panel-reserve, 0px) + 1rem);"></div>
+
+        <!-- Floating Scroll to Bottom Button -->
+        <button id="btn-scroll-bottom" class="agy-button agy-button-custom inline-flex items-center font-medium transition-colors select-none outline-none cursor-pointer bg-muted border border-border text-secondary-foreground hover:text-foreground agy-scroll-bottom h-8 w-8 rounded-full text-foreground hover:bg-secondary flex items-center justify-center shadow-lg" style="display: none;" aria-label="Aşağı Kaydır" title="Aşağı Kaydır" onclick="window.scrollToBottom()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 -960 960 960" fill="currentColor">
+            <path d="M450-780v485.08L222.15-522.77L180-480L480-180L780-480l-42.15-42.77L510-294.92V-780H450Z"/>
+          </svg>
+        </button>
+
+        <!-- Voice Mode Live Floating HUD Panel (1:1 Google Antigravity media_1794235519102_4825a3f1.jpg) -->
+        <div id="voice-mode-hud" class="hidden shrink-0 px-4 w-full max-w-3xl mx-auto relative z-30 transition-all duration-300">
+          <div class="voice-hud-panel p-4 flex flex-col gap-2 relative">
+            
+            <!-- Top Header Row -->
+            <div class="flex items-center justify-between pb-2 border-b border-white/10">
+              <!-- Left: Pulsing Wave Dots + "Antigravity" + Timer -->
+              <div class="flex items-center gap-2.5">
+                <div class="flex items-center gap-1.5 text-primary">
+                  <span class="flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                  </span>
+                  <span class="text-xs font-semibold tracking-wide text-foreground flex items-center gap-1">
+                    Antigravity
+                  </span>
+                </div>
+                <span id="voice-hud-timer" class="text-xs text-muted-foreground font-mono">0:00</span>
+                <button type="button" id="btn-hud-voice-select" class="text-[11px] text-muted-foreground hover:text-foreground bg-white/5 hover:bg-white/10 px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1 cursor-pointer transition-colors ml-1" title="Ses Karakterini Değiştir">
+                  <span class="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>
+                  <span id="hud-voice-current-name">Fola</span>
+                  <svg class="w-2.5 h-2.5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+              </div>
+
+              <!-- Right: Controls -->
+              <div class="flex items-center gap-1.5 relative">
+                <!-- Microphone Toggle -->
+                <button type="button" id="btn-voice-mic-toggle" class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors" title="Mikrofon (Aç/Kapat)">
+                  <svg id="icon-mic-active" class="w-4 h-4" viewBox="0 -960 960 960" fill="currentColor">
+                    <path d="M480-400q-50 0-85-35t-35-85v-240q0-50 35-85t85-35q50 0 85 35t35 85v240q0 50-35 85t-85 35Zm0-240Zm-40 520v-123q-104-14-172-93t-68-184h80q0 83 58.5 141.5T480-320q83 0 141.5-58.5T680-520h80q0 105-68 184t-172 93v123h-80Zm40-360q17 0 28.5-11.5T520-520v-240q0-17-11.5-28.5T480-800q-17 0-28.5 11.5T440-760v240q0 17 11.5 28.5T480-480Z"/>
+                  </svg>
+                  <svg id="icon-mic-muted" class="w-4 h-4 hidden text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                    <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/>
+                    <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
+                  </svg>
+                </button>
+
+                <!-- Speaker Toggle -->
+                <button type="button" id="btn-voice-speaker-toggle" class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors" title="Hoparlör (Aç/Kapat)">
+                  <svg id="icon-speaker-active" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                  </svg>
+                  <svg id="icon-speaker-muted" class="w-4 h-4 hidden text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                    <line x1="23" y1="9" x2="17" y2="15"/>
+                    <line x1="17" y1="9" x2="23" y2="15"/>
+                  </svg>
+                </button>
+
+                <!-- Voice Speed Button + Popup (1:1 Antigravity media_1794235519102_4825a3f1.jpg) -->
+                <div class="relative">
+                  <button type="button" id="btn-voice-speed-toggle" class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors flex items-center gap-0.5" title="Ses Hızı">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+
+                  <!-- Speed Flyout Popup -->
+                  <div id="voice-speed-flyout" class="hidden absolute bottom-full mb-2 right-0 bg-[#16161b] border border-border/80 rounded-2xl p-3.5 shadow-2xl flex flex-col gap-2.5 w-52 z-50 select-none">
+                    <span class="text-xs font-semibold text-foreground">Ses Hızı</span>
+                    <div class="flex items-center justify-between gap-3">
+                      <input type="range" id="voice-speed-slider" min="0.75" max="2" step="0.25" value="1" class="lux-range-slider flex-1" />
+                      <span id="voice-speed-text" class="text-xs font-semibold text-foreground w-7 text-right font-mono">1x</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Minimize Chevron -->
+                <button type="button" id="btn-voice-minimize" class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors" title="Küçült / Genişlet">
+                  <svg id="icon-voice-min" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+
+                <!-- Red End Button (Exact 1:1 to Antigravity media_1794235519102_4825a3f1.jpg) -->
+                <button type="button" id="btn-voice-end" class="bg-[#EA4335] hover:bg-[#d93025] text-white rounded-full px-3 py-1 text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm ml-1 select-none" title="Sesli Oturumu Kapat">
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  <span>End</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Listening Transcript Area -->
+            <div id="voice-hud-body" class="py-3 min-h-[56px] flex items-center justify-between gap-4">
+              <p id="voice-hud-transcript" class="text-sm md:text-base text-muted-foreground font-normal leading-relaxed m-0 select-none">
+                Dinliyor. Herhangi bir şey sorun.
+              </p>
+              
+              <!-- Subtle Animated Waveform in HUD -->
+              <div class="flex items-center gap-1 shrink-0 h-6">
+                <span class="w-1 bg-primary/70 rounded-full wavebar-1"></span>
+                <span class="w-1 bg-primary rounded-full wavebar-2"></span>
+                <span class="w-1 bg-primary/70 rounded-full wavebar-3"></span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Floating Prompt Composer (Double Border Container) -->
+        <div class="shrink-0 p-4 pb-4 w-full max-w-3xl mx-auto relative z-20" id="floating-composer-container">
+          <div data-testid="agent-input-box" class="flex flex-col w-full shrink-0">
+            <div id="antigravity.agentSidePanelInputBox" class="surface-composer relative flex flex-col p-px rounded-2xl bg-card-border shadow-2xl">
+              <div class="surface-composer-card relative z-[1] flex flex-col gap-0 p-1 rounded-[calc(theme(borderRadius.2xl)-1px)] bg-card">
+                
+                <!-- Textarea input -->
+                <div class="relative w-full">
+                  <textarea id="composer-textarea" class="w-full bg-transparent text-foreground placeholder:text-muted-foreground/60 text-sm leading-6 p-2 outline-none resize-none min-h-[44px] max-h-[220px]" placeholder="Herhangi bir şey sorun, @ ile bahsedin, / ile işlem seçin"></textarea>
+                </div>
+
+                <!-- Footer action row -->
+                <div class="agy-composer-footer flex w-full items-center justify-between gap-1 p-0.5 pt-0 select-none">
+                  <!-- Left: Add Context (+) & Model Selector -->
+                  <div class="flex items-center gap-1 min-w-0">
+                    <div class="relative">
+                      <button id="btn-add-context" aria-label="Bağlam ekle" title="Bağlam ekle (+)" class="p-1.5 rounded-full text-secondary-foreground hover:bg-secondary cursor-pointer lux-menu-btn" data-menu="menu-add-context" type="button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 -960 960 960" fill="currentColor">
+                          <path d="M450-450H250q-12.75,0-21.37-8.63T220-480.01t8.62-21.37T250-510H450V-710q0-12.75 8.63-21.37T480.01-740t21.37,8.62T510-710v200H710q12.75,0 21.37,8.63T740-479.99t-8.62,21.37T710-450H510v200q0,12.75-8.63,21.37T479.99-220t-21.37-8.62T450-250V-450Z"/>
+                        </svg>
+                      </button>
+                      <div id="menu-add-context" class="lux-dropdown-menu" style="bottom: 100%; top: auto; margin-bottom: 8px; min-width: 190px;">
+                        <div class="lux-dropdown-item" onclick="window.pickFileContext()">
+                          <span>Dosya Ekle...</span>
+                          <span class="text-[10px] text-muted-foreground">Ekle</span>
+                        </div>
+                        <div class="lux-dropdown-item" onclick="window.pickFolderContext()">
+                          <span>Klasör Ekle...</span>
+                        </div>
+                        <div class="lux-dropdown-item" onclick="window.captureScreenshotContext()">
+                          <span>Ekran Görüntüsü Al</span>
+                        </div>
+                        <div class="lux-dropdown-item" onclick="window.addTerminalContext()">
+                          <span>Terminal Çıktısını Ekle</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Model Selector -->
+                    <div class="relative">
+                      <button id="btn-composer-model" type="button" class="flex cursor-pointer items-center h-7 gap-1 rounded-full pl-2 pr-1.5 text-xs text-secondary-foreground outline-none hover:bg-secondary transition-colors lux-menu-btn" data-menu="menu-composer-model" title="Yapay zeka modelini seçin">
+                        <span id="composer-model-label">Gemini 3.8 Flash High</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 -960 960 960" fill="currentColor">
+                          <path d="M480-541.85l-184,184L253.85-400L480-626.15L706.15-400L664-357.85l-184-184Z"/>
+                        </svg>
+                      </button>
+                      <div id="menu-composer-model" class="lux-dropdown-menu" style="bottom: 100%; top: auto; margin-bottom: 8px; min-width: 230px;">
+                        <div class="lux-dropdown-item font-medium active" data-model="Gemini 3.8 Flash High">
+                          <span>Gemini 3.8 Flash High</span>
+                          <span class="text-[10px] text-primary">Varsayılan</span>
+                        </div>
+                        <div class="lux-dropdown-item" data-model="Gemini 3.8 Pro">
+                          <span>Gemini 3.8 Pro</span>
+                          <span class="text-[10px] text-muted-foreground">Muhakeme</span>
+                        </div>
+                        <div class="lux-dropdown-item" data-model="Claude 3.7 Sonnet">
+                          <span>Claude 3.7 Sonnet</span>
+                          <span class="text-[10px] text-muted-foreground">Kodlama</span>
+                        </div>
+                        <div class="lux-dropdown-item" data-model="GPT-4o">
+                          <span>GPT-4o</span>
+                          <span class="text-[10px] text-muted-foreground">Genel</span>
+                        </div>
+                        <div class="lux-dropdown-item" data-model="Lux Omni 4.0">
+                          <span>Lux Omni 4.0</span>
+                          <span class="text-[10px] text-cyan-400">Otonom</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Right: Turbo + Mic + Voice Waveform + Stop Button -->
+                  <div class="flex items-center gap-1 shrink-0">
+                    <!-- Turbo Selector -->
+                    <div class="relative">
+                      <button id="btn-composer-mode" type="button" class="flex cursor-pointer items-center h-7 gap-1 rounded-full pl-2 pr-1.5 text-xs text-secondary-foreground outline-none hover:bg-secondary transition-colors lux-menu-btn" data-menu="menu-composer-mode" title="Çalışma modunu seçin">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 -960 960 960" fill="currentColor">
+                          <path d="M502.92-344.77q9.38-9.38 9.38-22.92t-9.38-22.92T480-400t-22.92,9.38t-9.38,22.92t9.38,22.92T480-335.39t22.92-9.38ZM450-471.54h60V-664.61H450v193.08Zm30,370.77Q350.23-136.16 265.12-253.54T180-516V-746.15L480-858.46L780-746.15V-516q0,145.08-85.11,262.46T480-100.77ZM480-164q104-33 172-132t68-220V-705L480-794.62L240-705v189q0,121 68,220T480-164Zm0-315.62Z"/>
+                        </svg>
+                        <span id="composer-mode-label">Turbo</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 -960 960 960" fill="currentColor">
+                          <path d="M480-541.85l-184,184L253.85-400L480-626.15L706.15-400L664-357.85l-184-184Z"/>
+                        </svg>
+                      </button>
+                      <div id="menu-composer-mode" class="lux-dropdown-menu" style="bottom: 100%; top: auto; margin-bottom: 8px; right: 0; left: auto; min-width: 170px;">
+                        <div class="lux-dropdown-item active" data-mode="Turbo">⚡ Hızlı (Turbo)</div>
+                        <div class="lux-dropdown-item" data-mode="Standard">Dengeli (Standart)</div>
+                        <div class="lux-dropdown-item" data-mode="Deep Think">🧠 Derin Düşünme</div>
+                      </div>
+                    </div>
+
+                    <!-- Voice Record Button -->
+                    <button id="btn-composer-mic" type="button" aria-label="Ses kaydı al" title="Sesle Yaz (Dikte)" class="flex items-center rounded-full transition-colors cursor-pointer w-7 h-7 justify-center p-1.5 bg-transparent hover:bg-secondary">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor" class="w-4 h-4 text-secondary-foreground">
+                        <path d="M409.04-449.04Q380-478.08 380-520V-760q0-41.92 29.04-70.96T480-860t70.96,29.04T580-760v240q0,41.92-29.04,70.96T480-420t-70.96-29.04ZM480-640ZM450-130V-261.85q-99-11.31-164.5-84.92T220-520h60q0,83 58.5,141.5T480-320t141.5-58.5T680-520h60q0,99.61-65.5,173.23T510-261.85V-130H450Zm58.5-361.5Q520-503 520-520V-760q0-17-11.5-28.5T480-800t-28.5,11.5T440-760v240q0,17 11.5,28.5T480-480t28.5-11.5Z"/>
+                      </svg>
+                    </button>
+
+                    <!-- Voice Live Waveform Pill (White Circle - Exact 1:1 Antigravity media_1794235626780_3e634a8a.png) -->
+                    <span id="voice-live-container" class="relative flex h-7 rounded-full text-xs font-medium bg-foreground text-background hover:opacity-85 cursor-pointer transition-transform active:scale-95" title="Sesli Canlı Sohbet (Voice Mode)">
+                      <button id="btn-voice-live" type="button" aria-label="Sesli modu başlat" class="h-7 w-7 rounded-full flex items-center justify-center cursor-pointer select-none outline-none">
+                        <svg width="18" height="18" viewBox="0 -960 960 960" fill="none" class="w-[18px] h-[18px]">
+                          <g transform="translate(34, -48)">
+                            <rect id="voice-bar-1" x="167.8" y="-575.2" width="82" height="350" rx="41" fill="currentColor"/>
+                            <rect id="voice-bar-2" x="359.8" y="-662.7" width="82" height="525" rx="41" fill="currentColor"/>
+                            <rect id="voice-bar-3" x="551.8" y="-487.7" width="82" height="175" rx="41" fill="currentColor"/>
+                          </g>
+                        </svg>
+                      </button>
+                    </span>
+
+                    <!-- Send / Stop Button -->
+                    <button id="btn-input-cancel" type="button" aria-label="Gönder" title="Gönder (Enter)" class="bg-secondary hover:opacity-90 w-7 h-7 rounded-full cursor-pointer flex items-center justify-center transition-colors ml-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 -960 960 960" fill="currentColor" class="text-foreground">
+                        <path d="M440-160v-487L216-423l-56-57 320-320 320 320-56 57-224-224v487h-80Z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Overview Panel Card (100% Exact Antigravity Structure) -->
+        <div id="right-panel-container" data-testid="overview-panel-host-gutter" class="animate-overview-panel origin-top-right absolute top-2 right-2 flex flex-col max-h-[calc(100%-1rem)] rounded-xl border border-border bg-card overflow-hidden z-30 shadow-md" style="width: 320px; max-width: calc(100% - 16px);"></div>
+      </div>
+    </main>
+
+    <!-- Integrated IDE Split View -->
+    <div id="ide-split-container" class="w-1/2 shrink-0 h-full hidden z-20 border-l border-border"></div>
+  </div>
+
+  <!-- Modals & Overlays Root -->
+  <div id="modals-root"></div>
+
+  <!-- Scripts -->
+  <script src="js/marked.umd.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/chat.js"></script>
+  <script src="js/rightPanel.js"></script>
+  <script src="js/ideMode.js"></script>
+  <script src="js/modals.js"></script>
+  <script src="js/voice_library.js"></script>
+  <script src="js/voice.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

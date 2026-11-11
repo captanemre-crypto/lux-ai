@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>LUX AI - Canlı Mikrofon & Ekran Görüntüsü</title>
+    <style>
+        body { background: #0f172a; color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; }
+        header { background: #1e293b; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+        h1 { margin: 0; font-size: 1.2rem; color: #38bdf8; }
+        #chat { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .msg { padding: 12px 18px; border-radius: 12px; max-width: 75%; line-height: 1.5; word-wrap: break-word; }
+        .user { background: #0284c7; align-self: flex-end; }
+        .ai { background: #334155; align-self: flex-start; }
+        #input-area { background: #1e293b; padding: 15px; display: flex; gap: 10px; border-top: 1px solid #334155; align-items: center; }
+        textarea { flex: 1; background: #0f172a; border: 1px solid #475569; color: #fff; padding: 12px; border-radius: 8px; resize: none; height: 24px; outline: none; }
+        textarea:focus { border-color: #38bdf8; }
+        button { background: #0284c7; color: #white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        button:hover { background: #0369a1; }
+        #mic-btn.listening { background: #dc2626; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        #preview-container { display: none; padding: 5px 15px; background: #1e293b; border-top: 1px solid #334155; align-items: center; gap: 10px; }
+        #preview-img { height: 50px; border-radius: 4px; border: 1px solid #475569; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>LUX AI - Antigravity Mod</h1>
+        <div id="status" style="font-size: 0.9rem; color: #10b981;">● Hazır</div>
+    </header>
+
+    <div id="chat">
+        <div class="msg ai">Selam kanka! Sürekli mikrofon ve Ctrl+V ekran görüntüsü desteği aktif. Nasıl yardımcı olayım?</div>
+    </div>
+
+    <div id="preview-container">
+        <img id="preview-img" src="" alt="Önizleme">
+        <span style="font-size: 0.85rem; color: #94a3b8;">Ekran görüntüsü eklendi</span>
+        <button onclick="clearImage()" style="background: #ef4444; padding: 4px 8px; font-size: 0.8rem;">Kaldır</button>
+    </div>
+
+    <div id="input-area">
+        <button id="mic-btn" onclick="toggleMic()">🎤 Mikrofon</button>
+        <textarea id="user-input" placeholder="Mesajını yaz veya buraya Ctrl+V ile resim yapıştır..."></textarea>
+        <button onclick="sendMessage()">Gönder</button>
+    </div>
+
+    <script>
+        let isListening = false;
+        let recognition = null;
+        let attachedImage = null;
+
+        // Sürekli Mikrofon (Live STT)
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'tr-TR';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            recognition.onresult = (event) => {
+                let interim = '';
+                let final = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        final += event.results[i][0].transcript;
+                    } else {
+                        interim += event.results[i][0].transcript;
+                    }
+                }
+                const input = document.getElementById('user-input');
+                if (final) {
+                    input.value += (input.value ? ' ' : '') + final;
+                }
+            };
+
+            recognition.onend = () => {
+                if (isListening) {
+                    try { recognition.start(); } catch(e) {}
+                }
+            };
+        }
+
+        function toggleMic() {
+            if (!recognition) {
+                alert('Tarayıcın ses tanımayı desteklemiyor.');
+                return;
+            }
+            const btn = document.getElementById('mic-btn');
+            const status = document.getElementById('status');
+            if (!isListening) {
+                isListening = true;
+                recognition.start();
+                btn.classList.add('listening');
+                btn.innerText = '🔴 Dinleniyor...';
+                status.innerText = '● Canlı Dinleme Aktif';
+                status.style.color = '#ef4444';
+            } else {
+                isListening = false;
+                recognition.stop();
+                btn.classList.remove('listening');
+                btn.innerText = '🎤 Mikrofon';
+                status.innerText = '● Hazır';
+                status.style.color = '#10b981';
+            }
+        }
+
+        // Ctrl + V ile Resim Yapıştırma
+        window.addEventListener('paste', (e) => {
+            const items = e.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const blob = items[i].getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        attachedImage = event.target.result;
+                        document.getElementById('preview-img').src = attachedImage;
+                        document.getElementById('preview-container').style.display = 'flex';
+                    };
+                    reader.readAsDataURL(blob);
+                    break;
+                }
+            }
+        });
+
+        function clearImage() {
+            attachedImage = null;
+            document.getElementById('preview-container').style.display = 'none';
+            document.getElementById('preview-img').src = '';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('user-input');
+            const text = input.value.trim();
+            if (!text && !attachedImage) return;
+
+            const chat = document.getElementById('chat');
+            
+            // Kullanıcı mesajı ekle
+            let userHtml = `<div class="msg user">${text}`;
+            if (attachedImage) {
+                userHtml += `<br><img src="${attachedImage}" style="max-width:200px; margin-top:5px; border-radius:4px;">`;
+            }
+            userHtml += `</div>`;
+            chat.innerHTML += userHtml;
+
+            input.value = '';
+            const imgToSend = attachedImage;
+            clearImage();
+            chat.scrollTop = chat.scrollHeight;
+
+            // Simüle edilmiş AI yanıtı (Backend bağlantısı ile tam entegre edilir)
+            setTimeout(() => {
+                chat.innerHTML += `<div class="msg ai">Harika kanka, mesajını ve${imgToSend ? ' ekran görüntünü' : ''} aldım! An itibariyle sistem tamamen aktif. 🚀</div>`;
+                chat.scrollTop = chat.scrollHeight;
+            }, 1000);
+        }
+
+        // Enter tuşu ile gönderme
+        document.getElementById('user-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
