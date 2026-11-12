@@ -31,26 +31,18 @@ SmartScreen warns on unsigned installers until reputation builds. To sign:
 3. Add repo secrets: `CSC_LINK` (the base64 string) and `CSC_KEY_PASSWORD` (pfx password).
 4. Done — electron-builder picks them up automatically. Never commit the pfx or its password.
 
-## Auto-update (publish scaffolded; runtime not wired)
+## Auto-update (wired since v1.5.0)
 
-`package.json` → `build.publish` is **already set** to GitHub (`captanemre-crypto/lux-ai`), so update-info metadata can be emitted when a publishing target runs. The app still ships **no** auto-updater — updating means re-installing — until `electron-updater` is wired and **one real tagged release** is published with `latest.yml` attached. To enable:
+`package.json` → `build.publish` is set to GitHub (`captanemre-crypto/lux-ai`) and `electron-updater` ships as a runtime dependency. In a **production build** (`app.isPackaged === true`) the app silently checks the GitHub Releases feed at startup:
 
-1. `npm install electron-updater` (runtime dependency).
-2. In `main.js` after `app.whenReady()`:
-   ```js
-   try {
-     const { autoUpdater } = require("electron-updater");
-     if (app.isPackaged) {
-       autoUpdater.autoDownload = false; // ask first; downloads are big
-       autoUpdater.checkForUpdates(); // or on a menu item
-       autoUpdater.on("update-available", (info) => mainWindow?.webContents.send("update-available", info.version));
-       autoUpdater.on("update-downloaded", () => mainWindow?.webContents.send("update-ready"));
-     }
-   } catch (e) {
-     logger.warn("auto-update unavailable", e);
-   }
-   ```
-3. Publish releases via the tag flow — `electron-updater` reads `latest.yml` from the GitHub Release. Attach `dist/latest.yml` (Windows job) and `dist/latest-linux.yml` (Linux job) to the release alongside the installers, or switch the build steps to `--publish onTag` with `GH_TOKEN` set so electron-builder uploads everything itself.
+- `update-available` → background download starts (`autoDownload: true`, `autoInstallOnAppQuit: true`),
+- a small **update banner** appears bottom-right ("Lux vX.Y.Z mevcut…"),
+- when the download finishes, the banner switches to **"Yeniden Başlat ve Yükle"** (`update-quit-and-install` → `autoUpdater.quitAndInstall(false, true)`),
+- manual check anytime: **Settings → Uygulama → Güncelleme → Güncellemeleri Denetle**,
+- development builds (`app.isPackaged === false`) never touch the network and the banner never appears,
+- `release.yml` attaches `latest*.yml` (updater manifests) to the GitHub Release — that is what this runtime reads. Do not delete those assets from a release.
+
+Note: updater behavior on an unsigned build is OS-dependent (macOS refuses unsigned/notarized update installation; Windows NSIS works, SmartScreen may still warn). This environment cannot produce the signed installer — the full chain is only proven on the maintainer's machine/CI.
 
 ## Crash reporting (optional)
 

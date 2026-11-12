@@ -86,6 +86,7 @@ function log(level, scope, message, extra) {
 }
 
 module.exports = {
+  LOG_DIR,
   info: (msg, extra, scope) => log('info', scope, msg, extra),
   warn: (msg, extra, scope) => log('warn', scope, msg, extra),
   error: (msg, extra, scope) => log('error', scope, msg, extra),

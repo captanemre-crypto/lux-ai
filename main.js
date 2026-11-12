@@ -18,6 +18,8 @@ const { spawn, spawnSync } = require('child_process');
 const agentCaps = require('./scripts/agent_capabilities');
 const { buildUnifiedLineDiff } = require('./scripts/unified_diff');
 const logger = require('./src/logger');
+const { LOG_FILE, LOG_DIR } = require('./src/logger');
+const crypto = require('crypto');
 
 // Enforce dark mode for OS native popups, menus and system controls
 nativeTheme.themeSource = 'dark';
@@ -1443,5 +1445,286 @@ app.on('before-quit', () => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+
+// ----------------------------------------------------
+// Otomatik güncelleme, yedekleme ve günlükler (v1.5.0)
+// ----------------------------------------------------
+let autoUpdater = null;
+try {
+  ({ autoUpdater } = require('electron-updater'));
+} catch (err) {
+  logger.warn(
+    `[updater] electron-updater yüklenemedi: ${err && err.message ? err.message : err}`,
+    undefined,
+    'updater'
+  );
+}
+
+function broadcastUpdateStatus(payload) {
+  try {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-status', payload);
+    }
+  } catch (_) {}
+}
+
+function wireAutoUpdater() {
+  if (!autoUpdater || !app.isPackaged) return; // geliştirme ortamında denetim atlanır
+  try {
+    autoUpdater.autoDownload = true;
+    autoUpdater.autoInstallOnAppQuit = true;
+    autoUpdater.on('checking-for-update', () => broadcastUpdateStatus({ status: 'checking' }));
+    autoUpdater.on('update-available', (info) =>
+      broadcastUpdateStatus({ status: 'available', version: info && info.version })
+    );
+    autoUpdater.on('update-not-available', () => broadcastUpdateStatus({ status: 'up-to-date' }));
+    autoUpdater.on('download-progress', (p) =>
+      broadcastUpdateStatus({ status: 'downloading', percent: Math.round((p && p.percent) || 0) })
+    );
+    autoUpdater.on('update-downloaded', (info) =>
+      broadcastUpdateStatus({ status: 'downloaded', version: info && info.version })
+    );
+    autoUpdater.on('error', (err) =>
+      broadcastUpdateStatus({ status: 'error', message: String((err && err.message) || err) })
+    );
+    autoUpdater
+      .checkForUpdates()
+      .catch((err) =>
+        logger.warn(`[updater] kontrol basarisiz: ${err && err.message ? err.message : err}`, undefined, 'updater')
+      );
+  } catch (err) {
+    logger.warn(`[updater] kurulamadi: ${err && err.message ? err.message : err}`, undefined, 'updater');
+  }
+}
+app.whenReady().then(() => {
+  try {
+    wireAutoUpdater();
+  } catch (_) {}
+});
+
+ipcMain.handle('update-check-now', async () => {
+  if (!app.isPackaged) {
+    return {
+      success: true,
+      packaged: false,
+      message: 'Gelistirme surumu — guncelleme yalniz uretim paketinde gecerli.'
+    };
+  }
+  if (!autoUpdater) return { success: false, packaged: true, error: 'electron-updater yuklenemedi' };
+  try {
+    const r = await autoUpdater.checkForUpdates();
+    return { success: true, packaged: true, version: r && r.updateInfo && r.updateInfo.version };
+  } catch (err) {
+    return { success: false, packaged: true, error: String((err && err.message) || err) };
+  }
+});
+
+ipcMain.handle('update-quit-and-install', (event) => {
+  if (!isAppMainSender(event)) return { success: false, error: 'Yetkisiz gonderici' };
+  if (!autoUpdater) return { success: false, error: 'electron-updater yuklenemedi' };
+  setImmediate(() => {
+    try {
+      autoUpdater.quitAndInstall(false, true);
+    } catch (err) {
+      logger.warn(`[updater] yeniden baslatilamadi: ${err && err.message ? err.message : err}`, undefined, 'updater');
+    }
+  });
+  return { success: true };
+});
+
+// ---------------- Günlükler ----------------
+ipcMain.handle('logs-read', (event, maxBytes) => {
+  if (!isAppMainSender(event)) return { success: false, error: 'Yetkisiz gonderici' };
+  maxBytes = asIntInRange(maxBytes, 'maxBytes', { min: 4096, max: 1024 * 1024, fallback: 256 * 1024 });
+  try {
+    if (!fs.existsSync(LOG_FILE) || fs.statSync(LOG_FILE).size === 0) {
+      return { success: true, text: '(gunluk bos)', path: LOG_FILE, sizeBytes: 0 };
+    }
+    const stat = fs.statSync(LOG_FILE);
+    const readBytes = Math.min(stat.size, maxBytes);
+    let text;
+    if (readBytes === stat.size) {
+      text = fs.readFileSync(LOG_FILE, 'utf-8');
+    } else {
+      const fd = fs.openSync(LOG_FILE, 'r');
+      const buf = Buffer.alloc(readBytes);
+      fs.readSync(fd, buf, 0, readBytes, stat.size - readBytes);
+      fs.closeSync(fd);
+      text = '...' + buf.toString('utf-8');
+    }
+    return { success: true, text, path: LOG_FILE, sizeBytes: stat.size, truncated: stat.size > maxBytes };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('logs-clear', (event) => {
+  if (!isAppMainSender(event)) return { success: false, error: 'Yetkisiz gonderici' };
+  try {
+    logger.flush(); // bekleyen tamponu diske al ki temizlik karisikligi olmasin
+    fs.writeFileSync(LOG_FILE, '', 'utf-8');
+    const backup = `${LOG_FILE}.1`;
+    if (fs.existsSync(backup)) fs.unlinkSync(backup);
+    logger.info('[logs] gunluk kullanici tarafindan temizlendi', undefined, 'logs');
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('logs-open-folder', (event) => {
+  if (!isAppMainSender(event)) return { success: false, error: 'Yetkisiz gonderici' };
+  try {
+    shell.openPath(path.dirname(LOG_FILE));
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// ---------------- Yedekleme (.luxbackup) ----------------
+const BACKUP_MAX_BYTES = 32 * 1024 * 1024;
+
+function buildBackupEnvelopeText(payload, password) {
+  const inner = {
+    format: 'luxbackup',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    appVersion: app.getVersion(),
+    payload: payload === undefined ? null : payload
+  };
+  if (!password) {
+    return JSON.stringify({ kind: 'luxbackup', enc: 'none', ...inner }, null, 2);
+  }
+  const salt = crypto.randomBytes(16);
+  const iv = crypto.randomBytes(12);
+  const key = crypto.scryptSync(String(password), salt, 32);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const data = Buffer.concat([cipher.update(JSON.stringify(inner), 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return JSON.stringify(
+    {
+      kind: 'luxbackup',
+      enc: 'aes-256-gcm',
+      v: 1,
+      exportedAt: inner.exportedAt,
+      kdf: 'scrypt',
+      salt: salt.toString('base64'),
+      iv: iv.toString('base64'),
+      tag: tag.toString('base64'),
+      data: data.toString('base64')
+    },
+    null,
+    2
+  );
+}
+
+function parseBackupEnvelopeText(raw, password) {
+  let outer;
+  try {
+    outer = JSON.parse(raw);
+  } catch (_) {
+    throw new Error('Dosya JSON degil — gecerli bir Lux yedegi mi?');
+  }
+  if (!outer || typeof outer !== 'object' || outer.kind !== 'luxbackup') {
+    throw new Error('Lux yedek zarfi degil (kind eksik/gecersiz)');
+  }
+  if (outer.enc === 'none') return outer;
+  if (outer.enc === 'aes-256-gcm') {
+    if (!password) throw new Error('Bu yedek parola ile sifrelenmis; parola gerekli.');
+    if (outer.kdf !== 'scrypt') throw new Error('Desteklenmeyen KDF: ' + outer.kdf);
+    const salt = Buffer.from(String(outer.salt), 'base64');
+    const iv = Buffer.from(String(outer.iv), 'base64');
+    const tag = Buffer.from(String(outer.tag), 'base64');
+    const data = Buffer.from(String(outer.data), 'base64');
+    if (salt.length !== 16 || iv.length !== 12 || tag.length !== 16)
+      throw new Error('Parola/sifreleme parametreleri bozuk.');
+    const key = crypto.scryptSync(String(password), salt, 32);
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(tag);
+    let plain;
+    try {
+      plain = Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8');
+    } catch (_) {
+      throw new Error('Sifre cozme basarisiz — parola yanlis ya da dosya bozuk.');
+    }
+    const inner = JSON.parse(plain);
+    inner.kind = 'luxbackup';
+    inner.enc = 'aes-256-gcm';
+    return inner;
+  }
+  throw new Error('Desteklenmeyen sifreleme: ' + outer.enc);
+}
+
+ipcMain.handle('backup-export', async (event, password) => {
+  if (!isAppMainSender(event)) return { success: false, error: 'Yetkisiz gonderici' };
+  try {
+    if (password !== undefined && password !== null) {
+      password = asString(password, 'password', { required: false, max: 256 });
+    }
+    let payload = null;
+    if (fs.existsSync(DATA_FILE)) {
+      try {
+        payload = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+      } catch (_) {
+        payload = null; // bozuk dosya bile disari alabilsin diye null birak
+      }
+    }
+    payload = stripSecretsFromState(payload);
+    const text = buildBackupEnvelopeText(payload, password || null);
+    return {
+      success: true,
+      exportedAt: new Date().toISOString(),
+      data: text,
+      suggestedFilename: `lux-yedek-${new Date().toISOString().slice(0, 10)}.luxbackup`
+    };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('backup-import', async (event, password) => {
+  if (!isAppMainSender(event)) return { success: false, error: 'Yetkisiz gonderici' };
+  try {
+    if (password !== undefined && password !== null) {
+      password = asString(password, 'password', { required: false, max: 256 });
+    }
+    const picked = await dialog.showOpenDialog(mainWindow, {
+      title: 'Lux yedegini secin',
+      properties: ['openFile'],
+      filters: [{ name: 'Lux Yedegi', extensions: ['luxbackup', 'json'] }]
+    });
+    if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) {
+      return { success: false, canceled: true };
+    }
+    const filePath = picked.filePaths[0];
+    const stat = fs.statSync(filePath);
+    if (stat.size > BACKUP_MAX_BYTES) {
+      return { success: false, error: `Yedek cok buyuk (${Math.round(stat.size / 1024 / 1024)} MB > 32 MB)` };
+    }
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    const inner = parseBackupEnvelopeText(raw, password || null);
+    if (inner.format !== 'luxbackup' || Number(inner.version) !== 1) {
+      return { success: false, error: 'Yedek surumu desteklenmiyor (format/sürüm uyusmazligi).' };
+    }
+    if (inner.payload !== null && (typeof inner.payload !== 'object' || Array.isArray(inner.payload))) {
+      return { success: false, error: 'Yedek yuku gecerli bir nesne degil.' };
+    }
+    const safePayload = stripSecretsFromState(inner.payload);
+    if (fs.existsSync(DATA_FILE)) {
+      try {
+        fs.copyFileSync(DATA_FILE, `${DATA_FILE}.bak-${Date.now()}`);
+      } catch (_) {}
+    }
+    fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
+    const tmp = `${DATA_FILE}.tmp`;
+    fs.writeFileSync(tmp, JSON.stringify(safePayload, null, 2), 'utf-8');
+    fs.renameSync(tmp, DATA_FILE);
+    logger.info('[backup] yedekten yuku geri alindi', undefined, 'backup');
+    return { success: true, exportedAt: inner.exportedAt || null, appVersion: inner.appVersion || null };
+  } catch (err) {
+    return { success: false, error: String((err && err.message) || err) };
   }
 });

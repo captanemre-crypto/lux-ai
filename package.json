@@ -9,7 +9,7 @@
     "dev": "electron . --dev",
     "postinstall": "node scripts/sync-monaco.js",
     "vendor:monaco": "node scripts/sync-monaco.js --force",
-    "test": "node scripts/test_lifecycle_e2e.js && node scripts/test_model_client.js && node scripts/test_validate.js && node scripts/test_context_rollup.js",
+    "test": "node scripts/test_lifecycle_e2e.js && node scripts/test_model_client.js && node scripts/test_validate.js && node scripts/test_context_rollup.js && node scripts/test_i18n.js",
     "test:model": "node scripts/test_model_client.js",
     "test:validate": "node scripts/test_validate.js",
     "test:rollup": "node scripts/test_context_rollup.js",
@@ -23,7 +23,9 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:i18n": "node scripts/test_i18n.js",
+    "test:visual": "node node_modules/electron/cli.js scripts/visual_regression.js"
   },
   "keywords": [
     "lux-ai",
@@ -45,6 +47,7 @@
     "node": ">=22.12.0"
   },
   "dependencies": {
+    "electron-updater": "^6.8.11",
     "marked": "^15.0.7",
     "monaco-editor": "^0.57.0"
   },
@@ -54,6 +57,8 @@
     "electron-builder": "^26.0.12",
     "eslint": "^10.14.0",
     "globals": "^17.14.0",
+    "pixelmatch": "^8.0.0",
+    "pngjs": "^7.0.0",
     "prettier": "^3.10.1",
     "tailwindcss": "^4.3.5"
   },

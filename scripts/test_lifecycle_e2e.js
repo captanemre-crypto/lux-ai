@@ -497,7 +497,8 @@ async function main() {
       'model_client.js',
       'i18n.js',
       'tool_approval.js',
-      'agent_context.js'
+      'agent_context.js',
+      'agent_workspace.js'
     ]) {
       const pos = html.indexOf(`js/${dep}`);
       if (pos === -1) throw new Error(`index.html'de eksik script: ${dep}`);

@@ -811,6 +811,7 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
     <script src="js/model_client.js"></script>
     <script src="js/tool_approval.js"></script>
     <script src="js/agent_context.js"></script>
+    <script src="js/agent_workspace.js"></script>
     <script src="js/chat.js"></script>
     <script src="js/rightPanel.js"></script>
     <script src="js/ideMode.js"></script>
@@ -819,5 +820,32 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
     <script src="js/plugin_system.js"></script>
     <script src="js/voice.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/update_banner.js"></script>
+
+    <!-- Güncelleme bildirim bandı (yalnız üretim paketi + update-status olayı gelirse görünür) -->
+    <div
+      id="update-banner"
+      class="hidden fixed bottom-4 right-4 z-[1000] items-center gap-3 rounded-xl border border-primary/30 bg-card/95 backdrop-blur px-4 py-2.5 shadow-2xl text-xs text-foreground max-w-xs"
+      role="status"
+      aria-live="polite"
+    >
+      <span class="w-2 h-2 rounded-full bg-primary inline-block animate-pulse shrink-0"></span>
+      <span id="update-banner-text" class="leading-snug flex-1">Lux AI güncelleme</span>
+      <button
+        type="button"
+        id="update-banner-action"
+        class="agy-button bg-primary text-primary-foreground rounded-lg px-3 py-1 font-medium cursor-pointer hidden shrink-0"
+      >
+        Yeniden Başlat
+      </button>
+      <button
+        type="button"
+        id="update-banner-dismiss"
+        class="p-1 text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
+        aria-label="Kapat"
+      >
+        ✕
+      </button>
+    </div>
   </body>
 </html>

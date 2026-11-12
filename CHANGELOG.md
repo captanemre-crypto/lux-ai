@@ -6,6 +6,29 @@ All notable changes are documented here. Format: [Keep a Changelog](https://keep
 
 (Henüz yayınlanmamış değişiklik yok.)
 
+## [Unreleased]
+
+### Added
+
+- **Uygulama içi otomatik güncelleme**: `electron-updater` bağımlılığı + ana süreç kablolaması (açılışta sessiz denetim, yalnız üretim paketinde); sağ-alt köşede TR/EN bildirim bandı (`update-available` → indirme → "Yeniden Başlat ve Yükle"); Settings → Uygulama → Güncelleme → "Güncellemeleri Denetle" manuel denetim. `release.yml` artifact'lerine `latest*.yml` eklendi (updater kanal manifestleri).
+- **Veri yedekleme** (`Ayarlar → Uygulama → Veri & Yedek`): sohbetler/ayarlar/workspace haritası `.luxbackup` dosyasına aktarılır; API anahtarları yedeğe dahil değildir (sırlar yazılmaz). Opsiyonel parola → scrypt + AES-256-GCM. İçe aktarmada otomatik `.bak` kopyası alınır, doğrulanır ve uygulama yeniden yüklenir.
+- **Canlı günlük görüntüleyici** (`Ayarlar → Uygulama → Günlükler`): son 64 KB görüntülenir; Yenile / Kopyala / Klasörü Aç / Temizle. Yeni `logs-read` / `logs-clear` / `logs-open-folder` IPC'leri (yalnız ana pencere göndericisi).
+- **Görsel regresyon kapısı**: `scripts/visual_regression.js` — uygulamayı gerçekten açar (xvfb), 5 deterministik kare yakalar (`main-empty`, `chat-media-chips`, `settings-application`, `settings-data-logs`, `tool-approval-dialog`), `tests/visual/baselines/` ile piksel düzeyinde karşılaştırır (eşik %1.0). `npm run test:visual`; Linux dışında rapor-only.
+- **i18n anahtar kapsamı testi**: `scripts/test_i18n.js` — TR/EN parity + kodda geçen bilinen-önek her anahtarın sözlükte varlığı; `npm test` zincirine eklendi.
+- **Dokümantasyon**: her iki README'ye gerçek ekran görüntüleri (`docs/screenshots/*.png`); `RELEASING.md` "Auto-update (wired)" bölümü; `SECURITY.md` şema/sınır listesine yedek/updater/plugin-sandbox/CSP notları.
+
+### Changed
+
+- **Eklenti (plugin) yolu sandbox'landı**: `plugin_system.js` blob: belgeleri artık Aux Browser iframe'inde `sandbox="allow-scripts"` (same-origin yok) açılır — eklenti HTML/JS'i üst pencereye/`luxAPI`'ye ulaşamıyor. Normal Aux Browser gezinmesi değişmedi.
+- **`chat.js` → `agent_workspace.js` ayrıştırması**: masaüstü proje önbelleği, çalışma-ağacı analizi ve turn-bağlamı kancaları (~222 satır) ayrı dosyaya taşındı; `index.html` sırası ve bundle bütünlük testi güncellendi.
+- Yeni `data-logs` IPC'leri ve `update-status` kanalı `preload.js` üzerinden `luxAPI.logs|updates|backup` olarak açıldı.
+
+### Verified
+
+- Ses servisi bu turda CANLI denenebildi: `faster-whisper base` ile TR STT'nin ürettiği metnin kaynak metnin birebir aynısı çıktığı (`Bugün hava parçalı bulutlu olacak.` → aynı metin), `edge-tts` ile sentezin geçerli MP3 ürettiği (`Fola`) ve `status` CLI'ın doğru raporladığı görüldü. (Geçici test venv'i repodan silindi.)
+- Görsel regresyon: baseline üretimi sonrası ardışık koşumda tüm kareler ~%0.00 fark; eşik `VISUAL_MAX_DIFF=0` altında kapanın gerçekten kırdığı doğrulandı (exit 1).
+- `npm run verify` bu değişiklik setiyle **6/6 yeşil** (46 test + i18n testi = 7 paket, lint, prettier, CSS drift, xvfb smoke, e2e).
+
 ## [1.4.1] — 2026-11-12
 
 ### Security

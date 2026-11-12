@@ -1581,6 +1581,7 @@ window.applyAccentTheme = function (hex) {
 function renderApplicationSettingsView(container) {
   const appConf = window.appStore?.state?.application || {};
   const wsDir = appConf.workspaceDir || window.luxAppInfo?.currentWorkspace || "";
+  const T = (key) => (window.LuxI18n ? window.LuxI18n.t(key) : key);
 
   container.innerHTML = `
     <div class="flex flex-col gap-6 w-full max-w-3xl mx-auto pb-8 select-none">
@@ -1640,6 +1641,58 @@ function renderApplicationSettingsView(container) {
             Güncel
           </span>
         </div>
+
+      <div class="flex flex-col gap-2 pt-1">
+        <h3 class="text-sm font-medium text-foreground tracking-normal m-0">Güncelleme</h3>
+        <div class="bg-card/40 border border-border/80 rounded-2xl p-5 flex flex-col gap-2">
+          <p class="text-xs text-muted-foreground leading-relaxed m-0">
+            Üretim paketinde uygulama açılışta Release'i denetler, yeni sürüm varsa arka planda indirir;
+            indirme bitince sağ altta "Yeniden Başlat ve Yükle" bandı gösterilir.
+          </p>
+          <div class="flex flex-wrap items-center gap-3">
+            <button type="button" id="btn-check-update" class="agy-button bg-secondary/80 hover:bg-secondary text-foreground text-xs font-medium px-3.5 py-1.5 rounded-full border border-border/60 cursor-pointer transition-colors">
+              Güncellemeleri Denetle
+            </button>
+            <span id="update-check-status-line" class="text-[11px] text-muted-foreground"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2 pt-1">
+        <h3 class="text-sm font-medium text-foreground tracking-normal m-0">Veri & Yedek</h3>
+        <div class="bg-card/40 border border-border/80 rounded-2xl p-5 flex flex-col gap-3">
+          <p class="text-xs text-muted-foreground leading-relaxed m-0">
+            Sohbetler, ayarlar ve çalışma-alanı haritası tek bir <span class="font-mono">.luxbackup</span> dosyasına aktarılır.
+            API anahtarları yedeğe <strong>dahil değildir</strong> (şifreli kasa ayrıdır). Parola girerseniz dosya
+            AES-256-GCM ile şifrelenir; parolasız yedek düz JSON'dur.
+          </p>
+          <div class="flex flex-wrap items-center gap-2">
+            <input id="backup-password-input" type="password" autocomplete="new-password" class="model-input-field text-xs flex-1 min-w-[180px]" placeholder="${T("backup.password")}" />
+            <button type="button" id="btn-backup-export" class="agy-button bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-medium px-3.5 py-1.5 rounded-full cursor-pointer transition-colors">
+              ${T("backup.export")}
+            </button>
+            <button type="button" id="btn-backup-import" class="agy-button bg-secondary/80 hover:bg-secondary text-foreground text-xs font-medium px-3.5 py-1.5 rounded-full border border-border/60 cursor-pointer transition-colors">
+              ${T("backup.import")}
+            </button>
+          </div>
+          <p id="backup-status-line" class="text-[11px] text-muted-foreground min-h-[16px] m-0"></p>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2 pt-1">
+        <h3 class="text-sm font-medium text-foreground tracking-normal m-0">${T("logs.title")}</h3>
+        <div class="bg-card/40 border border-border/80 rounded-2xl p-5 flex flex-col gap-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span id="logs-path-line" class="text-[10.5px] text-muted-foreground font-mono truncate"></span>
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" id="btn-logs-refresh" class="agy-button bg-secondary/80 hover:bg-secondary text-foreground text-[11px] font-medium px-3 py-1.5 rounded-lg border border-border/60 cursor-pointer transition-colors">${T("logs.refresh")}</button>
+              <button type="button" id="btn-logs-copy" class="agy-button bg-secondary/80 hover:bg-secondary text-foreground text-[11px] font-medium px-3 py-1.5 rounded-lg border border-border/60 cursor-pointer transition-colors">${T("logs.copy")}</button>
+              <button type="button" id="btn-logs-open-folder" class="agy-button bg-secondary/80 hover:bg-secondary text-foreground text-[11px] font-medium px-3 py-1.5 rounded-lg border border-border/60 cursor-pointer transition-colors">${T("logs.openFolder")}</button>
+              <button type="button" id="btn-logs-clear" class="agy-button bg-danger/10 hover:bg-danger/20 text-red-400 text-[11px] font-medium px-3 py-1.5 rounded-lg border border-red-500/30 cursor-pointer transition-colors">${T("logs.clear")}</button>
+            </div>
+          </div>
+          <pre id="logs-pre-output" class="text-[10.5px] leading-relaxed font-mono bg-[#0a0a0c] border border-border/60 rounded-xl p-3 max-h-64 overflow-auto text-muted-foreground whitespace-pre-wrap break-words m-0 select-text">Yükleniyor…</pre>
+        </div>
       </div>
     </div>
   `;
@@ -1682,6 +1735,117 @@ function renderApplicationSettingsView(container) {
     window.appStore.state.application.autoDevTools = Boolean(e.target.checked);
     window.appStore.saveState();
     if (e.target.checked) window.luxAPI?.window?.devtools?.();
+  });
+
+  // --- Yedek / Güncelleme / Günlük bağlantıları (v1.5.0) ---
+  const statusLine = container.querySelector("#backup-status-line");
+  const setStatus = (msg, isError) => {
+    if (!statusLine) return;
+    statusLine.textContent = msg || "";
+    statusLine.classList.toggle("text-red-400", Boolean(isError));
+  };
+  const logsPre = container.querySelector("#logs-pre-output");
+  const logsPath = container.querySelector("#logs-path-line");
+  const loadLogs = async () => {
+    if (logsPre) logsPre.textContent = "Yükleniyor…";
+    try {
+      const res = await window.luxAPI?.logs?.read?.(64 * 1024);
+      if (!container.isConnected) return;
+      if (logsPre) logsPre.textContent = res?.success ? (res.text ?? "(boş)") : `Okunamadı: ${res?.error || "bilinmeyen hata"}`;
+      if (logsPath) logsPath.textContent = res?.path || "";
+    } catch (e) {
+      if (logsPre) logsPre.textContent = "Okunamadı: " + String(e);
+    }
+  };
+  container.querySelector("#btn-logs-refresh")?.addEventListener("click", loadLogs);
+  const copyBtn = container.querySelector("#btn-logs-copy");
+  copyBtn?.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(logsPre?.textContent || "");
+      copyBtn.textContent = "✓";
+      setTimeout(() => {
+        copyBtn.textContent = T("logs.copy");
+      }, 1200);
+    } catch (_) {}
+  });
+  container.querySelector("#btn-logs-open-folder")?.addEventListener("click", () => {
+    window.luxAPI?.logs?.openFolder?.();
+  });
+  container.querySelector("#btn-logs-clear")?.addEventListener("click", async () => {
+    if (!confirm("Günlükler (app.log ve app.log.1) silinecek. Emin misiniz?")) return;
+    await window.luxAPI?.logs?.clear?.();
+    loadLogs();
+  });
+  loadLogs();
+
+  container.querySelector("#btn-backup-export")?.addEventListener("click", async () => {
+    const pwInput = container.querySelector("#backup-password-input");
+    const pw = pwInput && pwInput.value ? pwInput.value : "";
+    setStatus("Dışa aktarılıyor…");
+    try {
+      const res = await window.luxAPI?.backup?.export?.(pw || undefined);
+      if (!res?.success) {
+        setStatus("Hata: " + (res?.error || "bilinmeyen"), true);
+        return;
+      }
+      const blob = new Blob([res.data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = res.suggestedFilename || "lux-yedek.luxbackup";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setStatus(`Kaydedildi: ${a.download}${pw ? " (parolalı)" : ""}`);
+    } catch (e) {
+      setStatus("Hata: " + String(e), true);
+    }
+  });
+  container.querySelector("#btn-backup-import")?.addEventListener("click", async () => {
+    const pwInput = container.querySelector("#backup-password-input");
+    const pw = pwInput && pwInput.value ? pwInput.value : "";
+    if (
+      !confirm(
+        "Yedek içe aktarılacak: mevcut sohbetler/ayarlar .luxbackup içeriğiyle DEĞİŞTİRİLİR. " +
+          "Önce mevcut dosyanın .bak kopyası alınır. Devam?"
+      )
+    )
+      return;
+    setStatus("İçe aktarılıyor…");
+    try {
+      const res = await window.luxAPI?.backup?.import?.(pw || undefined);
+      if (res?.canceled) {
+        setStatus("İçe aktarma iptal edildi.");
+        return;
+      }
+      if (!res?.success) {
+        setStatus("Hata: " + (res?.error || "bilinmeyen"), true);
+        return;
+      }
+      setStatus("Yedek geri alındı. Uygulama yeniden yükleniyor…");
+      setTimeout(() => window.location.reload(), 800);
+    } catch (e) {
+      setStatus("Hata: " + String(e), true);
+    }
+  });
+
+  container.querySelector("#btn-check-update")?.addEventListener("click", async () => {
+    const line = container.querySelector("#update-check-status-line");
+    if (line) line.textContent = "Denetleniyor…";
+    try {
+      const res = await window.luxAPI?.updates?.checkNow?.();
+      if (!line) return;
+      if (res?.packaged === false) {
+        line.textContent = "Geliştirme sürümü — güncelleme yalnız üretim paketinde etkin.";
+      } else if (res?.success) {
+        line.textContent = res.version ? `Güncelleme bulundu: v${res.version} (arka planda inecek)` : "Güncel görünüyor.";
+      } else {
+        line.textContent = "Kontrol başarısız: " + (res?.error || "bilinmeyen hata");
+      }
+    } catch (e) {
+      if (line) line.textContent = "Kontrol başarısız: " + String(e);
+    }
   });
 }
 

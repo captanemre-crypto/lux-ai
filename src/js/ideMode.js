@@ -2,6 +2,9 @@
 
 let auxViewMode = "home"; // 'home' | 'review' | 'editor' | 'terminal' | 'browser'
 let auxBrowserUrl = "http://127.0.0.1:8000/#positions";
+// Aux Browser iframe'i için sandbox: normal gezinme="" (kısıt yok),
+// eklenti blob: belgeleri="allow-scripts" (same-origin erişim yok).
+let auxFrameSandbox = "";
 let auxIsMaximized = false;
 
 let activeEditorFile = {
@@ -788,7 +791,7 @@ function renderAuxBrowser() {
         </button>
       </div>
       <div class="flex-1 relative overflow-hidden bg-white" id="aux-browser-viewport">
-        <iframe src="${escapeHtml(auxBrowserUrl)}" class="w-full h-full border-none" id="aux-browser-iframe"></iframe>
+        <iframe src="${escapeHtml(auxBrowserUrl)}" ${auxFrameSandbox ? `sandbox="${auxFrameSandbox}"` : ""} class="w-full h-full border-none" id="aux-browser-iframe" referrerpolicy="no-referrer"></iframe>
       </div>
     </div>
   `;
@@ -806,10 +809,11 @@ function normalizeBrowserUrl(raw) {
   return "http://" + v;
 }
 
-window.openAuxBrowserUrl = function (rawUrl) {
+window.openAuxBrowserUrl = function (rawUrl, opts) {
   const normalized = normalizeBrowserUrl(rawUrl);
   if (!normalized) return false;
   auxBrowserUrl = normalized;
+  auxFrameSandbox = opts && opts.sandbox === true ? "allow-scripts" : "";
   auxViewMode = "browser";
   if (!window.appStore.state.ideSplitActive) {
     window.appStore.state.ideSplitActive = true;
@@ -829,6 +833,7 @@ function attachAuxViewEvents() {
       const normalized = normalizeBrowserUrl(urlInput.value);
       if (normalized) {
         auxBrowserUrl = normalized;
+        auxFrameSandbox = "";
         auxViewMode = "browser";
         renderIdePanel();
       }
@@ -904,7 +909,9 @@ function attachAuxViewEvents() {
       const normalized = normalizeBrowserUrl(browserBar.value);
       if (normalized) {
         auxBrowserUrl = normalized;
+        auxFrameSandbox = "";
         const iframe = document.getElementById("aux-browser-iframe");
+        iframe?.removeAttribute("sandbox");
         if (iframe) iframe.src = auxBrowserUrl;
       }
     }

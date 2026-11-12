@@ -4,6 +4,16 @@
 
 Lux AI is an agentic desktop assistant (Electron) that can actually act on your machine — not just chat. It searches the live web, finds and generates images, creates and edits files/projects, runs terminal commands and controls the PC — always behind explicit, visible permission gates. Turkish-first UI and agent, with an i18n skeleton (EN keys included).
 
+## Screenshots
+
+|                                                                              |                                                                                            |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| ![Main window](docs/screenshots/main.png)                                    | ![Approval dialog](docs/screenshots/approval-dialog.png)                                   |
+| **Landing** — dark theme, sidebar, suggestion cards                          | **High-risk action approval** — `run_command` / `delete_path` never run without your click |
+| ![Media chips](docs/screenshots/media-chips.png)                             | ![Backup & logs](docs/screenshots/settings-backup-logs.png)                                |
+| **Agent images as compact chips** — click: lightbox, ×: removes from message | **Settings > Application** — Data & Backup (.luxbackup) and live log viewer                |
+|                                                                              |                                                                                            |
+
 ## Highlights
 
 - **Agent with real tools**: web search/fetch, image search & AI generation, file/folder CRUD on Desktop & workspace, PowerShell terminal, screen capture, PC control — each tool's permission is toggled in Settings → Permissions.

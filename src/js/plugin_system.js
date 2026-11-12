@@ -148,7 +148,7 @@
         `;
         const blob = new Blob([fullDoc], { type: "text/html" });
         const blobUrl = URL.createObjectURL(blob);
-        window.openAuxBrowserUrl(blobUrl);
+        window.openAuxBrowserUrl(blobUrl, { sandbox: true });
         return;
       }
     }

@@ -26,6 +26,10 @@ Lux AI is an **agentic** desktop app: with your permission it can run shell comm
 - **Agent network access is SSRF-guarded** (`scripts/agent/net_guard.js`): http/https only; loopback/private/link-local/CGNAT/multicast and internal hostnames are refused; redirects are re-validated per hop; DNS answers are checked before connect.
 - **PowerShell strings** built from model/tool input are sanitized for single/double-quoted contexts.
 - **Renderer** is `contextIsolation: true`, `nodeIntegration: false`, navigation locked to the packaged origin; IPC surface is intentionally minimal (`src/preload.js`).
+- **Backups** (`.luxbackup`, Settings → Application) never contain API keys (state is secrets-stripped at rest). Optional user password encrypts with scrypt + AES-256-GCM; without a password the file is plain JSON — treat it as private.
+- **Updates** (`electron-updater`) download from the GitHub Release feed referenced by `build.publish`; the update banner installs on restart. The updater channel integrity relies on GitHub's release assets + (optionally) code signing.
+- **Plugins** (`plugin_system.js`) render their HTML in a **sandboxed** Aux Browser iframe (`sandbox="allow-scripts"`, no `allow-same-origin`) — plugin markup/scripts cannot reach the app DOM or `luxAPI`.
+- **CSP**: the renderer page embeds a Content-Security-Policy meta (`script-src 'self'`, `object-src 'none'`, `base-uri 'none'`, `form-action 'none'`); inline event handlers are eliminated app-wide via delegated actions (`src/js/delegated_actions.js`).
 - **Crash reports** are **local only** by default. Setting `LUX_CRASH_URL` is explicit opt-in for upload; no content (prompts, messages, keys) is ever included.
 
 ## Data & privacy (what leaves your machine by default)

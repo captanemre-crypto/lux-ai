@@ -34,7 +34,20 @@
       "voice.consentTitle": "Ses tanıma modeli ilk kullanımda indirilecek.",
       "voice.consentBody": "faster-whisper (small, int8) bir kez iner (~244 MB), sonra tamamen çevrimdışı çalışır.",
       "voice.consentNo": "Şimdi Değil",
-      "voice.consentYes": "İndir ve Hazırla"
+      "voice.consentYes": "İndir ve Hazırla",
+      "update.available": "Lux {version} mevcut — arka planda indiriliyor.",
+      "update.downloading": "Güncelleme indiriliyor… %{percent}",
+      "update.downloaded": "Lux {version} hazır — yeniden başlatın, kurulsun.",
+      "update.restartNow": "Yeniden Başlat ve Yükle",
+      "update.upToDate": "Lux zaten güncel.",
+      "backup.export": "Yedeği Dışa Aktar",
+      "backup.import": "Yedeği İçe Aktar",
+      "backup.password": "Parola (opsiyonel — AES-256-GCM ile şifreler)",
+      "logs.title": "Günlükler",
+      "logs.refresh": "Yenile",
+      "logs.copy": "Kopyala",
+      "logs.openFolder": "Klasörü Aç",
+      "logs.clear": "Temizle"
     },
     en: {
       "app.name": "Lux AI",
@@ -63,7 +76,20 @@
       "voice.consentTitle": "The speech model will be downloaded on first use.",
       "voice.consentBody": "faster-whisper (small, int8) downloads once (~244 MB), then runs fully offline.",
       "voice.consentNo": "Not Now",
-      "voice.consentYes": "Download & Prepare"
+      "voice.consentYes": "Download & Prepare",
+      "update.available": "Lux {version} is available — downloading in background.",
+      "update.downloading": "Downloading update… {percent}%",
+      "update.downloaded": "Lux {version} is ready — restart to install.",
+      "update.restartNow": "Restart & Install",
+      "update.upToDate": "Lux is up to date.",
+      "backup.export": "Export Backup",
+      "backup.import": "Import Backup",
+      "backup.password": "Password (optional — encrypts with AES-256-GCM)",
+      "logs.title": "Logs",
+      "logs.refresh": "Refresh",
+      "logs.copy": "Copy",
+      "logs.openFolder": "Open Folder",
+      "logs.clear": "Clear"
     }
   });
 

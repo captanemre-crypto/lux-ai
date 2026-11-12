@@ -42,3 +42,6 @@ desktop.ini
 # Loglar
 *.log
 npm-debug.log*
+
+# Görsel regresyon: diff/çıktı png'leri (baselines commit'lenir)
+tests/visual/output/

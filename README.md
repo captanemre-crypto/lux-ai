@@ -4,7 +4,19 @@ Electron tabanlı masaüstü yapay zeka ajanı ve gömülü IDE. Koyu tema (`#07
 çift çerçeveli yüzen mesaj kutusu, araç adımları, gömülü terminal, Monaco tabanlı
 editör ve çok motorlu ses (STT/TTS) altyapısı içerir.
 
-**Sürüm:** 1.1.0 · **Node:** ≥ 22.12 · **Python (ses için):** 3.12 önerilir
+**Sürüm:** 1.4.1 · **Node:** ≥ 22.12 · **Python (ses için):** 3.12 önerilir
+
+---
+
+### 📸 Ekran Görüntüleri
+
+|                                                                         |                                                                                                 |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| ![Ana pencere](docs/screenshots/main.png)                               | ![Onay diyaloğu](docs/screenshots/approval-dialog.png)                                          |
+| **Açılış ekranı** — koyu tema, kenar çubuğu, öneri kartları             | **Yüksek riskli işlem onayı** — `run_command` / `delete_path` sizin tıklamanız olmadan çalışmaz |
+| ![Görsel chip'leri](docs/screenshots/media-chips.png)                   | ![Yedek & günlükler](docs/screenshots/settings-backup-logs.png)                                 |
+| **Ajan görselleri** — kompakt chip, tık: lightbox, ×: mesajdan kaldırır | **Ayarlar > Uygulama** — Veri & Yedek (.luxbackup) ve canlı günlük görüntüleyici                |
+|                                                                         |                                                                                                 |
 
 ---
 

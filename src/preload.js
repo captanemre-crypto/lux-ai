@@ -98,6 +98,30 @@ contextBridge.exposeInMainWorld('luxAPI', {
     installDependency: (packageName) => ipcRenderer.invoke('plugins-install-dependency', packageName)
   },
 
+  // Günlükler (main süreçteki app.log dosyası)
+  logs: {
+    read: (maxBytes) => ipcRenderer.invoke('logs-read', maxBytes),
+    clear: () => ipcRenderer.invoke('logs-clear'),
+    openFolder: () => ipcRenderer.invoke('logs-open-folder')
+  },
+
+  // Yedekleme (.luxbackup dışa/içe aktarma)
+  backup: {
+    export: (password) => ipcRenderer.invoke('backup-export', password),
+    import: (password) => ipcRenderer.invoke('backup-import', password)
+  },
+
+  // Otomatik güncelleme (üretim paketinde electron-updater)
+  updates: {
+    checkNow: () => ipcRenderer.invoke('update-check-now'),
+    quitAndInstall: () => ipcRenderer.invoke('update-quit-and-install'),
+    onStatus: (callback) => {
+      const listener = (event, payload) => callback(payload);
+      ipcRenderer.on('update-status', listener);
+      return () => ipcRenderer.removeListener('update-status', listener);
+    }
+  },
+
   // Lux Neural Voice & Transcription API (Online + Offline Neural + Local D: Suites)
   voice: {
     transcribe: (audioBase64, language, mode, sttModel) =>
