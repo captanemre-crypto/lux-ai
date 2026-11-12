@@ -37,8 +37,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lux-ai-windows-nsis
-          path: dist/*.exe
+          path: |
+            dist/*.exe
+            dist/latest*.yml
           if-no-files-found: error
+          retention-days: 14
 
   build-linux:
     name: Linux AppImage
@@ -60,8 +63,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lux-ai-linux-appimage
-          path: dist/*.AppImage
+          path: |
+            dist/*.AppImage
+            dist/latest*.yml
           if-no-files-found: error
+          retention-days: 14
 
   github-release:
     name: GitHub Release
@@ -81,4 +87,5 @@ jobs:
           files: |
             artifacts/**/*.exe
             artifacts/**/*.AppImage
+            artifacts/**/latest*.yml
           generate_release_notes: true

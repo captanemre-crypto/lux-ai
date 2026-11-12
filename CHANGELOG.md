@@ -6,6 +6,24 @@ All notable changes are documented here. Format: [Keep a Changelog](https://keep
 
 (Henüz yayınlanmamış değişiklik yok.)
 
+## [1.4.1] — 2026-11-12
+
+### Security
+
+- **Content-Security-Policy eklendi**: sayfaya `<meta http-equiv>` ile gömülü CSP — `script-src 'self'`, `object-src 'none'`, `base-uri 'none'`, `form-action 'none'`, `default-src 'self'`; `style-src 'self' 'unsafe-inline'` (render edilmiş satır içi stiller zorunlu), `img-src 'self' data: file: https: http:` (ajan görsel arama sonuçları + Aux Browser ile uyumlu), `connect-src 'self' https: http: ws: wss:` (kullanıcı tanımlı OpenAI-uyumlu uçlar serbest), `frame-src 'self' blob: https: http:` (eklenti blob: belgeleri + Aux Browser).
+- **Satır içi `onclick` temizliği (39 site)**: tüm menü çubuğu ve dinamik şablon aksiyonları `data-action` özniteliklerine taşındı; yeni `src/js/delegated_actions.js` içindeki tek document-level delegasyona bağlandı. Chat içeriğine gömülü dinamik aksiyonlar (`lightbox-img`, `remove-media`, `copy-msg` vb.) `chat.js`'in kendi dinleyicisinde kalır; delegasyon bilinmeyen aksiyonlarda sessiz geçer.
+- **`terminal-execute` sender guard**: ana süreç, yalnızca ana pencerenin `webContents`'inden gelen çağrıları kabul eder; harici göndericiler `success:false` alır.
+- **Ana süreç hata loglama**: `uncaughtException` ve `unhandledRejection` artık `logger`'a stack ile düşer (önceden sessiz sonlanma riski vardı); `crashReporter` davranışı değişmedi.
+
+### CI/Release
+
+- `ci.yml`: `actions/setup-python@v5` eklendi; Python sözdizimi adımı artık garantili Python altında koşar.
+- `release.yml`: artifact'lere `dist/latest*.yml` (electron-updater kanal manifestleri) eklendi; artifact retention 14 güne sabitlendi.
+
+### Docs
+
+- `README.en.md`: v1.4.0 özellikleri İngilizceye çevrildi; v1.4.1 güvenlik/CI notları eklendi.
+
 ## [1.4.0] — 2026-11-12
 
 > Release verified on a **clean tree built from the git index** (`git archive` → `npm ci` → full battery + xvfb smoke/e2e), not only on the working copy.

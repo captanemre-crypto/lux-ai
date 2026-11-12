@@ -253,7 +253,7 @@ function renderRightPanel() {
           <div class="flex w-full items-center gap-1.5 rounded-lg border-none text-left outline-none bg-transparent h-6 pl-2 pr-1.5">
             <span class="agy-hover-label text-xs opacity-50 font-medium select-none text-foreground">Genel Bakış</span>
             <span class="ml-auto flex items-center">
-              <button type="button" aria-label="Bölümleri Özelleştir" data-testid="overview-panel-customize-trigger" class="group flex h-5 w-5 items-center justify-center outline-none rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors cursor-pointer" title="Bölümleri Özelleştir" onclick="window.openOverviewCustomizeModal()">
+              <button type="button" aria-label="Bölümleri Özelleştir" data-testid="overview-panel-customize-trigger" class="group flex h-5 w-5 items-center justify-center outline-none rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors cursor-pointer" title="Bölümleri Özelleştir" data-action="openOverviewCustomizeModal">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 -960 960 960" fill="currentColor" class="outline-none">
                   <path d="M480-189.23q-24.75,0-42.37-17.62T420-249.23t17.62-42.37T480-309.23t42.37,17.62T540-249.23t-17.62,42.37T480-189.23ZM480-420q-24.75,0-42.37-17.62T420-480t17.62-42.37T480-540t42.37,17.62T540-480t-17.62,42.37T480-420Zm0-230.77q-24.75,0-42.37-17.62T420-710.77t17.62-42.37T480-770.77t42.37,17.62T540-710.77t-17.62,42.37T480-650.77Z"/>
                 </svg>
@@ -316,14 +316,14 @@ function renderRightPanel() {
 
             <!-- Animasyonlu İmleçli Görev Satırı -->
             <div class="flex flex-col gap-px mt-0.5">
-              <div data-testid="background-task-row" class="flex w-full items-center gap-1.5 rounded-lg border-none text-left outline-none h-8 text-sm group relative px-2 select-none bg-transparent text-secondary-foreground hover:bg-secondary hover:text-foreground cursor-pointer transition-colors" onclick="openRunningTaskTerminal()">
+              <div data-testid="background-task-row" class="flex w-full items-center gap-1.5 rounded-lg border-none text-left outline-none h-8 text-sm group relative px-2 select-none bg-transparent text-secondary-foreground hover:bg-secondary hover:text-foreground cursor-pointer transition-colors" data-action="openRunningTaskTerminal">
                 <svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 opacity-70 text-primary" data-testid="status-task-running">
                   <path d="M3.7 5.2L6.7 8L3.7 10.8"></path>
                   <path data-agent-state-caret="" d="M8.3 10.8H12.3" style="animation: 2s ease-in-out infinite alternate running pulse;"></path>
                 </svg>
                 <span class="agy-hover-label min-w-0 truncate flex-1 text-xs">${escapeHtml(state.backgroundTaskName || "Lux AI uygulamasını DevTools ile çalıştır")}</span>
                 <div class="can-hover:opacity-0 group-hover:opacity-100 flex items-center pr-1">
-                  <button type="button" aria-label="Görevi İptal Et" class="p-1 rounded text-muted-foreground hover:text-red-400 hover:bg-border/50 transition-colors" title="Görevi İptal Et" onclick="event.stopPropagation(); cancelBackgroundTask();">
+                  <button type="button" aria-label="Görevi İptal Et" class="p-1 rounded text-muted-foreground hover:text-red-400 hover:bg-border/50 transition-colors" title="Görevi İptal Et" data-action="cancelBackgroundTask">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 -960 960 960" fill="currentColor">
                       <path d="M330-330H630V-630H330v300ZM480.07-100q-78.84,0-148.2-29.92T211.18-211.13T129.93-331.76T100-479.93t29.92-148.2t81.21-120.68t120.63-81.25T479.93-860t148.2,29.92t120.68,81.21t81.25,120.63T860-480.07t-29.92,148.2T748.87-211.18T628.24-129.93T480.07-100ZM480-160q134,0 227-93t93-227T707-707T480-800T253-707T160-480t93,227t227,93Zm0-320Z"/>
                     </svg>
@@ -333,7 +333,7 @@ function renderRightPanel() {
             </div>
 
             <!-- Tümünü Gör Bağlantısı -->
-            <button class="text-xs text-muted-foreground hover:text-secondary-foreground cursor-pointer select-none pl-2 pt-1 text-left transition-colors" onclick="openAllTasksModal()">Tümünü gör</button>
+            <button class="text-xs text-muted-foreground hover:text-secondary-foreground cursor-pointer select-none pl-2 pt-1 text-left transition-colors" data-action="openAllTasksModal">Tümünü gör</button>
           </div>
         </div>
       </div>
@@ -388,7 +388,7 @@ function renderRightPanel() {
           <span class="text-xs font-semibold text-foreground uppercase tracking-wide">
             ${titleMap[activeOverviewSubView] || activeOverviewSubView}
           </span>
-          <button class="ml-auto p-1 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground cursor-pointer transition-colors" title="Bölünmüş Görünümde Aç" onclick="window.appStore.toggleIdeSplit(); window.renderApp();">
+          <button class="ml-auto p-1 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground cursor-pointer transition-colors" title="Bölünmüş Görünümde Aç" data-action="toggleIdeSplitAndRender">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 -960 960 960" fill="currentColor">
               <path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm240-80v-560H200v560h240Zm80 0h240v-560H520v560Z"/>
             </svg>
@@ -451,7 +451,7 @@ function renderSubViewContent(view) {
         <div class="flex flex-col gap-2">
           <div class="text-xs font-medium text-foreground py-1">Yüklü Eklentiler ve Servisler</div>
           <div class="flex flex-col gap-1.5">
-            <div class="p-2.5 rounded-lg bg-background border border-border hover:border-white/20 cursor-pointer transition-colors" onclick="openWebviewModal()">
+            <div class="p-2.5 rounded-lg bg-background border border-border hover:border-white/20 cursor-pointer transition-colors" data-action="openWebviewModal">
               <div class="flex items-center justify-between mb-1">
                 <span class="text-xs font-medium text-foreground">LUX Futures XL</span>
                 <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-medium">Canlı</span>

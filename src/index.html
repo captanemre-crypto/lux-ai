@@ -5,6 +5,16 @@
     <meta name="color-scheme" content="dark" />
     <title>Lux AI</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file: https: http:;
+font-src 'self' data:;
+connect-src 'self' https: http: ws: wss:;
+media-src 'self' data: blob: file: https: http:;
+worker-src 'self' blob:; child-src 'self' blob:;
+frame-src 'self' blob: https: http:;
+object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
 
     <!-- Stylesheets (System / Local Fonts for zero network blocking at boot) -->
     <link rel="stylesheet" href="css/jetbox.css" />
@@ -29,24 +39,24 @@
             Lux AI
           </button>
           <div id="menu-lux-ai" class="lux-dropdown-menu">
-            <div class="lux-dropdown-item" onclick="window.openSettingsModal()">
+            <div class="lux-dropdown-item" data-action="openSettingsModal">
               <span>Tercihler...</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+,</span>
             </div>
-            <div class="lux-dropdown-item" onclick="window.luxAPI?.window.devtools()">
+            <div class="lux-dropdown-item" data-action="devtoolsToggle">
               <span>Geliştirici Araçları</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+Shift+I</span>
             </div>
-            <div class="lux-dropdown-item" onclick="window.location.reload()">
+            <div class="lux-dropdown-item" data-action="reloadWindow">
               <span>Pencereyi Yenile</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+R</span>
             </div>
             <div class="lux-dropdown-divider"></div>
-            <div class="lux-dropdown-item" onclick="window.openAboutModal()">
+            <div class="lux-dropdown-item" data-action="openAboutModal">
               <span>Lux AI Hakkında</span>
             </div>
             <div class="lux-dropdown-divider"></div>
-            <div class="lux-dropdown-item text-red-400 hover:text-red-300" onclick="window.luxAPI?.window.close()">
+            <div class="lux-dropdown-item text-red-400 hover:text-red-300" data-action="windowClose">
               <span>Lux AI'dan Çıkış</span>
               <span class="text-[10px] text-muted-foreground">Alt+F4</span>
             </div>
@@ -63,28 +73,16 @@
             Çalışma Alanı
           </button>
           <div id="menu-workspace" class="lux-dropdown-menu">
-            <div
-              class="lux-dropdown-item"
-              onclick="
-                window.appStore.createConversation('Yeni Sohbet');
-                window.renderApp();
-              "
-            >
+            <div class="lux-dropdown-item" data-action="newConversation">
               <span>Yeni Sohbet</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+N</span>
             </div>
-            <div
-              class="lux-dropdown-item"
-              onclick="
-                window.appStore.toggleIdeSplit();
-                window.renderApp();
-              "
-            >
+            <div class="lux-dropdown-item" data-action="toggleIdeSplitAndRender">
               <span>Proje Klasörü Aç...</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+O</span>
             </div>
             <div class="lux-dropdown-divider"></div>
-            <div class="lux-dropdown-item" onclick="window.clearActiveChat()">
+            <div class="lux-dropdown-item" data-action="clearActiveChat">
               <span>Geçerli Sohbeti Temizle</span>
             </div>
           </div>
@@ -100,46 +98,28 @@
             Görünüm
           </button>
           <div id="menu-view" class="lux-dropdown-menu">
-            <div
-              class="lux-dropdown-item"
-              onclick="
-                window.appStore.toggleSidebar();
-                window.renderApp();
-              "
-            >
+            <div class="lux-dropdown-item" data-action="toggleSidebarAndRender">
               <span>Kenar Çubuğunu Aç/Kapat</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+B</span>
             </div>
-            <div
-              class="lux-dropdown-item"
-              onclick="
-                window.appStore.toggleRightPanel();
-                window.renderApp();
-              "
-            >
+            <div class="lux-dropdown-item" data-action="toggleRightPanelAndRender">
               <span>Genel Bakış Panelini Aç/Kapat</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+J</span>
             </div>
-            <div
-              class="lux-dropdown-item"
-              onclick="
-                window.appStore.toggleIdeSplit();
-                window.renderApp();
-              "
-            >
+            <div class="lux-dropdown-item" data-action="toggleIdeSplitAndRender">
               <span>Bölünmüş IDE Modu</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+I</span>
             </div>
             <div class="lux-dropdown-divider"></div>
-            <div class="lux-dropdown-item" onclick="window.zoomIn()">
+            <div class="lux-dropdown-item" data-action="zoomIn">
               <span>Yakınlaştır</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+=</span>
             </div>
-            <div class="lux-dropdown-item" onclick="window.zoomOut()">
+            <div class="lux-dropdown-item" data-action="zoomOut">
               <span>Uzaklaştır</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+-</span>
             </div>
-            <div class="lux-dropdown-item" onclick="window.resetZoom()">
+            <div class="lux-dropdown-item" data-action="resetZoom">
               <span>Yakınlaştırmayı Sıfırla</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+0</span>
             </div>
@@ -156,15 +136,15 @@
             Pencere
           </button>
           <div id="menu-window" class="lux-dropdown-menu">
-            <div class="lux-dropdown-item" onclick="window.luxAPI?.window.minimize()">
+            <div class="lux-dropdown-item" data-action="windowMinimize">
               <span>Simge Durumuna Küçült</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+M</span>
             </div>
-            <div class="lux-dropdown-item" onclick="window.luxAPI?.window.maximize()">
+            <div class="lux-dropdown-item" data-action="windowMaximize">
               <span>Ekranı Kapla</span>
             </div>
             <div class="lux-dropdown-divider"></div>
-            <div class="lux-dropdown-item text-red-400" onclick="window.luxAPI?.window.close()">
+            <div class="lux-dropdown-item text-red-400" data-action="windowClose">
               <span>Pencereyi Kapat</span>
             </div>
           </div>
@@ -332,22 +312,22 @@
                 </span>
               </button>
               <div id="menu-more-actions" class="lux-dropdown-menu" style="right: 0; left: auto; min-width: 210px">
-                <div class="lux-dropdown-item" onclick="window.openModelParamsModal()">
+                <div class="lux-dropdown-item" data-action="openModelParamsModal">
                   <span>Model Parametreleri</span>
                   <span class="text-[10px] text-muted-foreground">Yapılandır</span>
                 </div>
-                <div class="lux-dropdown-item" onclick="window.exportChatMarkdown()">
+                <div class="lux-dropdown-item" data-action="exportChatMarkdown">
                   <span>Markdown Olarak Dışa Aktar</span>
                 </div>
-                <div class="lux-dropdown-item" onclick="window.exportChatJson()">
+                <div class="lux-dropdown-item" data-action="exportChatJson">
                   <span>JSON Olarak Dışa Aktar</span>
                 </div>
                 <div class="lux-dropdown-divider"></div>
-                <div class="lux-dropdown-item text-red-400" onclick="window.clearActiveChat()">
+                <div class="lux-dropdown-item text-red-400" data-action="clearActiveChat">
                   <span>Sohbeti Temizle</span>
                 </div>
                 <div class="lux-dropdown-divider"></div>
-                <div class="lux-dropdown-item" onclick="window.openSettingsModal()">
+                <div class="lux-dropdown-item" data-action="openSettingsModal">
                   <span>Ayarlar</span>
                   <span class="text-[10px] text-muted-foreground">Ctrl+,</span>
                 </div>
@@ -415,7 +395,7 @@
             style="display: none"
             aria-label="Aşağı Kaydır"
             title="Aşağı Kaydır"
-            onclick="window.scrollToBottom()"
+            data-action="scrollToBottom"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 -960 960 960" fill="currentColor">
               <path d="M450-780v485.08L222.15-522.77L180-480L480-180L780-480l-42.15-42.77L510-294.92V-780H450Z" />
@@ -636,17 +616,17 @@
                           class="lux-dropdown-menu"
                           style="bottom: 100%; top: auto; margin-bottom: 8px; min-width: 190px"
                         >
-                          <div class="lux-dropdown-item" onclick="window.pickFileContext()">
+                          <div class="lux-dropdown-item" data-action="pickFileContext">
                             <span>Dosya Ekle...</span>
                             <span class="text-[10px] text-muted-foreground">Ekle</span>
                           </div>
-                          <div class="lux-dropdown-item" onclick="window.pickFolderContext()">
+                          <div class="lux-dropdown-item" data-action="pickFolderContext">
                             <span>Klasör Ekle...</span>
                           </div>
-                          <div class="lux-dropdown-item" onclick="window.captureScreenshotContext()">
+                          <div class="lux-dropdown-item" data-action="captureScreenshotContext">
                             <span>Ekran Görüntüsü Al</span>
                           </div>
-                          <div class="lux-dropdown-item" onclick="window.addTerminalContext()">
+                          <div class="lux-dropdown-item" data-action="addTerminalContext">
                             <span>Terminal Çıktısını Ekle</span>
                           </div>
                         </div>
@@ -815,6 +795,7 @@
     <div id="modals-root"></div>
 
     <!-- Scripts -->
+    <script src="js/delegated_actions.js"></script>
     <script src="js/markdown.js"></script>
     <script src="js/marked.umd.js"></script>
     <script src="js/icons.js"></script>

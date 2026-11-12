@@ -62,5 +62,10 @@ jobs:
         if: runner.os == 'Windows'
         run: node node_modules/electron/cli.js scripts/e2e_runtime.js
 
+      - name: Python kurulumu
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
       - name: Python sözdizimi
         run: python -m py_compile scripts/voice_service.py scripts/xtts_worker.py

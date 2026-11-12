@@ -225,6 +225,24 @@ window.luxPlugins.register({
 
 ---
 
+## 🧾 Sürüm Notları — v1.4.1 (güvenlik sertleştirme, 2026-11-12)
+
+**Güvenlik**
+
+- **Content-Security-Policy**: sayfaya `script-src 'self'` dahil kapalı-liste CSP meta etiketi eklendi (`object-src 'none'`, `base-uri 'none'`, `form-action 'none'`, `img-src`/`frame-src` uzak içeriğe açık ama `connect-src` kullanıcı tanımlı uçlara serbest — fetch_url görselleri ve Aux Browser etkilenmez).
+- **Satır içi `onclick` tamamen kaldırıldı (39 site)**: menü çubuğu + dinamik şablonlar `data-action` özniteliklerine taşındı; tek document-level delegasyon noktası `src/js/delegated_actions.js`. Chat içeriğindeki dinamik aksiyonlar (`lightbox-img`, `remove-media`, `copy-msg`…) `chat.js`'in dinleyicisinde çalışmaya devam eder.
+- **`terminal-execute` sender guard**: ana süreç yalnızca ana pencerenin webContents'inden gelen terminal çağrılarını kabul eder.
+- **Ana süreç hata loglama**: `uncaughtException` / `unhandledRejection` artık yerel log dosyasına stack ile düşer.
+
+**CI/Release**
+
+- `ci.yml`: `actions/setup-python@v5`; Python sözdizimi adımı garantili Python ile koşar.
+- `release.yml`: GitHub Release'e `latest*.yml` (electron-updater manifestleri) de eklenir; artifact retention 14 gün.
+
+**Not**: `v1.4.1`, v1.4.0'ın güvenlik tamamlama sürümüdür; ürün özelliklerinde değişiklik yoktur.
+
+---
+
 ## 🧾 Sürüm Notları — v1.4.0 (öneriler turu — 2026-11-12)
 
 **Güvenlik**

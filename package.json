@@ -1,7 +1,7 @@
 {
   "name": "lux-ai",
   "productName": "Lux AI",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Lux AI - Agentic Desktop Application",
   "main": "main.js",
   "scripts": {

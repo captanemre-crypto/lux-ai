@@ -1478,7 +1478,7 @@ window.openAboutModal = async function () {
         <div class="flex justify-between"><span>Ses Motoru:</span><span class="text-foreground">Whisper · Moonshine · Piper · Kokoro · XTTS</span></div>
         <div class="flex justify-between"><span>Yerel AI:</span><span class="text-foreground">Ollama &amp; 9Router</span></div>
       </div>
-      <button type="button" class="w-full py-2 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-xs transition-colors cursor-pointer" onclick="document.getElementById('about-modal-dialog')?.remove()">
+      <button type="button" class="w-full py-2 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-xs transition-colors cursor-pointer" data-action="closeAboutModal">
         Tamam
       </button>
     </div>

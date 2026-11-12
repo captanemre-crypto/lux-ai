@@ -306,6 +306,31 @@ function createWindow() {
     }
   });
 }
+// Yakalanmamış hatalar: ana süreç sessizce ölmesin, yerel log'a düşsün.
+process.on('uncaughtException', (err) => {
+  try {
+    logger.warn(`[process] yakalanmamış istisna: ${err && err.stack ? err.stack : err}`, undefined, 'process');
+  } catch (_) {}
+});
+process.on('unhandledRejection', (reason) => {
+  try {
+    logger.warn(
+      `[process] işlenmeyen Promise reddi: ${reason && reason.stack ? reason.stack : String(reason)}`,
+      undefined,
+      'process'
+    );
+  } catch (_) {}
+});
+
+// IPC çağrısının bizim pencereden geldiğini doğrular (tek pencereli uygulama).
+// Harici/yöneltilmiş göndericiler terminal dahil yetki gerektiren kanalları suistimal edemesin.
+function isAppMainSender(event) {
+  try {
+    return Boolean(mainWindow && !mainWindow.isDestroyed() && event && event.sender === mainWindow.webContents);
+  } catch (_) {
+    return false;
+  }
+}
 
 // ----------------------------------------------------
 // Tek örnek kilidi (single instance)
@@ -768,6 +793,9 @@ require('./src/main/git_ipc').registerGitIpc({
 let terminalRunSeq = 0;
 const activeTerminalChildren = new Set();
 ipcMain.handle('terminal-execute', (event, command, cwd, timeoutMs = 90000) => {
+  if (!isAppMainSender(event)) {
+    return { runId: null, success: false, code: -1, error: 'Yetkisiz gönderici', output: '' };
+  }
   try {
     command = asString(command, 'command', { max: MAX_COMMAND });
     if (!command.trim()) throw new Error('command boş olamaz');

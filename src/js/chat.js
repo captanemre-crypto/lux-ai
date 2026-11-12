@@ -346,28 +346,28 @@ function renderChat() {
 
         <!-- Quick Prompt Chips -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full text-left">
-          <button class="prompt-suggestion-card p-3 rounded-xl border border-border/70 bg-card/40 flex flex-col gap-1 cursor-pointer" onclick="window.quickPrompt('Gaziantep\'te bugün hava durumu nedir? İnternetten kontrol et.')">
+          <button class="prompt-suggestion-card p-3 rounded-xl border border-border/70 bg-card/40 flex flex-col gap-1 cursor-pointer" data-action="quickPrompt" data-arg="Gaziantep'te bugün hava durumu nedir? İnternetten kontrol et.">
             <div class="flex items-center gap-1.5 text-xs font-medium text-foreground">
               <span>🌐 Canlı İnternet & Hava Durumu</span>
             </div>
             <span class="text-[11px] text-muted-foreground">Gerçek zamanlı web araştırması ve hava durumu raporu</span>
           </button>
 
-          <button class="prompt-suggestion-card p-3 rounded-xl border border-border/70 bg-card/40 flex flex-col gap-1 cursor-pointer" onclick="window.quickPrompt('Bana Porsche 911 araba resmi bul getir ve neon tarzda bir logo tasarla')">
+          <button class="prompt-suggestion-card p-3 rounded-xl border border-border/70 bg-card/40 flex flex-col gap-1 cursor-pointer" data-action="quickPrompt" data-arg="Bana Porsche 911 araba resmi bul getir ve neon tarzda bir logo tasarla">
             <div class="flex items-center gap-1.5 text-xs font-medium text-foreground">
               <span>🎨 Görsel Bul & Tasarla</span>
             </div>
             <span class="text-[11px] text-muted-foreground">Web\'den fotoğraf getir veya yapay zeka ile sıfırdan çiz</span>
           </button>
 
-          <button class="prompt-suggestion-card p-3 rounded-xl border border-border/70 bg-card/40 flex flex-col gap-1 cursor-pointer" onclick="window.quickPrompt('Masaüstünde web projesi klasörü oluşturup modern bir açılış sayfası tasarla')">
+          <button class="prompt-suggestion-card p-3 rounded-xl border border-border/70 bg-card/40 flex flex-col gap-1 cursor-pointer" data-action="quickPrompt" data-arg="Masaüstünde web projesi klasörü oluşturup modern bir açılış sayfası tasarla">
             <div class="flex items-center gap-1.5 text-xs font-medium text-foreground">
               <span>🚀 Masaüstünde Web & Kod Kur</span>
             </div>
             <span class="text-[11px] text-muted-foreground">Otonom dosya üretimi, tarayıcı önizleme ve PC entegrasyonu</span>
           </button>
 
-          <button class="prompt-suggestion-card p-3 rounded-xl border border-border/70 bg-card/40 flex flex-col gap-1 cursor-pointer" onclick="window.quickPrompt('Tüm projelerimi ve çalışma alanı dosyalarını listele')">
+          <button class="prompt-suggestion-card p-3 rounded-xl border border-border/70 bg-card/40 flex flex-col gap-1 cursor-pointer" data-action="quickPrompt" data-arg="Tüm projelerimi ve çalışma alanı dosyalarını listele">
             <div class="flex items-center gap-1.5 text-xs font-medium text-foreground">
               <span>🤖 Projeler & Dosya Analizi</span>
             </div>

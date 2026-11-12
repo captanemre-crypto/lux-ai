@@ -137,7 +137,7 @@ function setupModals() {
             </div>
 
             <!-- Close 'X' Button -->
-            <button class="agy-button h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors" onclick="window.closeSettingsModal()" aria-label="Ayarları Kapat" title="Kapat (Esc)">
+            <button class="agy-button h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors" data-action="closeSettingsModal" aria-label="Ayarları Kapat" title="Kapat (Esc)">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor">
                 <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/>
               </svg>
