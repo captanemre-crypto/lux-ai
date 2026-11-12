@@ -29,7 +29,7 @@ function renderChat() {
       <div class="h-full flex flex-col items-center justify-center p-6 text-center select-none max-w-2xl mx-auto my-auto">
         <div class="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-foreground mb-4 shadow-sm border border-border/50">
           <svg viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg" width="28" height="28">
-            <path d="M144.248 149.062C151.748 154.688 162.998 150.938 152.685 140.625C121.748 110.625 128.31 28.125 89.8727 28.125C51.4352 28.125 57.9977 110.625 27.0602 140.625C15.8102 151.875 27.9977 154.688 35.4977 149.062C64.5602 129.375 62.6852 94.6875 89.8727 94.6875C117.06 94.6875 115.185 129.375 144.248 149.062Z" fill="currentColor"/>
+            <path d="M26 32C26 24.27 32.27 18 40 18H68C75.73 18 82 24.27 82 32V92C82 99.73 88.27 106 96 106H140C147.73 106 154 112.27 154 120V148C154 155.73 147.73 162 140 162H40C32.27 162 26 155.73 26 148V32Z" fill="currentColor"/>
           </svg>
         </div>
         <h2 class="text-xl font-semibold text-foreground mb-1.5">Bugün ne kurcalıyoruz?</h2>

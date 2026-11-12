@@ -1239,7 +1239,7 @@ window.openAboutModal = async function() {
     <div class="lux-modal max-w-sm w-full bg-[#121216] border border-border/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden relative select-none p-6 text-center">
       <div class="w-14 h-14 rounded-2xl bg-primary/15 border border-primary/25 flex items-center justify-center text-primary mx-auto mb-3 shadow-lg">
         <svg viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
-          <path d="M144.248 149.062C151.748 154.688 162.998 150.938 152.685 140.625C121.748 110.625 128.31 28.125 89.8727 28.125C51.4352 28.125 57.9977 110.625 27.0602 140.625C15.8102 151.875 27.9977 154.688 35.4977 149.062C64.5602 129.375 62.6852 94.6875 89.8727 94.6875C117.06 94.6875 115.185 129.375 144.248 149.062Z" fill="currentColor"/>
+          <path d="M26 32C26 24.27 32.27 18 40 18H68C75.73 18 82 24.27 82 32V92C82 99.73 88.27 106 96 106H140C147.73 106 154 112.27 154 120V148C154 155.73 147.73 162 140 162H40C32.27 162 26 155.73 26 148V32Z" fill="currentColor"/>
         </svg>
       </div>
       <h3 class="text-base font-semibold text-foreground m-0">Lux AI Desktop</h3>
