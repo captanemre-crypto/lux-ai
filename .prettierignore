@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+out/
+coverage/
+src/vendor/
+src/js/marked.umd.js
+src/css/compiled_tailwind.css
+package-lock.json
+*.log
+# Vendored / third-party artifacts
+src/css/jetbox.css
+scripts/**/*.py
+*.bat
+*.ps1
+*.sh

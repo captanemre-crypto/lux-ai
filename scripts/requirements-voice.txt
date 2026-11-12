@@ -1,0 +1,47 @@
+# Lux AI — Ses Servisi (STT + TTS) bağımlılıkları
+#
+# Kurulum (Python 3.12 önerilir):
+#   python -m venv .venv-voice
+#   .venv-voice\Scripts\activate        (Windows)
+#   source .venv-voice/bin/activate     (Linux/macOS)
+#   pip install -r scripts/requirements-voice.txt
+#
+# Sonra uygulamaya yorumlayıcıyı gösterin (.env içine):
+#   LUX_PYTHON=C:\yol\.venv-voice\Scripts\python.exe
+#
+# NOT: Tüm motorlar ZORUNLU değildir; voice_service.py motorları tembel yükler
+# ve bulunamayanları sessizce atlar. Aşağıdaki gruplardan ihtiyacınız olanları
+# kurabilirsiniz. Hiçbiri kurulmazsa ses özellikleri kapalı kalır, uygulama
+# normal çalışır.
+
+# --- Ortak temel ---
+numpy>=1.26,<3
+soundfile>=0.12.1
+
+# --- STT: Faster-Whisper (yerel, önerilen varsayılan) ---
+faster-whisper>=1.0.3
+
+# --- STT: Google Web Speech (online, ücretsiz, hızlı) ---
+SpeechRecognition>=3.10
+# Google motoru için: pip install pyaudio  (mikrofon yerine dosya kullandığımız
+# için genelde gerekmez, yalnızca canlı mikrofon denemelerinde gerekir)
+
+# --- STT: Moonshine (hafif ONNX, İngilizce odaklı) ---
+# moonshine-onnx>=0.0.1
+
+# --- TTS: Edge-TTS (bulut, varsayılan "Fola" motoru) ---
+edge-tts>=6.1.9
+
+# --- TTS: Piper (yerel ONNX, Türkçe sesler) ---
+piper-tts>=1.2.0
+onnxruntime>=1.17.0
+
+# --- TTS: Kokoro-82M (yerel ONNX) ---
+# kokoro-onnx>=0.3.5
+
+# --- TTS: Coqui XTTS-v2 (ses klonlama, ağır; AYRI venv önerilir) ---
+# Bu grubu ana venv'e kurmayın — torch bağımlılığı çakışır. Bunun yerine:
+#   python -m venv D:\LuxAI_Models\xtts_venv
+#   D:\LuxAI_Models\xtts_venv\Scripts\pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   D:\LuxAI_Models\xtts_venv\Scripts\pip install TTS
+# XTTS venv yolu: LUX_MODELS_DIR/xtts_venv  (voice_service.py bunu arar)

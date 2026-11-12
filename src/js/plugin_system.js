@@ -2,7 +2,7 @@
 // Manages dynamic slots (Sidebar tabs, composer actions, auxiliary panels)
 // and handles automated package installations safely without touching core code.
 
-(function() {
+(function () {
   const activePlugins = new Map();
   const registeredSlots = {
     sidebarTabs: new Map(),
@@ -18,7 +18,7 @@
       if (raw) {
         const list = JSON.parse(raw);
         if (Array.isArray(list)) {
-          list.forEach(p => {
+          list.forEach((p) => {
             if (p && p.id) registerPlugin(p, false);
           });
         }
@@ -28,7 +28,7 @@
 
   function saveStoredPlugins() {
     try {
-      const list = Array.from(activePlugins.values()).map(p => ({
+      const list = Array.from(activePlugins.values()).map((p) => ({
         id: p.id,
         name: p.name,
         slot: p.slot || "sidebar",
@@ -45,8 +45,12 @@
   function ensureSidebarSlotContainer() {
     let container = document.getElementById("sidebar-plugins-container");
     if (!container) {
-      // Find the sidebar section to attach to (above or below project trees)
-      const sidebarContent = document.getElementById("sidebar-content-projects") || document.getElementById("sidebar-wrapper");
+      // Sidebar kökü: sidebar.js tarafından render edilen gerçek kapsayıcılar.
+      // ("sidebar-content-projects" index.html'de yok; eski bir isimdi.)
+      const sidebarContent =
+        document.getElementById("sidebar-plugins-anchor") ||
+        document.getElementById("sidebar-container") ||
+        document.getElementById("sidebar-wrapper");
       if (sidebarContent) {
         container = document.createElement("div");
         container.id = "sidebar-plugins-container";
@@ -75,13 +79,16 @@
       listEl.appendChild(existing);
     }
 
-    const iconSvg = plugin.iconSvg || `
+    const iconSvg =
+      plugin.iconSvg ||
+      `
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-primary">
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
       </svg>
     `;
 
-    existing.className = "group flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-medium text-secondary-foreground hover:bg-secondary/70 hover:text-foreground cursor-pointer transition-colors";
+    existing.className =
+      "group flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-medium text-secondary-foreground hover:bg-secondary/70 hover:text-foreground cursor-pointer transition-colors";
     existing.innerHTML = `
       <div class="flex items-center gap-2 truncate">
         ${iconSvg}
@@ -149,13 +156,15 @@
 
   function escapeHtml(str) {
     return String(str || "").replace(/[&<>"']/g, (m) => {
-      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[m];
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[m];
     });
   }
 
   function registerPlugin(pluginDef, save = true) {
     if (!pluginDef || !pluginDef.id) return false;
-    const cleanId = String(pluginDef.id).replace(/[^a-zA-Z0-9_\-]/g, '_').toLowerCase();
+    const cleanId = String(pluginDef.id)
+      .replace(/[^a-zA-Z0-9_\-]/g, "_")
+      .toLowerCase();
     const plugin = { ...pluginDef, id: cleanId };
     activePlugins.set(cleanId, plugin);
 
@@ -169,12 +178,16 @@
   }
 
   function removePlugin(pluginId) {
-    const cleanId = String(pluginId || '').replace(/[^a-zA-Z0-9_\-]/g, '_').toLowerCase();
+    const cleanId = String(pluginId || "")
+      .replace(/[^a-zA-Z0-9_\-]/g, "_")
+      .toLowerCase();
     activePlugins.delete(cleanId);
     document.getElementById(`plugin-tab-${cleanId}`)?.remove();
     updatePluginBadgeCount();
     saveStoredPlugins();
-    try { window.luxAPI?.plugins?.remove?.(cleanId); } catch (_) {}
+    try {
+      window.luxAPI?.plugins?.remove?.(cleanId);
+    } catch (_) {}
     return true;
   }
 

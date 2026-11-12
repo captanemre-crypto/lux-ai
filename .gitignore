@@ -1,6 +1,44 @@
+# Bağımlılıklar
 node_modules/
+.pnp/
+.pnp.js
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+venv_xtts/
+
+# Yerel medya / önbellek / çıktılar
 lux_media/
-*.log
+logs/
+dist/
+build/*
+!build/icon.png
+!build/icon.ico
+out/
+release/
+*.asar
+
+# Yerel ayar / sırlar
+.env
+.env.*
+!.env.example
+
+# Geçici ses & görsel çıktıları
+*.tmp
+tmp_audio/
+lux_input_*.wav
+lux_tts_*.wav
+lux_tts_*.mp3
+
+# İşletim sistemi
 .DS_Store
 Thumbs.db
-.env
+desktop.ini
+
+# Loglar
+*.log
+npm-debug.log*

@@ -1,17 +1,17 @@
 /**
  * Lux AI - Dedicated External Voice Library Module
- * Provides high-fidelity cloud & neural voice models matching Antigravity & Gemini Live standards.
+ * Provides high-fidelity cloud & neural voice models matching Lux & Gemini Live standards.
  * Zero robotic Windows TTS.
  */
 
-(function() {
+(function () {
   const VOICE_CATALOG = [
     {
       id: "Fola",
       name: "Fola",
       gender: "Kadın",
       category: "neural",
-      provider: "Antigravity Nöral",
+      provider: "Lux Nöral",
       tone: "Doğal & Sıcak",
       badge: "Önerilen",
       badgeClass: "bg-blue-500/15 text-blue-400 border border-blue-500/30",
@@ -27,7 +27,7 @@
       name: "Arlo",
       gender: "Erkek",
       category: "neural",
-      provider: "Antigravity Nöral",
+      provider: "Lux Nöral",
       tone: "Sakin & Düşünceli",
       badge: "Klasik",
       badgeClass: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
@@ -43,7 +43,7 @@
       name: "Puck",
       gender: "Erkek",
       category: "neural",
-      provider: "Antigravity Nöral",
+      provider: "Lux Nöral",
       tone: "Dinamik & Enerjik",
       badge: "Hızlı",
       badgeClass: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
@@ -59,7 +59,7 @@
       name: "Kore",
       gender: "Kadın",
       category: "neural",
-      provider: "Antigravity Nöral",
+      provider: "Lux Nöral",
       tone: "Yumuşak & Rahatlatıcı",
       badge: "Akıcı",
       badgeClass: "bg-purple-500/15 text-purple-400 border border-purple-500/30",
@@ -75,7 +75,7 @@
       name: "Charon",
       gender: "Erkek",
       category: "neural",
-      provider: "Antigravity Nöral",
+      provider: "Lux Nöral",
       tone: "Derin & Tok",
       badge: "Tok Ses",
       badgeClass: "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30",
@@ -91,7 +91,7 @@
       name: "Aoede",
       gender: "Kadın",
       category: "neural",
-      provider: "Antigravity Nöral",
+      provider: "Lux Nöral",
       tone: "Parlak & Neşeli",
       badge: "Canlı",
       badgeClass: "bg-pink-500/15 text-pink-400 border border-pink-500/30",
@@ -107,7 +107,7 @@
       name: "Zephyr",
       gender: "Erkek",
       category: "neural",
-      provider: "Antigravity Nöral",
+      provider: "Lux Nöral",
       tone: "Seri & Keskin",
       badge: "Kıvrak",
       badgeClass: "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30",
@@ -335,7 +335,8 @@
       tone: "Doğal & Duygulu (TR + 80 Dil)",
       badge: "OpenRouter · $0 Free",
       badgeClass: "bg-sky-500/15 text-sky-300 border border-sky-500/30",
-      description: "OpenRouter üzerinden tamamen ücretsiz ($0) çalışan, Türkçe dahil 80+ dilde doğal ve duygulu konuşan amiral gemisi TTS modeli.",
+      description:
+        "OpenRouter üzerinden tamamen ücretsiz ($0) çalışan, Türkçe dahil 80+ dilde doğal ve duygulu konuşan amiral gemisi TTS modeli.",
       sampleText: "Selam dostum! Ben Fish Audio S2.1 Pro, OpenRouter üzerinden ücretsiz ve doğal Türkçe konuşuyorum.",
       color: "#0EA5E9",
       rate: 1.0
@@ -429,11 +430,12 @@
       el.textContent = "";
       return;
     }
-    const toneClass = tone === "error"
-      ? "bg-rose-500/15 text-rose-300 border-rose-500/30"
-      : (tone === "warn"
-        ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
-        : "bg-sky-500/15 text-sky-300 border-sky-500/30");
+    const toneClass =
+      tone === "error"
+        ? "bg-rose-500/15 text-rose-300 border-rose-500/30"
+        : tone === "warn"
+          ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
+          : "bg-sky-500/15 text-sky-300 border-sky-500/30";
     el.className = `mx-5 mt-2 px-3 py-2 rounded-xl border text-xs flex items-center justify-between gap-2 shrink-0 ${toneClass}`;
     el.dataset.tone = tone;
     el.textContent = msg;
@@ -473,15 +475,19 @@
       previewAudio.onended = null;
       previewAudio.onerror = null;
       previewAudio.onpause = null;
-      try { previewAudio.pause(); } catch (_) {}
-      try { previewAudio.removeAttribute("src"); } catch (_) {}
+      try {
+        previewAudio.pause();
+      } catch (_) {}
+      try {
+        previewAudio.removeAttribute("src");
+      } catch (_) {}
       previewAudio = null;
     }
     resetAllPreviewButtons();
   }
 
   async function playVoicePreview(voiceId) {
-    const voice = VOICE_CATALOG.find(v => v.id === voiceId) || VOICE_CATALOG[0];
+    const voice = VOICE_CATALOG.find((v) => v.id === voiceId) || VOICE_CATALOG[0];
     if (!voice) return;
 
     // Toggle off if user clicked the currently active (loading or playing) preview button
@@ -498,10 +504,14 @@
 
     // Pause any active chat/orb sample audio cleanly so preview is audible
     if (window.currentVoiceAudio && window.currentVoiceAudio !== previewAudio) {
-      try { window.currentVoiceAudio.pause(); } catch (_) {}
+      try {
+        window.currentVoiceAudio.pause();
+      } catch (_) {}
     }
     if (window.appStore?._sampleAudioPlayer) {
-      try { window.appStore._sampleAudioPlayer.pause(); } catch (_) {}
+      try {
+        window.appStore._sampleAudioPlayer.pause();
+      } catch (_) {}
       window.appStore._sampleAudioPlayer = null;
     }
 
@@ -518,7 +528,10 @@
     const openrouterApiKey = window.appStore?.getOpenRouterApiKey?.() || "";
 
     if (/^XTTS/i.test(voice.id)) {
-      setVoiceLibStatus(`${voice.name} hazırlanıyor (CPU ilk yükleme ~45-80 sn sürebilir, beklemek istemezsen başka sese geçebilirsin)...`, "info");
+      setVoiceLibStatus(
+        `${voice.name} hazırlanıyor (CPU ilk yükleme ~45-80 sn sürebilir, beklemek istemezsen başka sese geçebilirsin)...`,
+        "info"
+      );
     } else if (/^(Piper|Kokoro)-/i.test(voice.id)) {
       setVoiceLibStatus(`${voice.name} yerel ses motoru hazırlanıyor...`, "info");
     } else if (/^OpenRouter-/i.test(voice.id)) {
@@ -601,7 +614,9 @@
       try {
         await audio.play();
         if (seq !== previewSeq) {
-          try { audio.pause(); } catch (_) {}
+          try {
+            audio.pause();
+          } catch (_) {}
           return;
         }
       } catch (playErr) {
@@ -629,7 +644,8 @@
     const modal = document.createElement("div");
     modal.id = "voice-library-modal";
     modal.className = "lux-modal-backdrop show flex items-center justify-center";
-    modal.style.cssText = "position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px); z-index: 2500; display: flex; align-items: center; justify-content: center;";
+    modal.style.cssText =
+      "position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px); z-index: 2500; display: flex; align-items: center; justify-content: center;";
     modal.innerHTML = `
       <div class="lux-modal max-w-2xl w-full max-h-[90vh] mx-4 bg-[#121216] border border-border/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden relative select-none">
         
@@ -641,7 +657,7 @@
             </div>
             <div>
               <h3 class="text-base font-semibold text-foreground m-0">Harici Stüdyo Ses Kütüphanesi</h3>
-              <p class="text-xs text-muted-foreground m-0 mt-0.5">Gemini Live ve Antigravity standartlarında yüksek kaliteli nöral ses modelleri</p>
+              <p class="text-xs text-muted-foreground m-0 mt-0.5">Gemini Live ve Lux standartlarında yüksek kaliteli nöral ses modelleri</p>
             </div>
           </div>
           <button type="button" id="btn-close-voice-lib" class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors" title="Kapat">
@@ -672,11 +688,11 @@
           const curOrKey = window.appStore?.getOpenRouterApiKey?.() || "";
           const showInitially = /^OpenRouter-/i.test(activeVoiceId) && !curOrKey;
           return `
-            <div id="voice-lib-openrouter-bar" class="mx-5 mt-3 p-3 rounded-xl border border-sky-500/30 bg-sky-500/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0 ${showInitially ? '' : 'hidden'}">
+            <div id="voice-lib-openrouter-bar" class="mx-5 mt-3 p-3 rounded-xl border border-sky-500/30 bg-sky-500/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0 ${showInitially ? "" : "hidden"}">
               <div class="flex flex-col gap-0.5 min-w-0">
                 <span class="text-xs font-semibold text-sky-300 flex items-center gap-1.5">
                   <span>⚡ OpenRouter :free Ses Anahtarı (Ücretsiz · $0)</span>
-                  <span id="voice-lib-or-key-badge" class="text-[10px] px-1.5 py-0.5 rounded font-mono ${curOrKey ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">${curOrKey ? '✓ Bağlı' : 'Anahtar Gerekli'}</span>
+                  <span id="voice-lib-or-key-badge" class="text-[10px] px-1.5 py-0.5 rounded font-mono ${curOrKey ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"}">${curOrKey ? "✓ Bağlı" : "Anahtar Gerekli"}</span>
                 </span>
                 <span class="text-[11px] text-muted-foreground">Kota: 20 istek/dk · 50 istek/gün (kredi yüklenirse 1000/gün). Anahtarın yerel olarak kaydedilir.</span>
               </div>
@@ -690,12 +706,12 @@
 
         <!-- Voice Grid List -->
         <div class="p-5 flex flex-col gap-3 flex-1 min-h-[200px] overflow-y-auto custom-scrollbar" id="voice-cards-list">
-          ${VOICE_CATALOG.map(v => {
+          ${VOICE_CATALOG.map((v) => {
             const isSelected = v.id === activeVoiceId;
-            const supportsClone = v.id === 'XTTS-Clone' || v.id === 'OpenRouter-Fish-S2.1-Clone';
+            const supportsClone = v.id === "XTTS-Clone" || v.id === "OpenRouter-Fish-S2.1-Clone";
             const cloneRefName = activeSettings.cloneRefPath ? activeSettings.cloneRefPath.split(/[\\/]/).pop() : "Varsayılan TR Örneği";
             return `
-              <div class="voice-card p-4 rounded-xl border ${isSelected ? 'border-primary bg-primary/10 shadow-sm' : 'border-border/60 bg-card/30 hover:bg-card/70 hover:border-border'} transition-all flex items-center justify-between gap-4 group" data-category="${v.category || 'neural'}">
+              <div class="voice-card p-4 rounded-xl border ${isSelected ? "border-primary bg-primary/10 shadow-sm" : "border-border/60 bg-card/30 hover:bg-card/70 hover:border-border"} transition-all flex items-center justify-between gap-4 group" data-category="${v.category || "neural"}">
                 <div class="flex items-center gap-3.5 flex-1 min-w-0">
                   <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-md" style="background: linear-gradient(135deg, ${v.color}, #1f2937);">
                     ${v.name[0]}
@@ -707,16 +723,20 @@
                       <span class="text-xs text-muted-foreground">(${v.gender} · ${v.tone})</span>
                     </div>
                     <p class="text-xs text-muted-foreground m-0 truncate">${escapeHtml(v.description)}</p>
-                    ${supportsClone ? `<span class="text-[10px] text-purple-300 font-mono truncate">Referans: ${escapeHtml(cloneRefName)}</span>` : ''}
+                    ${supportsClone ? `<span class="text-[10px] text-purple-300 font-mono truncate">Referans: ${escapeHtml(cloneRefName)}</span>` : ""}
                   </div>
                 </div>
 
                 <div class="flex items-center gap-2 shrink-0">
-                  ${supportsClone ? `
+                  ${
+                    supportsClone
+                      ? `
                     <button type="button" class="btn-pick-clone-wav-inline px-2.5 py-1.5 rounded-lg border border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/20 text-[11px] text-purple-300 cursor-pointer transition-colors" title="Klonlanacak referans ses dosyasını seç">
                       Referans Seç
                     </button>
-                  ` : ''}
+                  `
+                      : ""
+                  }
                   <!-- Play Preview Button -->
                   <button type="button" class="btn-preview-voice px-3 py-1.5 rounded-lg border border-border/80 hover:bg-secondary text-xs text-secondary-foreground hover:text-foreground flex items-center gap-1.5 transition-colors cursor-pointer" data-voice-id="${v.id}" title="Önizlemeyi Dinle">
                     <svg class="w-3.5 h-3.5 text-primary" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -724,13 +744,13 @@
                   </button>
 
                   <!-- Select Button -->
-                  <button type="button" class="btn-select-voice px-3.5 py-1.5 rounded-lg ${isSelected ? 'bg-primary text-primary-foreground font-medium' : 'bg-secondary hover:bg-secondary/80 text-foreground'} text-xs transition-colors cursor-pointer" data-voice-id="${v.id}">
-                    ${isSelected ? '✓ Aktif' : 'Seç'}
+                  <button type="button" class="btn-select-voice px-3.5 py-1.5 rounded-lg ${isSelected ? "bg-primary text-primary-foreground font-medium" : "bg-secondary hover:bg-secondary/80 text-foreground"} text-xs transition-colors cursor-pointer" data-voice-id="${v.id}">
+                    ${isSelected ? "✓ Aktif" : "Seç"}
                   </button>
                 </div>
               </div>
             `;
-          }).join('')}
+          }).join("")}
         </div>
 
         <!-- Footer Notice -->
@@ -767,10 +787,10 @@
       }
     });
 
-    modal.querySelectorAll(".voice-filter-pill").forEach(pill => {
+    modal.querySelectorAll(".voice-filter-pill").forEach((pill) => {
       pill.addEventListener("click", () => {
         const filter = pill.getAttribute("data-filter");
-        modal.querySelectorAll(".voice-filter-pill").forEach(p => {
+        modal.querySelectorAll(".voice-filter-pill").forEach((p) => {
           p.classList.remove("bg-primary", "text-primary-foreground");
           p.classList.add("text-muted-foreground");
         });
@@ -783,7 +803,7 @@
           else if (window.appStore?.getOpenRouterApiKey?.()) orBar.classList.add("hidden");
         }
 
-        modal.querySelectorAll(".voice-card").forEach(card => {
+        modal.querySelectorAll(".voice-card").forEach((card) => {
           const cat = card.getAttribute("data-category");
           if (filter === "all" || cat === filter) {
             card.style.display = "flex";
@@ -807,10 +827,13 @@
       }
       const settingsOrInput = document.getElementById("settings-voice-openrouter-key-input");
       if (settingsOrInput) settingsOrInput.value = val;
-      setVoiceLibStatus(val ? "OpenRouter API anahtarı kaydedildi. Ücretsiz sesleri hemen dinleyebilirsin!" : "OpenRouter anahtarı temizlendi.", val ? "info" : "warn");
+      setVoiceLibStatus(
+        val ? "OpenRouter API anahtarı kaydedildi. Ücretsiz sesleri hemen dinleyebilirsin!" : "OpenRouter anahtarı temizlendi.",
+        val ? "info" : "warn"
+      );
     });
 
-    modal.querySelectorAll(".btn-pick-clone-wav-inline").forEach(btn => {
+    modal.querySelectorAll(".btn-pick-clone-wav-inline").forEach((btn) => {
       btn.addEventListener("click", async (e) => {
         e.stopPropagation();
         const picked = await window.luxAPI?.voice?.pickCloneAudio?.();
@@ -822,7 +845,7 @@
       });
     });
 
-    modal.querySelectorAll(".btn-preview-voice").forEach(btn => {
+    modal.querySelectorAll(".btn-preview-voice").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
         const vid = btn.getAttribute("data-voice-id");
@@ -830,7 +853,7 @@
       });
     });
 
-    modal.querySelectorAll(".btn-select-voice").forEach(btn => {
+    modal.querySelectorAll(".btn-select-voice").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
         const vid = btn.getAttribute("data-voice-id");
@@ -845,7 +868,7 @@
           const hudLbl = document.getElementById("hud-voice-current-name");
           if (hudLbl) hudLbl.textContent = vid;
           // Play confirmation chime
-          if (window.playAntigravitySound) window.playAntigravitySound("responseReceived1");
+          if (window.playLuxSound) window.playLuxSound("responseReceived1");
         }
       });
     });
@@ -853,12 +876,7 @@
 
   function escapeHtml(str) {
     if (!str) return "";
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   }
 
   window.luxVoiceLibrary = {

@@ -1,12 +1,29 @@
 {
   "name": "lux-ai",
   "productName": "Lux AI",
-  "version": "1.0.0",
+  "version": "1.4.0",
   "description": "Lux AI - Agentic Desktop Application",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dev": "electron ."
+    "dev": "electron . --dev",
+    "postinstall": "node scripts/sync-monaco.js",
+    "vendor:monaco": "node scripts/sync-monaco.js --force",
+    "test": "node scripts/test_lifecycle_e2e.js && node scripts/test_model_client.js && node scripts/test_validate.js && node scripts/test_context_rollup.js",
+    "test:model": "node scripts/test_model_client.js",
+    "test:validate": "node scripts/test_validate.js",
+    "test:rollup": "node scripts/test_context_rollup.js",
+    "test:live": "node scripts/test_live_api.js",
+    "verify": "node scripts/verify_release.js",
+    "dist": "electron-builder",
+    "test:e2e": "node node_modules/electron/cli.js scripts/e2e_runtime.js",
+    "test:smoke": "node node_modules/electron/cli.js scripts/smoke_harness.js",
+    "css:build": "tailwindcss -i src/css/tailwind.input.css -o src/css/compiled_tailwind.css",
+    "css:watch": "tailwindcss -i src/css/tailwind.input.css -o src/css/compiled_tailwind.css --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [
     "lux-ai",
@@ -15,12 +32,85 @@
   ],
   "author": "Lux AI Team",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/captanemre-crypto/lux-ai.git"
+  },
+  "bugs": {
+    "url": "https://github.com/captanemre-crypto/lux-ai/issues"
+  },
+  "homepage": "https://github.com/captanemre-crypto/lux-ai#readme",
   "type": "commonjs",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "dependencies": {
     "marked": "^15.0.7",
     "monaco-editor": "^0.57.0"
   },
   "devDependencies": {
-    "electron": "^45.2.3"
+    "@tailwindcss/cli": "^4.3.5",
+    "electron": "^45.2.3",
+    "electron-builder": "^26.0.12",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
+    "tailwindcss": "^4.3.5"
+  },
+  "build": {
+    "appId": "ai.lux.desktop",
+    "productName": "Lux AI",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "captanemre-crypto",
+        "repo": "lux-ai"
+      }
+    ],
+    "files": [
+      "main.js",
+      "package.json",
+      "icon.png",
+      "src/**/*",
+      "scripts/**/*.js",
+      "scripts/**/*.py",
+      "!scripts/__pycache__/**",
+      "!scripts/test_*.js",
+      "!**/*.map",
+      "LICENSE",
+      "README.md",
+      "scripts/requirements-voice.txt"
+    ],
+    "extraMetadata": {
+      "main": "main.js"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.ico"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "icon.png",
+      "category": "public.app-category.developer-tools"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "icon.png",
+      "category": "Development"
+    }
+  },
+  "overrides": {
+    "dompurify": "^3.4.17",
+    "minimatch": "^11.0.8"
   }
 }

@@ -1,12 +1,24 @@
-// Left Sidebar Component (100% Exact Antigravity Markup & Context Menus)
+// Left Sidebar Component (100% Exact Lux Markup & Context Menus)
 let sidebarFilterOpen = false;
 let sidebarFilterQuery = "";
 let sidebarAddProjectOpen = false;
+let sidebarAddProjectPath = "";
+
+function basenameFromAnyPath(p) {
+  const parts = String(p || "")
+    .split(/[\\/]/)
+    .filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : String(p || "");
+}
 
 function safeText(str) {
   return typeof escapeHtml === "function"
     ? escapeHtml(str)
-    : String(str ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    : String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
 }
 
 function renderSidebar() {
@@ -15,14 +27,16 @@ function renderSidebar() {
 
   const state = window.appStore.state;
   const q = (sidebarFilterQuery || "").trim().toLowerCase();
-  const filteredProjects = (state.projects || []).map(proj => {
-    if (!q) return { proj, convs: proj.conversations || [] };
-    const projMatches = (proj.name || "").toLowerCase().includes(q);
-    const matchingConvs = (proj.conversations || []).filter(c => (c.title || "").toLowerCase().includes(q));
-    if (projMatches) return { proj, convs: proj.conversations || [] };
-    if (matchingConvs.length > 0) return { proj, convs: matchingConvs, forceExpand: true };
-    return null;
-  }).filter(Boolean);
+  const filteredProjects = (state.projects || [])
+    .map((proj) => {
+      if (!q) return { proj, convs: proj.conversations || [] };
+      const projMatches = (proj.name || "").toLowerCase().includes(q);
+      const matchingConvs = (proj.conversations || []).filter((c) => (c.title || "").toLowerCase().includes(q));
+      if (projMatches) return { proj, convs: proj.conversations || [] };
+      if (matchingConvs.length > 0) return { proj, convs: matchingConvs, forceExpand: true };
+      return null;
+    })
+    .filter(Boolean);
 
   container.innerHTML = `
     <div role="navigation" aria-label="Sidebar" class="h-full w-full flex flex-col pb-2 bg-sidebar select-none" style="background-color: var(--sidebar);">
@@ -56,46 +70,64 @@ function renderSidebar() {
         <div class="flex items-center justify-between px-2 py-1 text-xs font-semibold text-secondary-foreground uppercase tracking-wider">
           <span>Projeler</span>
           <div class="flex items-center gap-1">
-            <button id="btn-filter-projects" class="p-1 rounded hover:bg-secondary ${sidebarFilterOpen ? 'text-primary bg-secondary/70' : 'text-secondary-foreground hover:text-foreground'} transition-colors cursor-pointer" title="Filtrele">
+            <button id="btn-filter-projects" class="p-1 rounded hover:bg-secondary ${sidebarFilterOpen ? "text-primary bg-secondary/70" : "text-secondary-foreground hover:text-foreground"} transition-colors cursor-pointer" title="Filtrele">
               ${ICONS.filter}
             </button>
-            <button id="btn-add-project" class="p-1 rounded hover:bg-secondary ${sidebarAddProjectOpen ? 'text-primary bg-secondary/70' : 'text-secondary-foreground hover:text-foreground'} transition-colors cursor-pointer" title="Yeni Proje">
+            <button id="btn-add-project" class="p-1 rounded hover:bg-secondary ${sidebarAddProjectOpen ? "text-primary bg-secondary/70" : "text-secondary-foreground hover:text-foreground"} transition-colors cursor-pointer" title="Yeni Proje (klasör yoluyla)">
               ${ICONS.newFolder}
             </button>
           </div>
         </div>
 
-        ${sidebarFilterOpen ? `
+        ${
+          sidebarFilterOpen
+            ? `
           <div id="sidebar-filter-box" class="px-1 py-1">
             <div class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-secondary/50 border border-border/80">
               <input id="sidebar-filter-input" type="text" value="${safeText(sidebarFilterQuery)}" placeholder="Proje veya sohbet ara..." class="flex-1 bg-transparent text-xs text-foreground outline-none min-w-0" />
-              ${sidebarFilterQuery ? `<button id="btn-clear-sidebar-filter" type="button" class="text-[11px] text-muted-foreground hover:text-foreground cursor-pointer" title="Temizle">✕</button>` : ''}
+              ${sidebarFilterQuery ? `<button id="btn-clear-sidebar-filter" type="button" class="text-[11px] text-muted-foreground hover:text-foreground cursor-pointer" title="Temizle">✕</button>` : ""}
             </div>
           </div>
-        ` : ''}
+        `
+            : ""
+        }
 
-        ${sidebarAddProjectOpen ? `
+        ${
+          sidebarAddProjectOpen
+            ? `
           <div id="sidebar-add-project-box" class="px-1 py-1">
             <div class="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-card border border-primary/50 shadow-sm">
               <input id="input-new-project-name" type="text" placeholder="Proje adı..." class="flex-1 bg-transparent text-xs text-foreground outline-none min-w-0" />
+              <button id="btn-browse-project-path" type="button" class="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground cursor-pointer shrink-0 transition-colors" title="Klasör seç — proje dosya yolunu bağla">${ICONS.folder}</button>
               <button id="btn-confirm-add-project" type="button" class="text-[11px] px-1.5 py-0.5 rounded bg-primary text-white hover:bg-primary/90 cursor-pointer shrink-0">Ekle</button>
               <button id="btn-cancel-add-project" type="button" class="text-[11px] px-1 py-0.5 rounded text-muted-foreground hover:text-foreground cursor-pointer shrink-0">✕</button>
             </div>
+            ${
+              sidebarAddProjectPath
+                ? `<div id="new-project-path-hint" class="px-2 pt-1 text-[10px] text-muted-foreground truncate" title="${safeText(sidebarAddProjectPath)}">${safeText(sidebarAddProjectPath)}</div>`
+                : ""
+            }
           </div>
-        ` : ''}
+        `
+            : ""
+        }
 
         <!-- Project Folders & Conversations List -->
         <div class="flex flex-col gap-0.5 mt-1" id="projects-tree">
-          ${filteredProjects.length === 0 ? `
+          ${
+            filteredProjects.length === 0
+              ? `
             <div class="px-3 py-4 text-center text-[11px] text-muted-foreground/70 italic">Eşleşen proje veya sohbet bulunamadı</div>
-          ` : filteredProjects.map(({ proj, convs, forceExpand }) => {
-            const isExpanded = forceExpand || proj.expanded !== false;
-            return `
+          `
+              : filteredProjects
+                  .map(({ proj, convs, forceExpand }) => {
+                    const isExpanded = forceExpand || proj.expanded !== false;
+                    return `
               <div class="project-group relative w-full group/header flex flex-col mb-0.5" data-project-id="${safeText(proj.id)}">
-                <!-- Project Row (Exact Antigravity Layout with ⋮ and + actions on hover) -->
+                <!-- Project Row (Exact Lux Layout with ⋮ and + actions on hover) -->
                 <div class="project-header relative flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-medium text-secondary-foreground hover:bg-secondary/60 hover:text-foreground cursor-pointer transition-colors" data-project-id="${safeText(proj.id)}">
                   <div class="flex items-center gap-1.5 truncate pr-14 min-w-0">
-                    <span class="shrink-0 transform transition-transform ${isExpanded ? 'rotate-90' : ''} text-muted-foreground text-[10px]">
+                    <span class="shrink-0 transform transition-transform ${isExpanded ? "rotate-90" : ""} text-muted-foreground text-[10px]">
                       ${ICONS.chevronRight}
                     </span>
                     <span class="shrink-0 text-muted-foreground">${ICONS.folder}</span>
@@ -114,36 +146,52 @@ function renderSidebar() {
                 </div>
 
                 <!-- Conversations under this project -->
-                ${isExpanded ? `
+                ${
+                  isExpanded
+                    ? `
                   <div class="conversations-list flex flex-col gap-0.5 pl-4 pr-1 py-0.5">
-                    ${(convs && convs.length > 0) ? convs.map(conv => {
-                      const isActive = conv.id === state.activeConversationId;
-                      return `
-                        <div class="conversation-item relative flex items-center justify-between px-2 py-1.5 rounded-lg text-xs cursor-pointer group transition-all ${isActive ? 'bg-[#1a1b20] text-foreground font-medium border border-white/10 shadow-sm' : 'text-secondary-foreground hover:bg-secondary/60 hover:text-foreground'}" data-conversation-id="${safeText(conv.id)}" data-project-id="${safeText(proj.id)}">
+                    ${
+                      convs && convs.length > 0
+                        ? convs
+                            .map((conv) => {
+                              const isActive = conv.id === state.activeConversationId;
+                              return `
+                        <div class="conversation-item relative flex items-center justify-between px-2 py-1.5 rounded-lg text-xs cursor-pointer group transition-all ${isActive ? "bg-[#1a1b20] text-foreground font-medium border border-white/10 shadow-sm" : "text-secondary-foreground hover:bg-secondary/60 hover:text-foreground"}" data-conversation-id="${safeText(conv.id)}" data-project-id="${safeText(proj.id)}">
                           <div class="flex items-center gap-1.5 truncate mr-2 min-w-0 title-container">
-                            ${conv.pinned ? `<span class="text-[11px] text-amber-400 shrink-0" title="Sabitlendi">📌</span>` : ''}
+                            ${conv.pinned ? `<span class="text-[11px] text-amber-400 shrink-0" title="Sabitlendi">📌</span>` : ""}
                             <span class="truncate conv-title-span">${safeText(conv.title)}</span>
                           </div>
                           <div class="flex items-center gap-1 shrink-0">
-                            ${conv.isDot ? `
+                            ${
+                              conv.isDot
+                                ? `
                               <span class="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block mr-1 shrink-0" title="Okunmadı"></span>
-                            ` : `
-                              <span class="text-[11px] text-muted-foreground shrink-0">${safeText(conv.timestamp || '')}</span>
-                            `}
-                            <button type="button" class="conv-options-btn opacity-0 group-hover:opacity-100 ${isActive ? 'opacity-100' : ''} p-0.5 rounded text-muted-foreground hover:text-foreground cursor-pointer transition-opacity flex items-center justify-center shrink-0" title="Seçenekler">
+                            `
+                                : `
+                              <span class="text-[11px] text-muted-foreground shrink-0">${safeText(conv.timestamp || "")}</span>
+                            `
+                            }
+                            <button type="button" class="conv-options-btn opacity-0 group-hover:opacity-100 ${isActive ? "opacity-100" : ""} p-0.5 rounded text-muted-foreground hover:text-foreground cursor-pointer transition-opacity flex items-center justify-center shrink-0" title="Seçenekler">
                               ${ICONS.dragHandle}
                             </button>
                           </div>
                         </div>
                       `;
-                    }).join("") : `
+                            })
+                            .join("")
+                        : `
                       <div class="px-2 py-1 text-[11px] text-muted-foreground/60 italic">Henüz sohbet yok</div>
-                    `}
+                    `
+                    }
                   </div>
-                ` : ''}
+                `
+                    : ""
+                }
               </div>
             `;
-          }).join("")}
+                  })
+                  .join("")
+          }
         </div>
       </div>
 
@@ -194,7 +242,9 @@ function setupSidebarEvents() {
       const restored = document.getElementById("sidebar-filter-input");
       if (restored) {
         restored.focus();
-        try { restored.setSelectionRange(selStart, selStart); } catch (_) {}
+        try {
+          restored.setSelectionRange(selStart, selStart);
+        } catch (_) {}
       }
     });
     filterInput.addEventListener("keydown", (e) => {
@@ -212,7 +262,21 @@ function setupSidebarEvents() {
     document.getElementById("sidebar-filter-input")?.focus();
   });
 
-  document.getElementById("btn-add-project")?.addEventListener("click", () => {
+  // btn-add-project: önce yerel klasör seçiciyle gerçek dosya yolunu BUL;
+  // klasör seçilirse proje adı klasör adından türetilir ve path'e bağlanır.
+  // Seçici iptal edilirse (veya ortamda pickFolder yoksa) eski ad-only inline akışa düş.
+  document.getElementById("btn-add-project")?.addEventListener("click", async () => {
+    if (window.luxAPI?.pickFolder) {
+      const res = await window.luxAPI.pickFolder().catch(() => null);
+      if (res && !res.canceled && res.path) {
+        window.appStore.addProject(basenameFromAnyPath(res.path), res.path);
+        sidebarAddProjectOpen = false;
+        sidebarAddProjectPath = "";
+        window.renderApp();
+        return;
+      }
+    }
+    sidebarAddProjectPath = "";
     sidebarAddProjectOpen = !sidebarAddProjectOpen;
     renderSidebar();
     if (sidebarAddProjectOpen) {
@@ -223,19 +287,35 @@ function setupSidebarEvents() {
   const commitAddProject = () => {
     const input = document.getElementById("input-new-project-name");
     const name = input?.value?.trim();
+    const projPath = sidebarAddProjectPath || "";
     if (name) {
-      window.appStore.addProject(name);
+      window.appStore.addProject(name, projPath);
       sidebarAddProjectOpen = false;
+      sidebarAddProjectPath = "";
       window.renderApp();
     } else {
       sidebarAddProjectOpen = false;
+      sidebarAddProjectPath = "";
       renderSidebar();
     }
   };
 
+  document.getElementById("btn-browse-project-path")?.addEventListener("click", async () => {
+    const res = await window.luxAPI?.pickFolder?.().catch(() => null);
+    if (!res || res.canceled || !res.path) return;
+    sidebarAddProjectPath = res.path;
+    const input = document.getElementById("input-new-project-name");
+    if (input && !input.value.trim()) {
+      input.value = basenameFromAnyPath(res.path);
+    }
+    renderSidebar();
+    setTimeout(() => document.getElementById("input-new-project-name")?.focus(), 20);
+  });
+
   document.getElementById("btn-confirm-add-project")?.addEventListener("click", commitAddProject);
   document.getElementById("btn-cancel-add-project")?.addEventListener("click", () => {
     sidebarAddProjectOpen = false;
+    sidebarAddProjectPath = "";
     renderSidebar();
   });
   document.getElementById("input-new-project-name")?.addEventListener("keydown", (e) => {
@@ -244,17 +324,18 @@ function setupSidebarEvents() {
       commitAddProject();
     } else if (e.key === "Escape") {
       sidebarAddProjectOpen = false;
+      sidebarAddProjectPath = "";
       renderSidebar();
     }
   });
 
   // Project Header Handlers (Collapse, Options, Add Conversation)
-  document.querySelectorAll(".project-header").forEach(el => {
+  document.querySelectorAll(".project-header").forEach((el) => {
     // Click on header toggles collapse (unless clicking on action buttons)
     el.addEventListener("click", (e) => {
       if (e.target.closest(".btn-project-options") || e.target.closest(".btn-project-add-conv")) return;
       const projId = el.getAttribute("data-project-id");
-      const proj = window.appStore.state.projects.find(p => p.id === projId);
+      const proj = window.appStore.state.projects.find((p) => p.id === projId);
       if (proj) {
         proj.expanded = !(proj.expanded !== false);
         window.appStore.saveState();
@@ -290,7 +371,7 @@ function setupSidebarEvents() {
   });
 
   // Conversation Selection & Context Menu Handlers
-  document.querySelectorAll(".conversation-item").forEach(el => {
+  document.querySelectorAll(".conversation-item").forEach((el) => {
     // Left click to select conversation
     el.addEventListener("click", (e) => {
       if (e.target.closest(".conv-options-btn") || e.target.tagName === "INPUT") return;
@@ -326,13 +407,13 @@ function setupSidebarEvents() {
   });
 }
 
-// Inline Rename conversation row (1:1 Antigravity inline-edit-input)
+// Inline Rename conversation row (1:1 Lux inline-edit-input)
 function startInlineRename(projId, convId) {
   const row = document.querySelector(`.conversation-item[data-conversation-id="${convId}"]`);
   if (!row) return;
 
-  const proj = window.appStore.state.projects.find(p => p.id === projId);
-  const conv = proj?.conversations.find(c => c.id === convId);
+  const proj = window.appStore.state.projects.find((p) => p.id === projId);
+  const conv = proj?.conversations.find((c) => c.id === convId);
   if (!conv) return;
 
   const titleContainer = row.querySelector(".title-container");
@@ -343,7 +424,8 @@ function startInlineRename(projId, convId) {
   input.type = "text";
   input.value = conv.title;
   input.maxLength = 70;
-  input.className = "bg-transparent outline-none border-none ring-0 shadow-none p-0 no-focus-ring focus:ring-0 focus:shadow-none focus:border-transparent truncate text-left w-full text-xs text-foreground font-medium";
+  input.className =
+    "bg-transparent outline-none border-none ring-0 shadow-none p-0 no-focus-ring focus:ring-0 focus:shadow-none focus:border-transparent truncate text-left w-full text-xs text-foreground font-medium";
   input.setAttribute("data-testid", "inline-edit-input");
 
   span.replaceWith(input);
@@ -378,12 +460,12 @@ function startInlineRename(projId, convId) {
   });
 }
 
-// Project Context Menu (1:1 Exact Antigravity media_1794225971499_824c48fa.png)
-window.openProjectContextMenu = function(x, y, projId) {
+// Project Context Menu (1:1 Exact Lux media_1794225971499_824c48fa.png)
+window.openProjectContextMenu = function (x, y, projId) {
   window.closeProjectContextMenu();
   window.closeConversationContextMenu();
 
-  const proj = window.appStore.state.projects.find(p => p.id === projId);
+  const proj = window.appStore.state.projects.find((p) => p.id === projId);
   if (!proj) return;
 
   const menu = document.createElement("div");
@@ -466,18 +548,18 @@ window.openProjectContextMenu = function(x, y, projId) {
   });
 };
 
-window.closeProjectContextMenu = function() {
+window.closeProjectContextMenu = function () {
   const existing = document.getElementById("proj-context-menu-popup");
   if (existing) existing.remove();
 };
 
-// Conversation Context Menu (1:1 Antigravity Replica - Image Exact)
-window.openConversationContextMenu = function(x, y, projId, convId) {
+// Conversation Context Menu (1:1 Lux Replica - Image Exact)
+window.openConversationContextMenu = function (x, y, projId, convId) {
   window.closeConversationContextMenu();
   window.closeProjectContextMenu();
 
-  const proj = window.appStore.state.projects.find(p => p.id === projId);
-  const conv = proj?.conversations.find(c => c.id === convId);
+  const proj = window.appStore.state.projects.find((p) => p.id === projId);
+  const conv = proj?.conversations.find((c) => c.id === convId);
   if (!conv) return;
 
   const menu = document.createElement("div");
@@ -492,12 +574,12 @@ window.openConversationContextMenu = function(x, y, projId, convId) {
 
     <!-- Pin / Sabitle -->
     <div class="conv-context-item" id="cmi-pin">
-      <span>${conv.pinned ? 'Sabitlemeyi Kaldır' : 'Sabitle'}</span>
+      <span>${conv.pinned ? "Sabitlemeyi Kaldır" : "Sabitle"}</span>
     </div>
 
     <!-- Mark Unread / Okunmadı Olarak İşaretle -->
     <div class="conv-context-item" id="cmi-unread">
-      <span>${conv.isDot ? 'Okundu İşaretle' : 'Okunmadı Olarak İşaretle'}</span>
+      <span>${conv.isDot ? "Okundu İşaretle" : "Okunmadı Olarak İşaretle"}</span>
     </div>
 
     <div class="conv-context-divider"></div>
@@ -593,7 +675,7 @@ window.openConversationContextMenu = function(x, y, projId, convId) {
   menu.querySelector("#cmi-copy-md")?.addEventListener("click", (e) => {
     e.stopPropagation();
     window.closeConversationContextMenu();
-    const md = (conv.messages || []).map(m => `**${m.role === 'user' ? 'Kullanıcı' : 'Lux AI'}:**\n${m.content}\n`).join("\n---\n\n");
+    const md = (conv.messages || []).map((m) => `**${m.role === "user" ? "Kullanıcı" : "Lux AI"}:**\n${m.content}\n`).join("\n---\n\n");
     navigator.clipboard.writeText(md || conv.title);
   });
 
@@ -628,7 +710,7 @@ window.openConversationContextMenu = function(x, y, projId, convId) {
       return;
     }
     window.closeConversationContextMenu();
-    proj.conversations = proj.conversations.filter(c => c.id !== convId);
+    proj.conversations = proj.conversations.filter((c) => c.id !== convId);
     if (window.appStore.state.activeConversationId === convId) {
       window.appStore.state.activeConversationId = proj.conversations[0]?.id || null;
     }
@@ -637,7 +719,7 @@ window.openConversationContextMenu = function(x, y, projId, convId) {
   });
 };
 
-window.closeConversationContextMenu = function() {
+window.closeConversationContextMenu = function () {
   const existing = document.getElementById("conv-context-menu-popup");
   if (existing) existing.remove();
 };

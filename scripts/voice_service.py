@@ -40,6 +40,25 @@ os.environ.setdefault("TORCH_HOME", os.path.join(MODELS_ROOT, "torch"))
 os.environ.setdefault("COQUI_TOS_AGREED", "1")
 os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 
+# ---- Python sürüm doğrulaması -------------------------------------------
+# torch / kokoro / piper gibi ikili bağımlılıklar 3.12 civarında sabitlendiği
+# için ilerideki sürümlerde sessizce ve anlaşılmaz biçimde çöküyordu. Artık
+# net bir mesajla uyarıyoruz (sert hata değil: yalnızca STT/TTS devre dışı kalır).
+_SUPPORTED_PY = (3, 10)
+_MAX_TESTED_PY = (3, 12)
+_PY_VER = sys.version_info[:2]
+if _PY_VER < _SUPPORTED_PY:
+    sys.stderr.write(
+        f"[voice_service] Python {sys.version.split()[0]} çok eski; en az "
+        f"{_SUPPORTED_PY[0]}.{_SUPPORTED_PY[1]} gerekli. Ses motorları devre dışı.\n"
+    )
+elif _PY_VER > _MAX_TESTED_PY:
+    sys.stderr.write(
+        f"[voice_service] Uyarı: Python {sys.version.split()[0]} ile test edilmedi "
+        f"(önerilen: 3.12). Bazı motorlar (torch/XTTS) yüklenemeyebilir. "
+        f"Çözüm: LUX_PYTHON ortam değişkeni ile 3.12 yorumlayıcısı gösterin.\n"
+    )
+
 PY_LIBS_DIR = os.path.join(MODELS_ROOT, "py_libs")
 if os.path.isdir(PY_LIBS_DIR) and PY_LIBS_DIR not in sys.path:
     sys.path.insert(0, PY_LIBS_DIR)
@@ -1839,6 +1858,15 @@ def warmup_models(stt_model="", voice="", mode="auto"):
     }
 
 
+# ----------------------------------------------------
+# İptal (cancel) protokolü
+# ----------------------------------------------------
+# Renderer yanıtı durdurduğunda main.js artık {"action":"cancel","id":N}
+# gönderebiliyor. Çalışan görev varsa iptal edilir; böylece kullanıcı
+# durdurduktan sonra Python CPU'su boşa yanmaz.
+RUNNING_TASKS = {}
+
+
 async def _dispatch_request(req):
     action = req.get("action")
     req_id = req.get("id")
@@ -1885,6 +1913,15 @@ async def _dispatch_request(req):
 
         elif action == "ping":
             _emit_json({"id": req_id, "pong": True})
+
+        elif action == "status-quick":
+            _emit_json({
+                "id": req_id,
+                "success": True,
+                "python": sys.version.split()[0],
+                "modelsRoot": MODELS_ROOT,
+                "runningTasks": len(RUNNING_TASKS),
+            })
 
         else:
             _emit_json({"id": req_id, "success": False, "error": f"Unknown action: {action}"})
@@ -2007,14 +2044,30 @@ async def main_loop():
                 _emit_json(err_payload)
                 continue
 
-            if req.get("action") == "shutdown":
+            action = req.get("action")
+
+            if action == "shutdown":
                 stop_reader.set()
                 await asyncio.to_thread(_stop_xtts_worker)
                 _emit_json({"id": req_id, "success": True, "shutdown": True})
                 break
 
+            if action == "cancel":
+                target = req.get("target") or req.get("cancelId")
+                cancelled = 0
+                for tid, tsk in list(RUNNING_TASKS.items()):
+                    if target is None or tid == target:
+                        tsk.cancel()
+                        cancelled += 1
+                RUNNING_TASKS.clear()
+                _emit_json({"id": req_id, "success": True, "cancelled": cancelled})
+                continue
+
             task = asyncio.create_task(_dispatch_request(req))
             pending_tasks.add(task)
+            if req_id is not None:
+                RUNNING_TASKS[req_id] = task
+                task.add_done_callback(lambda t, rid=req_id: RUNNING_TASKS.pop(rid, None))
             task.add_done_callback(pending_tasks.discard)
     finally:
         stop_reader.set()

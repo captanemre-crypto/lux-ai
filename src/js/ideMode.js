@@ -1,4 +1,4 @@
-// 1:1 Antigravity Auxiliary Split Panel & Monaco Code / Git Review / Browser / Terminal Hub
+// 1:1 Lux Auxiliary Split Panel & Monaco Code / Git Review / Browser / Terminal Hub
 
 let auxViewMode = "home"; // 'home' | 'review' | 'editor' | 'terminal' | 'browser'
 let auxBrowserUrl = "http://127.0.0.1:8000/#positions";
@@ -20,21 +20,23 @@ let monacoLoadPromise = null;
 let editorToastTimer = null;
 
 function normalizeEditorKey(filePath) {
-  return String(filePath || "").trim().replace(/\\/g, "/").toLowerCase();
+  return String(filePath || "")
+    .trim()
+    .replace(/\\/g, "/")
+    .toLowerCase();
 }
 
-window.invalidateWorkspaceFilesCache = function() {
+window.invalidateWorkspaceFilesCache = function () {
   workspaceFilesCache = [];
 };
 
-let auxTerminalLines = [
-  "Lux AI Auxiliary Terminal (PowerShell 7)",
-  "Hazır. Komut girmek için yazıp Enter'a basın."
-];
+let auxTerminalLines = ["Lux AI Auxiliary Terminal (PowerShell 7)", "Hazır. Komut girmek için yazıp Enter'a basın."];
 
 function disposeMonacoEditor() {
   if (monacoResizeObserver) {
-    try { monacoResizeObserver.disconnect(); } catch (_) {}
+    try {
+      monacoResizeObserver.disconnect();
+    } catch (_) {}
     monacoResizeObserver = null;
   }
   if (monacoEditorInstance) {
@@ -115,9 +117,7 @@ function showEditorStatusToast(message, isSuccess = true) {
   if (editorToastTimer) clearTimeout(editorToastTimer);
   toastEl.textContent = message;
   toastEl.className = `text-[11px] font-medium px-2 py-0.5 rounded-md border transition-opacity ${
-    isSuccess
-      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-      : "bg-rose-500/15 text-rose-400 border-rose-500/30"
+    isSuccess ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-rose-500/15 text-rose-400 border-rose-500/30"
   }`;
   toastEl.style.opacity = "1";
   editorToastTimer = setTimeout(() => {
@@ -164,7 +164,7 @@ async function saveCurrentEditorFile() {
     updateEditorDirtyUI();
     window.invalidateWorkspaceFilesCache?.();
     showEditorStatusToast("✓ Kaydedildi", true);
-    window.playAntigravitySound?.("codeActionApplied");
+    window.playLuxSound?.("codeActionApplied");
     window.refreshDiffViews?.();
   } else {
     showEditorStatusToast(res?.error || "Kaydedilemedi", false);
@@ -176,6 +176,11 @@ window.getAuxViewMode = () => auxViewMode;
 
 let monacoLoaderScriptPromise = null;
 
+// Monaco, `scripts/sync-monaco.js` (postinstall) tarafından src/vendor/monaco/vs
+// altına kopyalanır. Böylece ne node_modules ne de CDN gerekir; asar paketinde de
+// (src/** paket içinde olduğu için) çalışır.
+const MONACO_VENDOR_AMD_DIR = "vendor/monaco/vs";
+
 function ensureMonacoAmdLoader() {
   if (typeof window.require === "function") {
     return Promise.resolve();
@@ -183,12 +188,12 @@ function ensureMonacoAmdLoader() {
   if (monacoLoaderScriptPromise) return monacoLoaderScriptPromise;
   monacoLoaderScriptPromise = new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = "../node_modules/monaco-editor/min/vs/loader.js";
+    script.src = `${MONACO_VENDOR_AMD_DIR}/loader.js`;
     script.async = true;
     script.onload = () => resolve();
     script.onerror = () => {
       monacoLoaderScriptPromise = null;
-      reject(new Error("Monaco AMD yükleyici scripti yüklenemedi"));
+      reject(new Error("Monaco yükleyicisi bulunamadı (src/vendor/monaco/vs/loader.js). " + "Kurulumu tamamlayın: npm run vendor:monaco"));
     };
     document.head.appendChild(script);
   });
@@ -201,62 +206,67 @@ function ensureMonaco() {
   }
   if (monacoLoadPromise) return monacoLoadPromise;
 
-  monacoLoadPromise = ensureMonacoAmdLoader().then(() => new Promise((resolve, reject) => {
-    if (typeof window.require !== "function") {
-      reject(new Error("Monaco AMD yükleyici bulunamadı"));
-      return;
-    }
+  monacoLoadPromise = ensureMonacoAmdLoader()
+    .then(
+      () =>
+        new Promise((resolve, reject) => {
+          if (typeof window.require !== "function") {
+            reject(new Error("Monaco AMD yükleyici bulunamadı"));
+            return;
+          }
 
-    const vsBase = new URL("../node_modules/monaco-editor/min/vs", window.location.href).href;
-    window.require.config({
-      paths: { vs: vsBase }
-    });
+          const vsBase = new URL(MONACO_VENDOR_AMD_DIR, window.location.href).href;
+          window.require.config({
+            paths: { vs: vsBase }
+          });
 
-    window.require(
-      ["vs/editor/editor.main"],
-      () => {
-        if (window.monaco?.editor) {
-          try {
-            window.monaco.editor.defineTheme("lux-onyx", {
-              base: "vs-dark",
-              inherit: true,
-              rules: [
-                { token: "comment", foreground: "6b7280", fontStyle: "italic" },
-                { token: "keyword", foreground: "60a5fa" },
-                { token: "string", foreground: "34d399" },
-                { token: "number", foreground: "fbbf24" }
-              ],
-              colors: {
-                "editor.background": "#070709",
-                "editor.foreground": "#e4e4e7",
-                "editor.lineHighlightBackground": "#121218",
-                "editorLineNumber.foreground": "#52525b",
-                "editorLineNumber.activeForeground": "#a1a1aa",
-                "editorGutter.background": "#070709",
-                "editor.selectionBackground": "#2563eb44",
-                "editorWidget.background": "#121216",
-                "editorWidget.border": "#27272a",
-                "editorSuggestWidget.background": "#121216",
-                "editorSuggestWidget.border": "#27272a",
-                "input.background": "#16161b",
-                "scrollbarSlider.background": "#27272a80",
-                "scrollbarSlider.hoverBackground": "#3f3f46aa"
+          window.require(
+            ["vs/editor/editor.main"],
+            () => {
+              if (window.monaco?.editor) {
+                try {
+                  window.monaco.editor.defineTheme("lux-onyx", {
+                    base: "vs-dark",
+                    inherit: true,
+                    rules: [
+                      { token: "comment", foreground: "6b7280", fontStyle: "italic" },
+                      { token: "keyword", foreground: "60a5fa" },
+                      { token: "string", foreground: "34d399" },
+                      { token: "number", foreground: "fbbf24" }
+                    ],
+                    colors: {
+                      "editor.background": "#070709",
+                      "editor.foreground": "#e4e4e7",
+                      "editor.lineHighlightBackground": "#121218",
+                      "editorLineNumber.foreground": "#52525b",
+                      "editorLineNumber.activeForeground": "#a1a1aa",
+                      "editorGutter.background": "#070709",
+                      "editor.selectionBackground": "#2563eb44",
+                      "editorWidget.background": "#121216",
+                      "editorWidget.border": "#27272a",
+                      "editorSuggestWidget.background": "#121216",
+                      "editorSuggestWidget.border": "#27272a",
+                      "input.background": "#16161b",
+                      "scrollbarSlider.background": "#27272a80",
+                      "scrollbarSlider.hoverBackground": "#3f3f46aa"
+                    }
+                  });
+                } catch (_) {}
+                resolve(window.monaco);
+              } else {
+                reject(new Error("Monaco çekirdeği yüklenemedi"));
               }
-            });
-          } catch (_) {}
-          resolve(window.monaco);
-        } else {
-          reject(new Error("Monaco çekirdeği yüklenemedi"));
-        }
-      },
-      (err) => {
-        reject(err || new Error("Monaco yükleme hatası"));
-      }
-    );
-  })).catch((err) => {
-    monacoLoadPromise = null;
-    throw err;
-  });
+            },
+            (err) => {
+              reject(err || new Error("Monaco yükleme hatası"));
+            }
+          );
+        })
+    )
+    .catch((err) => {
+      monacoLoadPromise = null;
+      throw err;
+    });
 
   return monacoLoadPromise;
 }
@@ -287,42 +297,50 @@ function renderIdePanel() {
     <div class="h-full w-full flex flex-col bg-[#070709] select-none text-foreground relative overflow-hidden" data-testid="auxiliary-split-panel">
       
       <!-- Left Draggable Sash Resizer Handle (orta çizgi sürükleyici) -->
-      ${!auxIsMaximized ? `
+      ${
+        !auxIsMaximized
+          ? `
         <div id="split-sash-handle" data-testid="split-sash" class="absolute z-50 bg-transparent flex items-center justify-center touch-none top-0 left-0 w-3 -translate-x-1.5 h-full cursor-col-resize shrink-0 group select-none" title="Genişliği Ayarlamak İçin Sürükleyin">
           <div class="split-sash-line transition-all w-[3px] h-full bg-transparent group-hover:bg-primary group-active:bg-primary pointer-events-none"></div>
         </div>
-      ` : ''}
+      `
+          : ""
+      }
 
       <!-- Top Action Toolbar (Height 40px) -->
       <div class="h-10 px-3 bg-sidebar/50 border-b border-border/40 flex items-center justify-between shrink-0">
         <!-- Left: Back Button (if not on home) or Status -->
         <div class="flex items-center gap-2 min-w-0">
-          ${auxViewMode !== 'home' ? `
+          ${
+            auxViewMode !== "home"
+              ? `
             <button id="aux-btn-back" class="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors" title="Geri Dön">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 -960 960 960" fill="currentColor">
                 <path d="M294.92-450L522.77-222.15L480-180L180-480L480-780l42.77,42.15L294.92-510H780v60H294.92Z"/>
               </svg>
             </button>
             <span class="text-xs font-medium text-foreground uppercase tracking-wide truncate">${escapeHtml(getAuxTitle(auxViewMode))}</span>
-          ` : `
+          `
+              : `
             <span class="text-xs font-medium text-muted-foreground">Yardımcı Görünüm</span>
-          `}
+          `
+          }
         </div>
 
         <!-- Quick Mode Pills when inside subview + Window Buttons -->
         <div class="flex items-center gap-1 shrink-0">
-          <button id="aux-tab-review" class="h-7 px-2 rounded-md text-[11px] font-medium ${auxViewMode === 'review' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'} cursor-pointer transition-colors" title="Değişiklik İncelemesi">
+          <button id="aux-tab-review" class="h-7 px-2 rounded-md text-[11px] font-medium ${auxViewMode === "review" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"} cursor-pointer transition-colors" title="Değişiklik İncelemesi">
             İnceleme
           </button>
-          <button id="aux-tab-editor" class="h-7 px-2 rounded-md text-[11px] font-medium ${auxViewMode === 'editor' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'} cursor-pointer transition-colors" title="Monaco Kod Düzenleyici">
+          <button id="aux-tab-editor" class="h-7 px-2 rounded-md text-[11px] font-medium ${auxViewMode === "editor" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"} cursor-pointer transition-colors" title="Monaco Kod Düzenleyici">
             Editör
           </button>
-          <button id="aux-tab-terminal" class="h-7 px-2 rounded-md text-[11px] font-medium ${auxViewMode === 'terminal' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'} cursor-pointer transition-colors" title="Terminal">
+          <button id="aux-tab-terminal" class="h-7 px-2 rounded-md text-[11px] font-medium ${auxViewMode === "terminal" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"} cursor-pointer transition-colors" title="Terminal">
             Terminal
           </button>
 
           <!-- Maximize / Restore Toggle -->
-          <button id="aux-btn-maximize" class="h-7 w-7 rounded-lg flex items-center justify-center text-secondary-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors ml-1" title="${auxIsMaximized ? 'Görünümü Daralt' : 'Tam Ekrana Genişlet'}">
+          <button id="aux-btn-maximize" class="h-7 w-7 rounded-lg flex items-center justify-center text-secondary-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors ml-1" title="${auxIsMaximized ? "Görünümü Daralt" : "Tam Ekrana Genişlet"}">
             ${ICONS.fullscreen}
           </button>
 
@@ -404,7 +422,9 @@ function setupSplitResize(container) {
       container.style.width = newWidth + "px";
       window.appStore.state.splitPaneWidth = newWidth;
       if (monacoEditorInstance) {
-        try { monacoEditorInstance.layout(); } catch (_) {}
+        try {
+          monacoEditorInstance.layout();
+        } catch (_) {}
       }
     };
 
@@ -414,7 +434,9 @@ function setupSplitResize(container) {
       window.removeEventListener("mouseup", onMouseUp);
       window.appStore.saveState();
       if (monacoEditorInstance) {
-        try { monacoEditorInstance.layout(); } catch (_) {}
+        try {
+          monacoEditorInstance.layout();
+        } catch (_) {}
       }
     };
 
@@ -425,25 +447,30 @@ function setupSplitResize(container) {
 
 function getAuxTitle(mode) {
   switch (mode) {
-    case 'review': return 'İnceleme (Git Diff)';
-    case 'editor': return activeEditorFile.name || 'Kod Düzenleyici';
-    case 'terminal': return 'Entegre Terminal';
-    case 'browser': return 'Dahili Tarayıcı';
-    default: return 'Görünüm';
+    case "review":
+      return "İnceleme (Git Diff)";
+    case "editor":
+      return activeEditorFile.name || "Kod Düzenleyici";
+    case "terminal":
+      return "Entegre Terminal";
+    case "browser":
+      return "Dahili Tarayıcı";
+    default:
+      return "Görünüm";
   }
 }
 
 function renderAuxBody() {
   switch (auxViewMode) {
-    case 'home':
+    case "home":
       return renderAuxHome();
-    case 'review':
+    case "review":
       return renderAuxReview();
-    case 'editor':
+    case "editor":
       return renderAuxEditor();
-    case 'terminal':
+    case "terminal":
       return renderAuxTerminal();
-    case 'browser':
+    case "browser":
       return renderAuxBrowser();
     default:
       return renderAuxHome();
@@ -517,7 +544,7 @@ function renderAuxReview() {
   `;
 }
 
-window.loadAuxReviewDiffs = async function() {
+window.loadAuxReviewDiffs = async function () {
   const container = document.getElementById("aux-review-container");
   if (!container) return;
 
@@ -547,7 +574,7 @@ function renderAuxEditor() {
       <!-- Editor Toolbar -->
       <div class="h-9 px-3 bg-card/80 border-b border-border flex items-center justify-between gap-2 shrink-0">
         <div class="flex items-center gap-2 min-w-0 flex-1">
-          <span id="editor-dirty-indicator" class="w-2 h-2 rounded-full bg-amber-400 shrink-0 ${activeEditorFile.dirty ? '' : 'hidden'}" title="Kaydedilmemiş değişiklikler var"></span>
+          <span id="editor-dirty-indicator" class="w-2 h-2 rounded-full bg-amber-400 shrink-0 ${activeEditorFile.dirty ? "" : "hidden"}" title="Kaydedilmemiş değişiklikler var"></span>
           <select id="aux-editor-file-select" class="max-w-[260px] bg-[#141418] text-foreground border border-border/70 rounded-md px-2 py-1 text-xs font-mono outline-none cursor-pointer truncate" style="color-scheme: dark;">
             <option value="${escapeHtml(activeEditorFile.path)}">${escapeHtml(activeEditorFile.path)}</option>
           </select>
@@ -556,7 +583,7 @@ function renderAuxEditor() {
         <div class="flex items-center gap-2 shrink-0">
           <span id="editor-save-toast" class="text-[11px] font-medium px-2 py-0.5 rounded-md border opacity-0 pointer-events-none transition-opacity"></span>
           <button id="btn-save-code-file" type="button" class="lux-btn px-2.5 py-1 text-xs bg-primary text-white hover:bg-primary/90 rounded-md cursor-pointer transition-colors font-medium" title="Kaydet (Ctrl+S)">
-            ${activeEditorFile.dirty ? 'Kaydet *' : 'Kaydet'}
+            ${activeEditorFile.dirty ? "Kaydet *" : "Kaydet"}
           </button>
         </div>
       </div>
@@ -641,18 +668,23 @@ async function mountMonacoEditor() {
     // Responsive resize observer
     monacoResizeObserver = new ResizeObserver(() => {
       if (monacoEditorInstance) {
-        try { monacoEditorInstance.layout(); } catch (_) {}
+        try {
+          monacoEditorInstance.layout();
+        } catch (_) {}
       }
     });
     monacoResizeObserver.observe(mountEl);
 
     requestAnimationFrame(() => {
       if (monacoEditorInstance) {
-        try { monacoEditorInstance.layout(); } catch (_) {}
+        try {
+          monacoEditorInstance.layout();
+        } catch (_) {}
       }
     });
   } catch (err) {
     console.warn("Monaco Editor başlatılamadı, yedek düz metin editörüne geçiliyor:", err);
+    showEditorStatusToast("Monaco yüklenemedi — basit editör", false);
     if (mountEl) mountEl.classList.add("hidden");
     if (fallbackTextarea) {
       fallbackTextarea.classList.remove("hidden");
@@ -682,7 +714,7 @@ async function populateEditorFileSelector() {
     }
     const items = workspaceFilesCache.slice(0, 120);
     const curPath = (activeEditorFile.path || "").replace(/\\/g, "/").toLowerCase();
-    const hasCurrent = items.some(f => {
+    const hasCurrent = items.some((f) => {
       const fp = (f.path || "").replace(/\\/g, "/").toLowerCase();
       const rp = (f.relPath || "").replace(/\\/g, "/").toLowerCase();
       return fp === curPath || rp === curPath;
@@ -691,12 +723,14 @@ async function populateEditorFileSelector() {
       items.unshift({ name: activeEditorFile.name, path: activeEditorFile.path, relPath: activeEditorFile.name });
     }
 
-    selectEl.innerHTML = items.map(f => {
-      const fp = (f.path || "").replace(/\\/g, "/").toLowerCase();
-      const rp = (f.relPath || "").replace(/\\/g, "/").toLowerCase();
-      const isSelected = fp === curPath || rp === curPath;
-      return `<option value="${escapeHtml(f.path)}" ${isSelected ? "selected" : ""}>${escapeHtml(f.relPath || f.name)}</option>`;
-    }).join("");
+    selectEl.innerHTML = items
+      .map((f) => {
+        const fp = (f.path || "").replace(/\\/g, "/").toLowerCase();
+        const rp = (f.relPath || "").replace(/\\/g, "/").toLowerCase();
+        const isSelected = fp === curPath || rp === curPath;
+        return `<option value="${escapeHtml(f.path)}" ${isSelected ? "selected" : ""}>${escapeHtml(f.relPath || f.name)}</option>`;
+      })
+      .join("");
 
     selectEl.onchange = () => {
       const chosen = selectEl.value;
@@ -726,7 +760,7 @@ function renderAuxTerminal() {
   return `
     <div class="h-full flex flex-col p-4 bg-[#050508] font-mono text-xs">
       <div id="aux-terminal-logs" class="flex-1 overflow-y-auto space-y-1 mb-2 text-muted-foreground">
-        ${auxTerminalLines.map(l => `<div>${escapeHtml(l)}</div>`).join('')}
+        ${auxTerminalLines.map((l) => `<div>${escapeHtml(l)}</div>`).join("")}
       </div>
       <div class="flex items-center gap-2 pt-2 border-t border-border/40 shrink-0">
         <span class="text-primary font-bold">PS &gt;</span>
@@ -742,13 +776,18 @@ function renderAuxBrowser() {
     <div class="h-full flex flex-col bg-background">
       <div class="h-8 px-2 bg-sidebar border-b border-border flex items-center gap-2 shrink-0">
         <input id="aux-browser-url-bar" type="text" value="${escapeHtml(auxBrowserUrl)}" class="flex-1 px-2 py-0.5 rounded bg-background border border-border text-xs text-foreground outline-none" />
+        <button id="aux-browser-pick" class="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground cursor-pointer" title="Konum işaretle — sayfada tıklayarak koordinat seç">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+          </svg>
+        </button>
         <button id="aux-browser-reload" class="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground cursor-pointer" title="Yenile">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 -960 960 960" fill="currentColor">
             <path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h60v220H560v-60h116q-46-52-108.5-81T480-750q-109 0-184.5 75.5T220-490q0 109 75.5 184.5T480-230q88 0 154-52t82-138h64q-17 114-100 182t-200 68Z"/>
           </svg>
         </button>
       </div>
-      <div class="flex-1 relative overflow-hidden bg-white">
+      <div class="flex-1 relative overflow-hidden bg-white" id="aux-browser-viewport">
         <iframe src="${escapeHtml(auxBrowserUrl)}" class="w-full h-full border-none" id="aux-browser-iframe"></iframe>
       </div>
     </div>
@@ -767,7 +806,7 @@ function normalizeBrowserUrl(raw) {
   return "http://" + v;
 }
 
-window.openAuxBrowserUrl = function(rawUrl) {
+window.openAuxBrowserUrl = function (rawUrl) {
   const normalized = normalizeBrowserUrl(rawUrl);
   if (!normalized) return false;
   auxBrowserUrl = normalized;
@@ -875,13 +914,17 @@ function attachAuxViewEvents() {
     const iframe = document.getElementById("aux-browser-iframe");
     if (iframe) iframe.src = auxBrowserUrl;
   });
+
+  document.getElementById("aux-browser-pick")?.addEventListener("click", () => {
+    toggleBrowserPickMode();
+  });
 }
 
-window.activeEditorPath = function() {
+window.activeEditorPath = function () {
   return activeEditorFile?.path || "";
 };
 
-window.loadEditorFile = async function(filePath) {
+window.loadEditorFile = async function (filePath) {
   if (!window.luxAPI?.fs?.readFile) return;
   if (activeEditorFile?.path && activeEditorFile.dirty) {
     unsavedEditorDrafts.set(normalizeEditorKey(activeEditorFile.path), activeEditorFile.content);
@@ -892,9 +935,7 @@ window.loadEditorFile = async function(filePath) {
     const normKey = normalizeEditorKey(normalized);
     const rawKey = normalizeEditorKey(filePath);
     const hasDraft = unsavedEditorDrafts.has(normKey) || unsavedEditorDrafts.has(rawKey);
-    const draftContent = unsavedEditorDrafts.has(normKey)
-      ? unsavedEditorDrafts.get(normKey)
-      : unsavedEditorDrafts.get(rawKey);
+    const draftContent = unsavedEditorDrafts.has(normKey) ? unsavedEditorDrafts.get(normKey) : unsavedEditorDrafts.get(rawKey);
     activeEditorFile = {
       name: normalized.split(/[/\\]/).pop(),
       path: normalized,
@@ -912,3 +953,186 @@ window.loadEditorFile = async function(filePath) {
     }
   }
 };
+
+// ===== Dahili Tarayıcı — Koordinat (Konum) Seçici =====
+// Sayfa cross-origin iframe içinde olabilir; sayfanın DOM'una dokunmadan,
+// iframe'in üstüne geçici şeffaf bir katman koyarak tıklanan noktayı
+// iframe viewport pikseli (ve yüzdesi) olarak kaydederiz.
+// İşaret YAZI OLARAK MESAJA YAZILMAZ; yalnız örnek görselindeki gibi küçük
+// bir kutucuk (chip) olarak gösterilir. Gönderim anında koordinatlar
+// modele gizli bağlam ([KONUM REFERANSLARI]) olarak eklenir.
+let auxPickActive = false;
+let auxPickOverlay = null;
+let auxPickKeyHandler = null;
+
+function auxPickCurrentUrl() {
+  const iframe = document.getElementById("aux-browser-iframe");
+  return (iframe && (iframe.getAttribute("src") || iframe.src)) || auxBrowserUrl || "";
+}
+
+function syncComposerAttachmentTray() {
+  const tray = document.getElementById("composer-attachment-tray");
+  if (!tray) return;
+  const hasChips = tray.childElementCount > 0;
+  tray.classList.toggle("hidden", !hasChips);
+  tray.classList.toggle("flex", hasChips);
+}
+
+function auxPendingLocations() {
+  if (!Array.isArray(window.__luxPendingLocations)) window.__luxPendingLocations = [];
+  return window.__luxPendingLocations;
+}
+
+// Bekleyen konumları VE çip kutusunu temizler; modele eklenecek gizli bağlam
+// metnini döndürür (konum yoksa boş string).
+window.consumePendingLocationPrompt = function () {
+  const pending = auxPendingLocations().splice(0, auxPendingLocations().length);
+  const tray = document.getElementById("composer-attachment-tray");
+  if (tray) tray.innerHTML = "";
+  syncComposerAttachmentTray();
+  if (pending.length === 0) return "";
+  const lines = pending.map(
+    (l) => `- ${l.url} @ x:${l.x}px, y:${l.y}px (%${l.px}, %${l.py}) — kullanıcı sayfada bu noktayı işaretledi (olası tıklama hedefi)`
+  );
+  return `\n\n[KONUM REFERANSLARI]\n${lines.join("\n")}`;
+};
+
+window.hasPendingLocationAttachments = function () {
+  return auxPendingLocations().length > 0;
+};
+
+window.clearComposerAttachmentTray = function () {
+  const tray = document.getElementById("composer-attachment-tray");
+  if (tray) tray.innerHTML = "";
+  syncComposerAttachmentTray();
+};
+
+function auxPickPercent(value, total) {
+  if (!total) return 0;
+  return Math.max(0, Math.min(100, Math.round((value / total) * 100)));
+}
+
+function addLocationAttachmentChip(url, x, y, viewportW, viewportH) {
+  const tray = document.getElementById("composer-attachment-tray");
+  if (!tray) return;
+
+  const px = auxPickPercent(x, viewportW);
+  const py = auxPickPercent(y, viewportH);
+  let host = url;
+  try {
+    host = new URL(url).host || url;
+  } catch (_) {
+    host = String(url).split(/[/?#]/)[0];
+  }
+
+  const entry = { url, x, y, px, py };
+  auxPendingLocations().push(entry);
+
+  const chip = document.createElement("span");
+  chip.className = "lux-location-chip";
+  chip.title = `${url}\nKonum: x ${x}px, y ${y}px (%${px}, %${py})`;
+  chip.innerHTML =
+    '<span class="lux-location-chip-pin">' +
+    '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>' +
+    "</span>" +
+    '<span class="lux-location-chip-body">' +
+    `<span class="lux-location-chip-title">${escapeHtml(host)}</span>` +
+    `<span class="lux-location-chip-meta">x:${x} · y:${y} · %${px}/%${py}</span>` +
+    "</span>" +
+    '<button type="button" class="lux-location-chip-remove" aria-label="Konum işaretini kaldır" title="Konum işaretini kaldır">✕</button>';
+
+  chip.querySelector(".lux-location-chip-remove")?.addEventListener("click", () => {
+    const list = auxPendingLocations();
+    const idx = list.indexOf(entry);
+    if (idx !== -1) list.splice(idx, 1);
+    chip.remove();
+    syncComposerAttachmentTray();
+    document.getElementById("composer-textarea")?.focus();
+  });
+
+  tray.appendChild(chip);
+  syncComposerAttachmentTray();
+  document.getElementById("composer-textarea")?.focus();
+}
+
+function onAuxPickMouseMove(e) {
+  const overlay = auxPickOverlay;
+  if (!overlay) return;
+  const reticle = overlay.querySelector(".aux-browser-pick-reticle");
+  if (!reticle) return;
+  const rect = overlay.getBoundingClientRect();
+  reticle.style.display = "block";
+  reticle.style.left = `${e.clientX - rect.left}px`;
+  reticle.style.top = `${e.clientY - rect.top}px`;
+}
+
+function onAuxPickClick(e) {
+  const overlay = auxPickOverlay;
+  if (!overlay) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const rect = overlay.getBoundingClientRect();
+  const x = Math.round(Math.max(0, Math.min(rect.width, e.clientX - rect.left)));
+  const y = Math.round(Math.max(0, Math.min(rect.height, e.clientY - rect.top)));
+  const url = auxPickCurrentUrl();
+  const vw = Math.round(rect.width);
+  const vh = Math.round(rect.height);
+  exitBrowserPickMode();
+  addLocationAttachmentChip(url, x, y, vw, vh);
+}
+
+function exitBrowserPickMode() {
+  if (auxPickOverlay) {
+    auxPickOverlay.removeEventListener("mousemove", onAuxPickMouseMove);
+    auxPickOverlay.removeEventListener("click", onAuxPickClick);
+    auxPickOverlay.remove();
+    auxPickOverlay = null;
+  }
+  auxPickActive = false;
+  if (auxPickKeyHandler) {
+    window.removeEventListener("keydown", auxPickKeyHandler, true);
+    auxPickKeyHandler = null;
+  }
+  const btn = document.getElementById("aux-browser-pick");
+  btn?.classList.remove("text-primary", "bg-secondary/70");
+}
+
+function toggleBrowserPickMode(force) {
+  const next = typeof force === "boolean" ? force : !auxPickActive;
+  if (next === auxPickActive) return;
+  if (!next) {
+    exitBrowserPickMode();
+    return;
+  }
+  const viewport = document.getElementById("aux-browser-viewport");
+  if (!viewport) return;
+
+  auxPickActive = true;
+  const overlay = document.createElement("div");
+  overlay.id = "aux-browser-pick-overlay";
+  overlay.className = "aux-browser-pick-overlay";
+  overlay.innerHTML =
+    '<div class="aux-browser-pick-hint">' +
+    '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="#93c5fd"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>' +
+    "Konumu işaretlemek için sayfaya tıklayın <kbd>ESC</kbd> iptal" +
+    "</div>" +
+    '<div class="aux-browser-pick-reticle" style="display:none"></div>';
+
+  overlay.addEventListener("mousemove", onAuxPickMouseMove);
+  overlay.addEventListener("click", onAuxPickClick);
+  viewport.appendChild(overlay);
+  auxPickOverlay = overlay;
+
+  // Yakalama fazında dinle: ESC seçici açıkken global handler'ı tetiklemesin
+  auxPickKeyHandler = (e) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      exitBrowserPickMode();
+    }
+  };
+  window.addEventListener("keydown", auxPickKeyHandler, true);
+
+  const btn = document.getElementById("aux-browser-pick");
+  btn?.classList.add("text-primary", "bg-secondary/70");
+}

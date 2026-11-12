@@ -1,0 +1,74 @@
+# Changelog
+
+All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com/) principles, dates ISO-8601.
+
+## [Unreleased]
+
+(Henüz yayınlanmamış değişiklik yok.)
+
+## [1.4.0] — 2026-11-12
+
+> Release verified on a **clean tree built from the git index** (`git archive` → `npm ci` → full battery + xvfb smoke/e2e), not only on the working copy.
+
+### Security
+
+- SSRF guard for all agent-driven URL fetches (`scripts/agent/net_guard.js`): http/https only, private/loopback/link-local/CGNAT/multicast IPs and internal hostnames refused, per-hop redirect re-validation, DNS answer checks.
+- PowerShell injection fixed: `pc_control(volume)` free text no longer interpolated into double-quoted scripts; `send_keys`/`type_text`/`open_app` sanitized; mouse coordinates clamped (`clampInt`).
+- High-risk tool approval gate: `run_command`, `delete_path`, non-read-only `pc_control` now require an in-app confirmation while `auto_approve_commands` is off (default). Read-only `pc_control` actions (`system_info`, `list_windows`, `clipboard_get`) exempt.
+- Vault schema v2 with in-place v1→v2 reads and `secrets-rotate` IPC (re-encrypt all records; aborts without modifying the vault if any record fails to decrypt).
+
+### Changed (architecture)
+
+- `main.js` split into `src/main/{secrets_vault,agent_ipc,git_ipc,plugins_ipc,edit_snapshots}.js` (~1.7k → ~1.2k lines).
+- New renderer modules `src/js/tool_approval.js`, `src/js/agent_context.js`, `src/js/i18n.js`.
+- Conversation rendering is windowed: last 40 messages + "load earlier" expansion (streaming unchanged).
+- First STT warmup now asks before downloading faster-whisper (~244 MB, once) — quiet pre-warm removed.
+
+### Added
+
+- Agent-found/generated images and screenshots now render as **compact chips** (~37 px, thumbnail + filename + format) instead of large 220 px grid cards; clicking the thumbnail opens the lightbox, the × button removes the image from the message (persisted via `saveState`), and the display name falls back to the file name when the model provides no title.
+- Dahili Tarayıcı (IDE split) gained a **coordinate picker**: crosshair toolbar button overlays the page (works on cross-origin pages too, since the overlay sits above the iframe), ESC cancels. Picking a point adds a compact attachment **chip** to the composer — thumbnail-sized `host · x · y · %` pill like the reference design — with × to remove. The coordinates are **never written into the message text**; on send they are injected into the model prompt as a hidden `[KONUM REFERANSLARI]` block (`window.consumePendingLocationPrompt`). Sending with only a location pending uses the fixed minimal text "İşaretlediğim konuma bak.". e2e gained a true end-to-end probe: overlay shown/ESC-cancel/click → chip added/textarea kept clean/suffix consumed/chip removed/tray hidden.
+- Sidebar "Yeni Proje" button now opens the native folder picker to find the project's real path: on pick, the project name is derived from the folder basename and stored in `project.path` (consumed by `chat.js` agent context resolution and the project "Open Explorer" action). Cancelling the picker (or running without `luxAPI.pickFolder`) falls back to the previous name-only inline flow; the inline box also gained a bind-folder button and a hint row showing the selected path.
+- Windows installer icon is now a real multi-layer `.ico` (`build/icon.ico`, 16–256 px, 32-bpp RGBA) built from the 512 px brand artwork; `build.win.icon` points at it, so the NSIS installer ships crisp 16–256 px icons instead of relying on conversion of a single 512 px PNG.
+- `npm run test:live` (`scripts/test_live_api.js`): manual smoke test against the real Gemini / OpenAI-compatible / Anthropic endpoints using `GEMINI_API_KEY`/`GOOGLE_API_KEY`, `OPENAI_API_KEY` (override `LUX_OPENAI_BASE`/`LUX_OPENAI_MODEL`) and `ANTHROPIC_API_KEY` (override `LUX_ANTHROPIC_MODEL`). Keys are only read from the environment, never stored or logged. Exits 0 with a skip notice when no keys are configured; **not** part of `npm test` or CI.
+- `npm run verify` (`scripts/verify_release.js`): single-command local release gate — test + lint + prettier + CSS-drift check + xvfb smoke + xvfb e2e, with a pass/fail summary and non-zero exit on any failure.
+- `SECURITY.md` now documents supported 1.4.x and a data-privacy matrix (what leaves the machine by default: nothing except explicitly configured model endpoints, opt-in `LUX_CRASH_URL` crash uploads, and agent-browsed web pages).
+- `scripts/test_model_client.js`: mock-fetch tests for Gemini SSE/JSON parsing, 429 classification, missing-key local fallback, voice-turn no-fallback (6 tests).
+- `src/js/context_rollup.js`: **context rollover/summarization** — older turns that used to be silently dropped from the wire are now folded into a deterministic, offline digest (`[ÖNCEKİ KONUŞMANIN ÖZETİ]`) prepended to the user turn; last 12 messages (4 on local CPU) always kept verbatim; system prompt & tool selection keep the original prompt (no behavior change there). 9 unit tests (`scripts/test_context_rollup.js`, `npm run test:rollup`); `npm test` runs all four suites.
+- Key vault UI (Settings → Permissions → "Anahtar Kasası (Şifreli)"): schema version, entry count, encryption scheme, created/rotated timestamps, record ids (never plaintext keys); "Kasayı Yeniden Şifrele" re-encrypts via `secrets-rotate` IPC.
+- i18n keys for the vault card and the STT-download consent band (TR/EN).
+- Test suite 19 → 21 (`#20` SSRF/PowerShell sanitize, `#21` tool approval gate); plus model-client (6), IPC validators (10) and context-rollup (9) unit tests.
+- ESLint flat config + `npm run lint` (CI gate); Prettier config (opt-in for new files).
+- `.github/workflows/release.yml`: tag `v*` → Windows NSIS + Linux AppImage + GitHub Release (signing via `CSC_LINK`/`CSC_KEY_PASSWORD` when present).
+- i18n skeleton (TR default, EN keys) wired into the approval dialog.
+- `aria-live`/`aria-busy` on streaming output; `prefers-reduced-motion` honored (streaming cursor included).
+- `crashReporter` starts at boot — local dumps only unless `LUX_CRASH_URL` is set.
+- Docs: `README.en.md`, `CONTRIBUTING.md`, `SECURITY.md`, `RELEASING.md`.
+
+### Removed
+
+- Settings → sidebar **"Geri Bildirim Gönder"** button and the feedback modal behind it (`window.giveFeedback`) — removed entirely, including its Escape handling; no remaining references.
+
+### Fixed
+
+- Hardcoded `c:\Users\SERVER\Desktop\LUX_ai` fallback removed from system-prompt assembly (now uses `luxAppInfo`).
+- Hardcoded `c:\Users\SERVER\Desktop\LUX_ai` fallback in Settings → Application ("Varsayılan Çalışma Dizini" placeholder) — now resolves via `window.luxAppInfo.currentWorkspace`.
+- `build/icon.png` restored (electron-builder `buildResources`); lost copies caused silent default-icon packaging.
+- CI: `npm audit --audit-level=high` gate, compiled-CSS drift check, Windows e2e is now a real gate (`continue-on-error` removed), `npm run lint` step.
+- Renderer global `stripMarkupForLiveStream` permanently guarded by bundle-integrity test #19 + e2e probe.
+
+## [1.3.0] — 2026-11-12
+
+- Performance: incremental `renderChat` (djb2 row signatures), Myers O(ND) line diff, `AudioBuffer` decode-once for static mp3s.
+- Architecture: `scripts/agent_capabilities.js` split into `scripts/agent/*.js`; renderer cores split out of `chat.js` (5,354 → ~3,069 lines): `speech_text`, `prompt_intents`, `tool_schemas`, `model_output_parse`, `model_client`, `markdown`.
+- Tailwind v4 build pipeline (`tailwind.input.css` → `compiled_tailwind.css`, 294 KB → 114 KB); theme base layer rescued from the compiled artifact into source.
+- Security: npm audit 8 → 0 (overrides); `build/` resources fixed (`build/*` + `!build/icon.png`).
+- Verification: `npm test`, xvfb e2e (isolated profile), smoke harness. `electron-builder --dir` verified (384 MB, app boots headless).
+
+## [1.2.0] — earlier
+
+- Second-pass fixes + lifecycle e2e rewrite (async tests actually awaited). See README.md "Sürüm Notları".
+
+## [1.1.0] — earlier
+
+- Initial hardening pass (node_modules untracked, Monaco vendored, test suite, CI). See README.md "Sürüm Notları".

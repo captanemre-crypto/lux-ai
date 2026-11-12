@@ -1,14 +1,4 @@
-// 1:1 Antigravity Settings Modal & Command Palette Component (Türkçe Arayüz)
-
-function escapeHtml(str) {
-  if (!str) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
+// 1:1 Lux Settings Modal & Command Palette Component (Türkçe Arayüz)
 
 let currentSettingsTab = "general";
 
@@ -81,7 +71,7 @@ function setupModals() {
   if (!container) return;
 
   container.innerHTML = `
-    <!-- 1:1 Antigravity Settings Modal Backdrop -->
+    <!-- 1:1 Lux Settings Modal Backdrop -->
     <div id="settings-modal" class="lux-modal-backdrop">
       <div class="settings-dialog-container">
         
@@ -127,15 +117,6 @@ function setupModals() {
             </div>
           </div>
 
-          <!-- Bottom Feedback -->
-          <div class="mt-auto p-3 border-t border-border/40 flex flex-col gap-2 shrink-0">
-            <button class="settings-nav-btn text-xs text-muted-foreground hover:text-foreground" onclick="window.giveFeedback()">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 -960 960 960" fill="currentColor">
-                <path d="M240-400h320v-60H240v60Zm0-120h480v-60H240v60Zm0-120h480v-60H240v60ZM80-80v-720q0-33 23.5-56.5T160-880h640q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H240L80-80Zm80-240h640V-800H160v480Zm0 0v-480 480Z"/>
-              </svg>
-              <span>Geri Bildirim Gönder</span>
-            </button>
-          </div>
         </div>
 
         <!-- Right Content Area (Active Tab Content) -->
@@ -229,60 +210,82 @@ function getPaletteEntries(query = "") {
       title: "Yeni Sohbet Başlat",
       category: "Sohbet",
       icon: ICONS.plus,
-      run: () => { window.appStore.createConversation("Yeni Sohbet"); window.renderApp(); }
+      run: () => {
+        window.appStore.createConversation("Yeni Sohbet");
+        window.renderApp();
+      }
     },
     {
       title: "Bölünmüş IDE Modunu Aç/Kapat",
       category: "Görünüm",
       icon: ICONS.ide,
-      run: () => { window.appStore.toggleIdeSplit(); window.renderApp(); }
+      run: () => {
+        window.appStore.toggleIdeSplit();
+        window.renderApp();
+      }
     },
     {
       title: "Entegre Terminali Aç",
       category: "Terminal",
       icon: ICONS.terminal,
-      run: () => { window.openRightPanelTerminal?.(); }
+      run: () => {
+        window.openRightPanelTerminal?.();
+      }
     },
     {
       title: "Sağ Paneli (Overview) Aç/Gizle",
       category: "Görünüm",
       icon: ICONS.extensions,
-      run: () => { window.appStore.toggleRightPanel(); window.renderApp(); }
+      run: () => {
+        window.appStore.toggleRightPanel();
+        window.renderApp();
+      }
     },
     {
       title: "Kenar Çubuğunu Aç/Gizle",
       category: "Görünüm",
       icon: ICONS.sidebarLeft || ICONS.folder,
-      run: () => { window.appStore.toggleSidebar(); window.renderApp(); }
+      run: () => {
+        window.appStore.toggleSidebar();
+        window.renderApp();
+      }
     },
     {
       title: "Sesli Sohbet Modunu Başlat/Durdur",
       category: "Ses",
       icon: ICONS.mic || ICONS.plus,
-      run: () => { window.toggleVoiceMode?.(); }
+      run: () => {
+        window.toggleVoiceMode?.();
+      }
     },
     {
       title: "Ayarlar: Modeller ve API Yönetimi",
       category: "Ayarlar",
       icon: ICONS.settings,
-      run: () => { window.openSettingsModal("models"); }
+      run: () => {
+        window.openSettingsModal("models");
+      }
     },
     {
       title: "Ayarlar: İzinler ve Güvenlik",
       category: "Ayarlar",
       icon: ICONS.settings,
-      run: () => { window.openSettingsModal("permissions"); }
+      run: () => {
+        window.openSettingsModal("permissions");
+      }
     },
     {
       title: `Ayarlar: Sesli Asistan Kütüphanesi (${window.luxVoiceLibrary?.catalog?.length || 28} Ses)`,
       category: "Ses",
       icon: ICONS.settings,
-      run: () => { window.luxVoiceLibrary?.openModal?.(); }
+      run: () => {
+        window.luxVoiceLibrary?.openModal?.();
+      }
     }
   ];
 
   // Dynamic Projects & Conversations
-  (state.projects || []).forEach(proj => {
+  (state.projects || []).forEach((proj) => {
     items.push({
       title: `Projeye Geç: ${proj.name}`,
       category: "Proje",
@@ -297,7 +300,7 @@ function getPaletteEntries(query = "") {
         window.renderApp();
       }
     });
-    (proj.conversations || []).forEach(conv => {
+    (proj.conversations || []).forEach((conv) => {
       items.push({
         title: `${conv.title}`,
         category: `Sohbet · ${proj.name}`,
@@ -311,7 +314,7 @@ function getPaletteEntries(query = "") {
   });
 
   // Dynamic Models
-  (window.appStore?.getModels?.() || []).forEach(m => {
+  (window.appStore?.getModels?.() || []).forEach((m) => {
     items.push({
       title: `Model Kullan: ${m.name} (${m.modelId})`,
       category: "Model",
@@ -324,9 +327,7 @@ function getPaletteEntries(query = "") {
   });
 
   if (!q) return items.slice(0, 14);
-  return items.filter(it =>
-    it.title.toLowerCase().includes(q) || it.category.toLowerCase().includes(q)
-  ).slice(0, 20);
+  return items.filter((it) => it.title.toLowerCase().includes(q) || it.category.toLowerCase().includes(q)).slice(0, 20);
 }
 
 function renderPaletteResults() {
@@ -342,17 +343,21 @@ function renderPaletteResults() {
     return;
   }
 
-  container.innerHTML = entries.map((item, idx) => `
-    <div class="palette-item flex items-center justify-between p-2 rounded-md cursor-pointer text-xs transition-colors ${idx === paletteSelectedIdx ? 'bg-primary/20 text-foreground border border-primary/40' : 'hover:bg-secondary text-secondary-foreground'}" data-palette-idx="${idx}">
+  container.innerHTML = entries
+    .map(
+      (item, idx) => `
+    <div class="palette-item flex items-center justify-between p-2 rounded-md cursor-pointer text-xs transition-colors ${idx === paletteSelectedIdx ? "bg-primary/20 text-foreground border border-primary/40" : "hover:bg-secondary text-secondary-foreground"}" data-palette-idx="${idx}">
       <div class="flex items-center gap-2 min-w-0 truncate">
-        <span class="shrink-0 opacity-80">${item.icon || ''}</span>
+        <span class="shrink-0 opacity-80">${item.icon || ""}</span>
         <span class="truncate">${escapeHtml(item.title)}</span>
       </div>
       <span class="text-[10px] text-muted-foreground shrink-0 ml-2">${escapeHtml(item.category)}</span>
     </div>
-  `).join("");
+  `
+    )
+    .join("");
 
-  container.querySelectorAll(".palette-item").forEach(el => {
+  container.querySelectorAll(".palette-item").forEach((el) => {
     el.addEventListener("click", () => {
       const idx = Number(el.getAttribute("data-palette-idx"));
       const picked = entries[idx];
@@ -408,22 +413,24 @@ function renderSettingsProjectsNav() {
   const projects = window.appStore?.state?.projects || [];
 
   navContainer.innerHTML = `
-    ${projects.map(p => {
-      const convCount = (p.conversations || []).length;
-      return `
+    ${projects
+      .map((p) => {
+        const convCount = (p.conversations || []).length;
+        return `
         <button class="settings-nav-btn truncate text-left flex items-center justify-between group py-1.5 px-3 rounded-lg text-xs" data-tab="project:${p.id}" data-project-id="${p.id}" title="${escapeHtml(p.name)}">
           <span class="truncate">${escapeHtml(p.name)}</span>
-          ${convCount > 0 ? `<span class="text-[10px] text-muted-foreground/60 font-mono shrink-0">${convCount}</span>` : ''}
+          ${convCount > 0 ? `<span class="text-[10px] text-muted-foreground/60 font-mono shrink-0">${convCount}</span>` : ""}
         </button>
       `;
-    }).join("")}
+      })
+      .join("")}
     <button class="settings-nav-btn text-muted-foreground text-left py-1.5 px-3 rounded-lg text-xs hover:text-foreground mt-0.5" data-tab="show_all">
       Tümünü Göster
     </button>
   `;
 
   // Attach event listeners to project buttons
-  navContainer.querySelectorAll(".settings-nav-btn").forEach(btn => {
+  navContainer.querySelectorAll(".settings-nav-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const tab = btn.getAttribute("data-tab");
       if (tab) switchSettingsTab(tab);
@@ -431,7 +438,7 @@ function renderSettingsProjectsNav() {
   });
 
   // Highlight active tab
-  navContainer.querySelectorAll(".settings-nav-btn").forEach(btn => {
+  navContainer.querySelectorAll(".settings-nav-btn").forEach((btn) => {
     if (btn.getAttribute("data-tab") === currentSettingsTab) {
       btn.classList.add("active");
     } else {
@@ -459,7 +466,7 @@ function switchSettingsTab(tabId) {
   if (tabId.startsWith("project:")) {
     const projId = tabId.replace("project:", "");
     const projects = window.appStore?.state?.projects || [];
-    currentProject = projects.find(p => p.id === projId || p.name === projId);
+    currentProject = projects.find((p) => p.id === projId || p.name === projId);
     if (currentProject) {
       isProject = true;
       config = {
@@ -556,15 +563,19 @@ function renderProjectSettingsView(container, project) {
             </div>
           </div>
           <div class="flex items-center gap-2">
-            ${isGlobalActive ? `
+            ${
+              isGlobalActive
+                ? `
               <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium">
                 ● Aktif Çalışma Alanı
               </span>
-            ` : `
+            `
+                : `
               <span class="text-xs px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground border border-border/60 font-medium">
                 Kayıtlı Proje
               </span>
-            `}
+            `
+            }
           </div>
         </div>
 
@@ -623,19 +634,27 @@ function renderProjectSettingsView(container, project) {
           <span class="text-xs text-muted-foreground">Tıklayarak sohbete geçebilirsiniz</span>
         </div>
         <div class="flex flex-col gap-1.5 pt-1">
-          ${(!project.conversations || project.conversations.length === 0) ? `
+          ${
+            !project.conversations || project.conversations.length === 0
+              ? `
             <div class="p-4 text-center text-xs text-muted-foreground border border-dashed border-border/50 rounded-lg">
               Bu projede henüz bir sohbet başlatılmadı.
             </div>
-          ` : project.conversations.map(c => `
+          `
+              : project.conversations
+                  .map(
+                    (c) => `
             <div class="p-2.5 rounded-lg border border-border/50 bg-secondary/20 hover:bg-secondary/50 flex items-center justify-between cursor-pointer transition-colors prj-conv-row" data-conv-id="${escapeHtml(c.id)}">
               <div class="flex items-center gap-2 truncate">
                 <span class="text-muted-foreground text-xs">💬</span>
                 <span class="text-xs font-medium text-foreground truncate">${escapeHtml(c.title)}</span>
               </div>
-              <span class="text-[11px] text-muted-foreground shrink-0">${escapeHtml(c.timestamp || 'Şimdi')}</span>
+              <span class="text-[11px] text-muted-foreground shrink-0">${escapeHtml(c.timestamp || "Şimdi")}</span>
             </div>
-          `).join("")}
+          `
+                  )
+                  .join("")
+          }
         </div>
       </div>
 
@@ -696,7 +715,7 @@ function renderProjectSettingsView(container, project) {
   });
 
   // Click on existing conversation row
-  container.querySelectorAll(".prj-conv-row").forEach(row => {
+  container.querySelectorAll(".prj-conv-row").forEach((row) => {
     row.addEventListener("click", () => {
       const convId = row.getAttribute("data-conv-id");
       if (convId) window.appStore.selectConversation(convId);
@@ -753,10 +772,11 @@ function renderAllProjectsView(container) {
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        ${projects.map(p => {
-          const isAct = p.id === window.appStore?.state?.activeProjectId;
-          return `
-            <div class="p-4 rounded-xl border ${isAct ? 'border-primary/50 bg-secondary/30' : 'border-border/80 bg-card/40'} hover:border-border transition-colors flex flex-col justify-between gap-3">
+        ${projects
+          .map((p) => {
+            const isAct = p.id === window.appStore?.state?.activeProjectId;
+            return `
+            <div class="p-4 rounded-xl border ${isAct ? "border-primary/50 bg-secondary/30" : "border-border/80 bg-card/40"} hover:border-border transition-colors flex flex-col justify-between gap-3">
               <div class="flex items-start justify-between gap-2">
                 <div class="flex items-center gap-2.5 truncate">
                   <div class="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-primary shrink-0">
@@ -769,9 +789,13 @@ function renderAllProjectsView(container) {
                     <div class="text-[11px] text-muted-foreground">${(p.conversations || []).length} Sohbet</div>
                   </div>
                 </div>
-                ${isAct ? `
+                ${
+                  isAct
+                    ? `
                   <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium shrink-0">Aktif</span>
-                ` : ''}
+                `
+                    : ""
+                }
               </div>
 
               <div class="flex items-center justify-end gap-1.5 pt-2 border-t border-border/30">
@@ -787,7 +811,8 @@ function renderAllProjectsView(container) {
               </div>
             </div>
           `;
-        }).join("")}
+          })
+          .join("")}
       </div>
     </div>
   `;
@@ -816,16 +841,21 @@ function renderAllProjectsView(container) {
     inlineBar?.classList.add("hidden");
   });
   inlineInput?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { e.preventDefault(); doCreateProject(); }
-    else if (e.key === "Escape") { e.preventDefault(); inlineBar?.classList.add("hidden"); }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      doCreateProject();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      inlineBar?.classList.add("hidden");
+    }
   });
 
   // Action buttons
-  container.querySelectorAll(".btn-all-open").forEach(btn => {
+  container.querySelectorAll(".btn-all-open").forEach((btn) => {
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-id");
       window.appStore.state.activeProjectId = id;
-      const proj = window.appStore.state.projects.find(p => p.id === id);
+      const proj = window.appStore.state.projects.find((p) => p.id === id);
       if (proj && proj.conversations && proj.conversations.length > 0) {
         window.appStore.selectConversation(proj.conversations[0].id);
       } else {
@@ -836,14 +866,14 @@ function renderAllProjectsView(container) {
     });
   });
 
-  container.querySelectorAll(".btn-all-settings").forEach(btn => {
+  container.querySelectorAll(".btn-all-settings").forEach((btn) => {
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-id");
       switchSettingsTab(`project:${id}`);
     });
   });
 
-  container.querySelectorAll(".btn-all-delete").forEach(btn => {
+  container.querySelectorAll(".btn-all-delete").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       const el = e.currentTarget;
       const id = el.getAttribute("data-id");
@@ -865,7 +895,7 @@ function renderAllProjectsView(container) {
   });
 }
 
-// 1:1 Antigravity Permissions & Security Settings Component
+// 1:1 Lux Permissions & Security Settings Component
 function renderPermissionsSettingsView(container) {
   const perms = window.appStore?.getPermissions() || {};
   const isUnlimited = window.appStore?.isUnlimitedMode?.() ?? false;
@@ -896,7 +926,7 @@ function renderPermissionsSettingsView(container) {
         {
           key: "auto_approve_commands",
           title: "Otomatik Komut Onayı (Auto-Approve)",
-          desc: "Ajanın tüm araçları ve sistem komutlarını tek tek onay beklemeden Antigravity hızında otonom çalıştırmasını sağlar.",
+          desc: "Ajanın tüm araçları ve sistem komutlarını tek tek onay beklemeden Lux hızında otonom çalıştırmasını sağlar.",
           badge: "Otonom",
           badgeClass: "text-amber-400 bg-amber-500/10 border-amber-500/20",
           icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`
@@ -944,8 +974,8 @@ function renderPermissionsSettingsView(container) {
         {
           key: "env_secrets_protection",
           title: "Hassas Dosya Koruması (Açıkken .env/Anahtarları Engeller)",
-          desc: "Sınırsız Yetki Modunda varsayılan olarak kapalıdır (.env ve yapılandırma dosyaları da okunabilir); ek koruma isterseniz açabilirsiniz.",
-          badge: "Opsiyonel Kısıt",
+          desc: "Varsayılan olarak AÇIKTIR: .env, *.pem, id_rsa ve secrets.json gibi dosyalar ajan tarafından okunamaz. Kapatmanız önerilmez.",
+          badge: "Önerilen",
           badgeClass: "text-zinc-400 bg-zinc-500/10 border-zinc-500/20",
           icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`
         }
@@ -1026,23 +1056,23 @@ function renderPermissionsSettingsView(container) {
   ];
 
   // Calculate active capability permissions count (excluding optional restriction switch)
-  const capabilityKeys = PERMISSION_GROUPS.flatMap(g => g.items.map(i => i.key)).filter(k => k !== "env_secrets_protection");
-  const activeCount = capabilityKeys.filter(k => Boolean(perms[k])).length;
+  const capabilityKeys = PERMISSION_GROUPS.flatMap((g) => g.items.map((i) => i.key)).filter((k) => k !== "env_secrets_protection");
+  const activeCount = capabilityKeys.filter((k) => Boolean(perms[k])).length;
 
   container.innerHTML = `
     <div class="flex flex-col gap-6 w-full max-w-4xl mx-auto pb-8 select-none">
 
-      <!-- Master Antigravity Unlimited Mode Card -->
-      <div class="rounded-2xl p-4 border ${isUnlimited ? 'bg-emerald-500/10 border-emerald-500/35' : 'bg-card/40 border-border/70'} flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <!-- Master Lux Unlimited Mode Card -->
+      <div class="rounded-2xl p-4 border ${isUnlimited ? "bg-emerald-500/10 border-emerald-500/35" : "bg-card/40 border-border/70"} flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl ${isUnlimited ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-primary/10 text-primary border-primary/20'} border flex items-center justify-center shrink-0">
+          <div class="w-10 h-10 rounded-xl ${isUnlimited ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-primary/10 text-primary border-primary/20"} border flex items-center justify-center shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
           </div>
           <div>
             <div class="flex items-center gap-2 flex-wrap">
-              <h3 class="text-sm font-semibold text-foreground m-0">Antigravity Sınırsız Yetki Modu</h3>
-              <span id="perm-active-badge" class="text-xs px-2.5 py-0.5 rounded-full ${isUnlimited ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-blue-500/15 text-blue-400 border-blue-500/30'} border font-medium">
-                ${isUnlimited ? '⚡ Sınırsız Aktif' : `${activeCount} / ${capabilityKeys.length} İzin Aktif`}
+              <h3 class="text-sm font-semibold text-foreground m-0">Lux Sınırsız Yetki Modu</h3>
+              <span id="perm-active-badge" class="text-xs px-2.5 py-0.5 rounded-full ${isUnlimited ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" : "bg-blue-500/15 text-blue-400 border-blue-500/30"} border font-medium">
+                ${isUnlimited ? "⚡ Sınırsız Aktif" : `${activeCount} / ${capabilityKeys.length} İzin Aktif`}
               </span>
             </div>
             <p class="text-xs text-muted-foreground m-0 mt-0.5">
@@ -1072,7 +1102,8 @@ function renderPermissionsSettingsView(container) {
 
       <!-- Categorized Permission Groups -->
       <div class="flex flex-col gap-6" id="perm-groups-container">
-        ${PERMISSION_GROUPS.map(group => `
+        ${PERMISSION_GROUPS.map(
+          (group) => `
           <div class="bg-card/30 border border-border/80 rounded-xl p-5 flex flex-col gap-3.5">
             
             <!-- Category Title & Header -->
@@ -1090,9 +1121,10 @@ function renderPermissionsSettingsView(container) {
 
             <!-- List of Horizontal Permission Rows -->
             <div class="flex flex-col gap-2 pt-1">
-              ${group.items.map(item => {
-                const isChecked = Boolean(perms[item.key]);
-                return `
+              ${group.items
+                .map((item) => {
+                  const isChecked = Boolean(perms[item.key]);
+                  return `
                   <div class="perm-row flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-background/50 hover:bg-card/70 hover:border-border transition-colors group">
                     <div class="flex items-start gap-3.5 pr-4 flex-1 min-w-0">
                       <div class="w-8 h-8 rounded-lg bg-secondary/80 border border-border/40 text-muted-foreground group-hover:text-foreground flex items-center justify-center shrink-0 mt-0.5 transition-colors">
@@ -1101,11 +1133,15 @@ function renderPermissionsSettingsView(container) {
                       <div class="flex flex-col gap-1 min-w-0 flex-1">
                         <div class="flex items-center gap-2 flex-wrap">
                           <span class="text-xs font-medium text-foreground tracking-tight">${escapeHtml(item.title)}</span>
-                          ${item.badge ? `
+                          ${
+                            item.badge
+                              ? `
                             <span class="text-[10px] px-1.5 py-0.2 rounded font-mono font-medium border ${item.badgeClass}">
                               ${escapeHtml(item.badge)}
                             </span>
-                          ` : ''}
+                          `
+                              : ""
+                          }
                         </div>
                         <p class="text-[11px] text-muted-foreground leading-relaxed m-0">
                           ${escapeHtml(item.desc)}
@@ -1115,23 +1151,48 @@ function renderPermissionsSettingsView(container) {
                     
                     <!-- Toggle Switch -->
                     <label class="lux-toggle shrink-0" title="${escapeHtml(item.title)} iznini değiştir">
-                      <input type="checkbox" class="perm-checkbox" data-perm-key="${item.key}" ${isChecked ? 'checked' : ''} />
+                      <input type="checkbox" class="perm-checkbox" data-perm-key="${item.key}" ${isChecked ? "checked" : ""} />
                       <span class="slider"></span>
                     </label>
                   </div>
                 `;
-              }).join("")}
+                })
+                .join("")}
             </div>
 
           </div>
-        `).join("")}
+        `
+        ).join("")}
+      </div>
+
+      <!-- Key Vault (Şifreli Anahtar Kasası) -->
+      <div class="bg-card/30 border border-border/80 rounded-xl p-5 flex flex-col gap-3">
+        <div class="flex items-start justify-between gap-3 flex-wrap pb-2 border-b border-border/40">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-foreground shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <div>
+              <h4 class="text-xs font-semibold text-foreground uppercase tracking-wider m-0">${(window.LuxI18n && LuxI18n.t("vault.title")) || "Anahtar Kasası (Şifreli)"}</h4>
+              <p class="text-[11px] text-muted-foreground m-0">${(window.LuxI18n && LuxI18n.t("vault.subtitle")) || "Gemini / OpenRouter / OpenAI / Anthropic API anahtarları yalnızca bu cihazda şifreli saklanır; arayüze asla düz metin dönülmez."}</p>
+            </div>
+          </div>
+          <button type="button" id="btn-vault-rotate" class="agy-button px-3 py-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-xs text-amber-300 font-medium flex items-center gap-1.5 transition-colors cursor-pointer shrink-0" title="Tüm kasayı güncel şema/anahtarla yeniden şifreler; çözülemeyen kayıt varsa kasa değiştirilmez">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            <span>${(window.LuxI18n && LuxI18n.t("vault.rotate")) || "Kasayı Yeniden Şifrele"}</span>
+          </button>
+        </div>
+        <div class="flex flex-col gap-1">
+          <p class="text-[11px] text-muted-foreground m-0" id="vault-status-text">${(window.LuxI18n && LuxI18n.t("vault.loading")) || "Kasa durumu yükleniyor…"}</p>
+          <p class="text-[10px] text-muted-foreground/70 m-0 break-words" id="vault-detail-text"></p>
+        </div>
       </div>
 
     </div>
   `;
 
   // Attach Toggle Change Handlers
-  container.querySelectorAll(".perm-checkbox").forEach(input => {
+  container.querySelectorAll(".perm-checkbox").forEach((input) => {
     input.addEventListener("change", (e) => {
       const key = input.getAttribute("data-perm-key");
       const isChecked = input.checked;
@@ -1139,7 +1200,7 @@ function renderPermissionsSettingsView(container) {
 
       // Update active count badge
       const currentPerms = window.appStore.getPermissions();
-      const newActive = capabilityKeys.filter(k => Boolean(currentPerms[k])).length;
+      const newActive = capabilityKeys.filter((k) => Boolean(currentPerms[k])).length;
       const nowUnlimited = window.appStore?.isUnlimitedMode?.() ?? false;
       const badge = container.querySelector("#perm-active-badge");
       if (badge) {
@@ -1150,8 +1211,8 @@ function renderPermissionsSettingsView(container) {
       const statusBox = container.querySelector("#perm-status-msg");
       const statusText = container.querySelector("#perm-status-text");
       if (statusBox && statusText) {
-        const itemInfo = PERMISSION_GROUPS.flatMap(g => g.items).find(i => i.key === key);
-        statusText.textContent = `"${itemInfo?.title || key}" izni ${isChecked ? 'etkinleştirildi' : 'kapatıldı'}.`;
+        const itemInfo = PERMISSION_GROUPS.flatMap((g) => g.items).find((i) => i.key === key);
+        statusText.textContent = `"${itemInfo?.title || key}" izni ${isChecked ? "etkinleştirildi" : "kapatıldı"}.`;
         statusBox.classList.remove("hidden");
         clearTimeout(statusBox._timer);
         statusBox._timer = setTimeout(() => {
@@ -1172,9 +1233,80 @@ function renderPermissionsSettingsView(container) {
     window.appStore.resetPermissions();
     renderPermissionsSettingsView(container);
   });
+
+  // --- Key Vault: durum satırı + yeniden şifreleme ---
+  const vi18n = (key, params) => (window.LuxI18n && LuxI18n.t(key, params)) || null;
+  const vaultStatusText = container.querySelector("#vault-status-text");
+  const vaultDetailText = container.querySelector("#vault-detail-text");
+  const vaultRotateBtn = container.querySelector("#btn-vault-rotate");
+  const schemeLabel = (scheme) =>
+    scheme === "safeStorage"
+      ? vi18n("vault.schemeSafeStorage") || "İşletim sistemi anahtar zinciri (safeStorage)"
+      : vi18n("vault.schemeAesGcm") || "AES-256-GCM (dosya tabanlı, makineye özgü)";
+  const fmtDate = (iso) => {
+    try {
+      return iso ? new Date(iso).toLocaleString("tr-TR") : null;
+    } catch (_) {
+      return iso;
+    }
+  };
+  const showVaultToast = (msg) => {
+    const statusBox = container.querySelector("#perm-status-msg");
+    const statusText = container.querySelector("#perm-status-text");
+    if (statusBox && statusText) {
+      statusText.textContent = msg;
+      statusBox.classList.remove("hidden");
+      clearTimeout(statusBox._timer);
+      statusBox._timer = setTimeout(() => statusBox.classList.add("hidden"), 3000);
+    }
+  };
+  const loadVaultStatus = async () => {
+    if (!vaultStatusText) return;
+    try {
+      const res = await window.luxAPI?.secrets?.status?.();
+      if (!res?.success) {
+        vaultStatusText.textContent = `Kasa durumu alınamadı: ${res?.error || "bilinmeyen hata"}`;
+        return;
+      }
+      const migration = res.needsMigration
+        ? ` · v${res.vaultVersion} → güncel şemaya göç bekliyor (Kasayı Yeniden Şifrele)`
+        : " · şema güncel";
+      vaultStatusText.textContent = `Şema v${res.vaultVersion}${migration} · ${res.count} kayıtlı anahtar · ${schemeLabel(res.scheme)}`;
+      const created = fmtDate(res.createdAt);
+      const rotated = fmtDate(res.rotatedAt);
+      const parts = [];
+      if (created) parts.push(`Oluşturuldu: ${created}`);
+      if (rotated) parts.push(`Son yeniden şifreleme: ${rotated}`);
+      if (Array.isArray(res.ids) && res.ids.length) parts.push(`Kayıtlar: ${res.ids.join(", ")}`);
+      if (vaultDetailText) vaultDetailText.textContent = parts.join(" · ");
+    } catch (e) {
+      vaultStatusText.textContent = `Kasa durumu alınamadı: ${e?.message || e}`;
+    }
+  };
+  vaultRotateBtn?.addEventListener("click", async () => {
+    if (!vaultRotateBtn) return;
+    const prevLabel = vaultRotateBtn.innerHTML;
+    vaultRotateBtn.disabled = true;
+    vaultRotateBtn.innerHTML = "<span>" + (vi18n("vault.rotating") || "Yeniden şifreleniyor…") + "</span>";
+    try {
+      const res = await window.luxAPI?.secrets?.rotate?.();
+      if (res?.success) {
+        showVaultToast(vi18n("vault.rotateDone", { count: res.rotated }) || `Kasa yeniden şifrelendi (${res.rotated} anahtar).`);
+      } else if (vaultDetailText) {
+        vaultDetailText.textContent = `HATA: ${res?.error || "Kasa yeniden şifrelenemedi."}`;
+      }
+      await loadVaultStatus();
+    } catch (e) {
+      if (vaultDetailText) vaultDetailText.textContent = `HATA: ${e?.message || e}`;
+    } finally {
+      vaultRotateBtn.disabled = false;
+      vaultRotateBtn.innerHTML = prevLabel;
+    }
+  });
+  loadVaultStatus();
 }
 
-// 1:1 Antigravity Notifications & Sound Settings Component
+// 1:1 Lux Notifications & Sound Settings Component
 function renderNotificationsSettingsView(container) {
   const notifs = window.appStore?.getNotifications() || {
     agentNotifications: true,
@@ -1199,7 +1331,7 @@ function renderNotificationsSettingsView(container) {
             </p>
           </div>
           <label class="lux-toggle shrink-0" title="Ajan bildirimlerini aç / kapat">
-            <input type="checkbox" id="notif-agent-toggle" ${notifs.agentNotifications ? 'checked' : ''} />
+            <input type="checkbox" id="notif-agent-toggle" ${notifs.agentNotifications ? "checked" : ""} />
             <span class="slider"></span>
           </label>
         </div>
@@ -1209,7 +1341,7 @@ function renderNotificationsSettingsView(container) {
       <div class="flex flex-col gap-2 pt-1">
         <h3 class="text-sm font-medium text-foreground tracking-normal m-0">Ses</h3>
         
-        <!-- Sound Card (Multi-Row Container matching 1:1 Antigravity) -->
+        <!-- Sound Card (Multi-Row Container matching 1:1 Lux) -->
         <div class="bg-card/40 border border-border/80 rounded-2xl flex flex-col overflow-hidden hover:border-border transition-colors">
           
           <!-- Row 1: Enable Sounds for Agent -->
@@ -1221,7 +1353,7 @@ function renderNotificationsSettingsView(container) {
               </p>
             </div>
             <label class="lux-toggle shrink-0" title="Ajan seslerini aç / kapat">
-              <input type="checkbox" id="notif-sound-toggle" ${notifs.agentSounds ? 'checked' : ''} />
+              <input type="checkbox" id="notif-sound-toggle" ${notifs.agentSounds ? "checked" : ""} />
               <span class="slider"></span>
             </label>
           </div>
@@ -1240,7 +1372,7 @@ function renderNotificationsSettingsView(container) {
             
             <div class="flex items-center gap-4 shrink-0">
               <!-- Test Chime Speaker Button -->
-              <button type="button" id="btn-test-chime" class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors ${!notifs.agentSounds ? 'opacity-40 pointer-events-none' : ''}" title="Sesi Çal ve Test Et">
+              <button type="button" id="btn-test-chime" class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors ${!notifs.agentSounds ? "opacity-40 pointer-events-none" : ""}" title="Sesi Çal ve Test Et">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
                   <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
@@ -1249,7 +1381,7 @@ function renderNotificationsSettingsView(container) {
               </button>
 
               <!-- Range slider with dynamic fill -->
-              <input type="range" id="notif-volume-slider" min="0" max="100" value="${volume}" style="background: linear-gradient(to right, ${notifs.agentSounds ? '#2F71E3' : '#4b5563'} 0%, ${notifs.agentSounds ? '#2F71E3' : '#4b5563'} ${volume}%, #23242c ${volume}%, #23242c 100%);" class="lux-range-slider" ${!notifs.agentSounds ? 'disabled' : ''} />
+              <input type="range" id="notif-volume-slider" min="0" max="100" value="${volume}" style="background: linear-gradient(to right, ${notifs.agentSounds ? "#2F71E3" : "#4b5563"} 0%, ${notifs.agentSounds ? "#2F71E3" : "#4b5563"} ${volume}%, #23242c ${volume}%, #23242c 100%);" class="lux-range-slider" ${!notifs.agentSounds ? "disabled" : ""} />
               
               <!-- Volume Percentage text -->
               <span id="notif-volume-text" class="text-xs font-semibold text-foreground w-11 text-right font-mono">%${volume}</span>
@@ -1294,12 +1426,12 @@ function renderNotificationsSettingsView(container) {
     if (isChecked && "Notification" in window && Notification.permission !== "granted") {
       Notification.requestPermission();
     }
-    showStatus(`Ajan bildirimleri ${isChecked ? 'etkinleştirildi' : 'kapatıldı'}.`);
+    showStatus(`Ajan bildirimleri ${isChecked ? "etkinleştirildi" : "kapatıldı"}.`);
   });
 
   function updateSliderFill(val, enabled) {
     if (volumeSlider) {
-      const color = enabled ? '#2F71E3' : '#4b5563';
+      const color = enabled ? "#2F71E3" : "#4b5563";
       volumeSlider.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${val}%, #23242c ${val}%, #23242c 100%)`;
     }
   }
@@ -1308,7 +1440,7 @@ function renderNotificationsSettingsView(container) {
   soundToggle?.addEventListener("change", (e) => {
     const isChecked = e.target.checked;
     window.appStore.setNotificationSetting("agentSounds", isChecked);
-    
+
     if (volumeSlider) {
       volumeSlider.disabled = !isChecked;
       updateSliderFill(Number(volumeSlider.value), isChecked);
@@ -1324,7 +1456,7 @@ function renderNotificationsSettingsView(container) {
     if (isChecked) {
       window.appStore.playNotificationSound();
     }
-    showStatus(`Ajan sesleri ${isChecked ? 'etkinleştirildi' : 'kapatıldı'}.`);
+    showStatus(`Ajan sesleri ${isChecked ? "etkinleştirildi" : "kapatıldı"}.`);
   });
 
   // Volume Slider Live Update & Save
@@ -1346,14 +1478,14 @@ function renderNotificationsSettingsView(container) {
   });
 }
 
-// 1:1 Antigravity General Settings View (Includes Voice mode section - Image 2)
+// 1:1 Lux General Settings View (Includes Voice mode section - Image 2)
 function renderGeneralSettingsView(container) {
   const voiceSectionHtml = window.renderVoiceModeSettingsSection ? window.renderVoiceModeSettingsSection() : "";
 
   container.innerHTML = `
     <div class="flex flex-col gap-6 w-full max-w-3xl mx-auto pb-8 select-none">
       
-      <!-- Voice mode Section (1:1 Antigravity media_1794235540942_e9ae1001.png) -->
+      <!-- Voice mode Section (1:1 Lux media_1794235540942_e9ae1001.png) -->
       ${voiceSectionHtml}
 
       <!-- Agent Behavior Section -->
@@ -1367,7 +1499,7 @@ function renderGeneralSettingsView(container) {
             </p>
           </div>
           <label class="lux-toggle shrink-0">
-            <input type="checkbox" id="general-auto-heal-toggle" ${window.appStore?.state?.general?.autoHeal !== false ? 'checked' : ''} />
+            <input type="checkbox" id="general-auto-heal-toggle" ${window.appStore?.state?.general?.autoHeal !== false ? "checked" : ""} />
             <span class="slider"></span>
           </label>
         </div>
@@ -1433,7 +1565,7 @@ function renderGeneralSettingsView(container) {
   });
 }
 
-window.applyAccentTheme = function(hex) {
+window.applyAccentTheme = function (hex) {
   if (!hex) return;
   document.documentElement.style.setProperty("--primary", hex);
   const styleId = "lux-dynamic-accent-style";
@@ -1448,7 +1580,7 @@ window.applyAccentTheme = function(hex) {
 
 function renderApplicationSettingsView(container) {
   const appConf = window.appStore?.state?.application || {};
-  const wsDir = appConf.workspaceDir || "c:\\Users\\SERVER\\Desktop\\LUX_ai";
+  const wsDir = appConf.workspaceDir || window.luxAppInfo?.currentWorkspace || "";
 
   container.innerHTML = `
     <div class="flex flex-col gap-6 w-full max-w-3xl mx-auto pb-8 select-none">
@@ -1460,7 +1592,7 @@ function renderApplicationSettingsView(container) {
             <div class="flex flex-col gap-1 pr-4 flex-1 min-w-0">
               <span class="text-sm font-medium text-foreground tracking-tight">Varsayılan Çalışma Dizini</span>
               <p id="app-settings-workspace-path" class="text-xs text-muted-foreground leading-relaxed m-0 font-mono text-[11px] text-primary/80 truncate">
-                ${escapeHtml(wsDir)}
+                ${escapeHtml(wsDir) || '<span class="text-muted-foreground/60">(ayarlanmadı — main süreçten çözülür)</span>'}
               </p>
             </div>
             <button type="button" id="btn-app-browse-workspace" class="agy-button bg-secondary/80 hover:bg-secondary text-foreground text-xs font-medium px-3.5 py-1.5 rounded-full border border-border/60 cursor-pointer transition-colors shrink-0">
@@ -1476,7 +1608,7 @@ function renderApplicationSettingsView(container) {
               </p>
             </div>
             <label class="lux-toggle shrink-0">
-              <input type="checkbox" id="app-hardware-accel-toggle" ${appConf.hardwareAccel !== false ? 'checked' : ''} />
+              <input type="checkbox" id="app-hardware-accel-toggle" ${appConf.hardwareAccel !== false ? "checked" : ""} />
               <span class="slider"></span>
             </label>
           </div>
@@ -1489,7 +1621,7 @@ function renderApplicationSettingsView(container) {
               </p>
             </div>
             <label class="lux-toggle shrink-0">
-              <input type="checkbox" id="app-auto-devtools-toggle" ${appConf.autoDevTools ? 'checked' : ''} />
+              <input type="checkbox" id="app-auto-devtools-toggle" ${appConf.autoDevTools ? "checked" : ""} />
               <span class="slider"></span>
             </label>
           </div>
@@ -1512,17 +1644,20 @@ function renderApplicationSettingsView(container) {
     </div>
   `;
 
-  window.luxAPI?.getAppInfo?.().then(info => {
-    if (!container.isConnected || !info) return;
-    const wsEl = container.querySelector("#app-settings-workspace-path");
-    if (wsEl && !appConf.workspaceDir && info.currentWorkspace) {
-      wsEl.textContent = info.currentWorkspace;
-    }
-    const verEl = container.querySelector("#app-settings-version-line");
-    if (verEl) {
-      verEl.textContent = `Sürüm: ${info.version || "1.0.0"} · Electron Native Engine (${info.platform || "win32"})`;
-    }
-  }).catch(() => {});
+  window.luxAPI
+    ?.getAppInfo?.()
+    .then((info) => {
+      if (!container.isConnected || !info) return;
+      const wsEl = container.querySelector("#app-settings-workspace-path");
+      if (wsEl && !appConf.workspaceDir && info.currentWorkspace) {
+        wsEl.textContent = info.currentWorkspace;
+      }
+      const verEl = container.querySelector("#app-settings-version-line");
+      if (verEl) {
+        verEl.textContent = `Sürüm: ${info.version || "1.0.0"} · Electron Native Engine (${info.platform || "win32"})`;
+      }
+    })
+    .catch(() => {});
 
   container.querySelector("#btn-app-browse-workspace")?.addEventListener("click", async () => {
     const picked = await window.luxAPI?.pickFolder?.();
@@ -1553,7 +1688,7 @@ function renderApplicationSettingsView(container) {
 function renderAppearanceSettingsView(container) {
   const activeAccent = (window.appStore?.state?.appearance?.accentColor || "#2F71E3").toUpperCase();
   const accents = [
-    { hex: "#2F71E3", title: "Antigravity Blue" },
+    { hex: "#2F71E3", title: "Lux Blue" },
     { hex: "#10B981", title: "Cyber Emerald" },
     { hex: "#8B5CF6", title: "Cosmic Purple" },
     { hex: "#F59E0B", title: "Solar Amber" }
@@ -1569,11 +1704,11 @@ function renderAppearanceSettingsView(container) {
             <div class="flex flex-col gap-1 pr-6 flex-1 min-w-0">
               <span class="text-sm font-medium text-foreground tracking-tight">Karanlık Tema Modu</span>
               <p class="text-xs text-muted-foreground leading-relaxed m-0">
-                Google Antigravity IDE (#070709) koyu tema renk standardı.
+                Google Lux IDE (#070709) koyu tema renk standardı.
               </p>
             </div>
             <span class="text-xs text-primary font-medium px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20">
-              Onyx Antigravity (Varsayılan)
+              Onyx Lux (Varsayılan)
             </span>
           </div>
 
@@ -1585,10 +1720,12 @@ function renderAppearanceSettingsView(container) {
               </p>
             </div>
             <div class="flex items-center gap-2">
-              ${accents.map(a => {
-                const isActive = a.hex === activeAccent;
-                return `<button type="button" class="accent-swatch-btn w-6 h-6 rounded-full cursor-pointer transition-transform ${isActive ? 'border-2 border-white scale-110 shadow-sm' : 'border border-white/20 hover:scale-105'}" style="background-color: ${a.hex};" data-accent="${a.hex}" title="${a.title}"></button>`;
-              }).join('')}
+              ${accents
+                .map((a) => {
+                  const isActive = a.hex === activeAccent;
+                  return `<button type="button" class="accent-swatch-btn w-6 h-6 rounded-full cursor-pointer transition-transform ${isActive ? "border-2 border-white scale-110 shadow-sm" : "border border-white/20 hover:scale-105"}" style="background-color: ${a.hex};" data-accent="${a.hex}" title="${a.title}"></button>`;
+                })
+                .join("")}
             </div>
           </div>
 
@@ -1609,7 +1746,7 @@ function renderAppearanceSettingsView(container) {
     </div>
   `;
 
-  container.querySelectorAll(".accent-swatch-btn").forEach(btn => {
+  container.querySelectorAll(".accent-swatch-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const hex = btn.getAttribute("data-accent");
       if (!hex) return;
@@ -1648,12 +1785,17 @@ function renderAutomationsSettingsView(container) {
         </div>
 
         <div class="bg-card/40 border border-border/80 rounded-2xl flex flex-col overflow-hidden hover:border-border transition-colors divide-y divide-border/60">
-          ${list.length === 0 ? `
+          ${
+            list.length === 0
+              ? `
             <div class="p-6 text-center text-xs text-muted-foreground">Henüz kayıtlı otomasyon bulunmuyor.</div>
-          ` : list.map(item => `
+          `
+              : list
+                  .map(
+                    (item) => `
             <div class="p-5 flex items-center justify-between gap-3">
               <div class="flex items-center gap-3.5 flex-1 min-w-0">
-                <div class="w-9 h-9 rounded-xl ${item.color === 'purple' ? 'bg-purple-500/15 text-purple-400 border-purple-500/25' : 'bg-blue-500/15 text-blue-400 border-blue-500/25'} border flex items-center justify-center shrink-0">
+                <div class="w-9 h-9 rounded-xl ${item.color === "purple" ? "bg-purple-500/15 text-purple-400 border-purple-500/25" : "bg-blue-500/15 text-blue-400 border-blue-500/25"} border flex items-center justify-center shrink-0">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 </div>
                 <div class="flex flex-col gap-0.5 min-w-0 flex-1">
@@ -1667,12 +1809,15 @@ function renderAutomationsSettingsView(container) {
               <div class="flex items-center gap-2 shrink-0">
                 <button type="button" class="btn-delete-automation p-1 rounded text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer" data-auto-id="${escapeHtml(item.id)}" title="Sil">✕</button>
                 <label class="lux-toggle shrink-0">
-                  <input type="checkbox" class="automation-enabled-toggle" data-auto-id="${escapeHtml(item.id)}" ${item.enabled ? 'checked' : ''} />
+                  <input type="checkbox" class="automation-enabled-toggle" data-auto-id="${escapeHtml(item.id)}" ${item.enabled ? "checked" : ""} />
                   <span class="slider"></span>
                 </label>
               </div>
             </div>
-          `).join("")}
+          `
+                  )
+                  .join("")
+          }
         </div>
       </div>
     </div>
@@ -1706,10 +1851,10 @@ function renderAutomationsSettingsView(container) {
     renderAutomationsSettingsView(container);
   });
 
-  container.querySelectorAll(".automation-enabled-toggle").forEach(chk => {
+  container.querySelectorAll(".automation-enabled-toggle").forEach((chk) => {
     chk.addEventListener("change", (e) => {
       const id = e.target.getAttribute("data-auto-id");
-      const found = (window.appStore.state.automations || []).find(a => a.id === id);
+      const found = (window.appStore.state.automations || []).find((a) => a.id === id);
       if (found) {
         found.enabled = Boolean(e.target.checked);
         window.appStore.saveState();
@@ -1717,10 +1862,10 @@ function renderAutomationsSettingsView(container) {
     });
   });
 
-  container.querySelectorAll(".btn-delete-automation").forEach(btn => {
+  container.querySelectorAll(".btn-delete-automation").forEach((btn) => {
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-auto-id");
-      window.appStore.state.automations = (window.appStore.state.automations || []).filter(a => a.id !== id);
+      window.appStore.state.automations = (window.appStore.state.automations || []).filter((a) => a.id !== id);
       window.appStore.saveState();
       renderAutomationsSettingsView(container);
     });
@@ -1736,7 +1881,7 @@ function renderCustomizationsSettingsView(container) {
           
           <div class="p-5 flex items-center justify-between">
             <div class="flex flex-col gap-1 pr-6 flex-1 min-w-0">
-              <span class="text-sm font-medium text-foreground tracking-tight">Antigravity Kuralları (.rules)</span>
+              <span class="text-sm font-medium text-foreground tracking-tight">Lux Kuralları (.rules)</span>
               <p class="text-xs text-muted-foreground leading-relaxed m-0">
                 Çalışma alanındaki kod standartlarını ve ajan davranış yönergelerini otomatik uygular.
               </p>
@@ -1809,7 +1954,9 @@ function renderShortcutsSettingsView(container) {
   container.innerHTML = `
     <div class="flex flex-col gap-3 w-full max-w-3xl mx-auto pb-8 select-none">
       <div class="bg-card/40 border border-border/80 rounded-2xl overflow-hidden divide-y divide-border/50">
-        ${shortcuts.map(s => `
+        ${shortcuts
+          .map(
+            (s) => `
           <div class="px-5 py-3 flex items-center justify-between hover:bg-secondary/20 transition-colors">
             <div class="flex items-center gap-3">
               <span class="text-[10px] px-2 py-0.5 rounded bg-secondary text-muted-foreground font-medium">${escapeHtml(s.cat)}</span>
@@ -1817,7 +1964,9 @@ function renderShortcutsSettingsView(container) {
             </div>
             <kbd class="px-2 py-1 rounded bg-background border border-border text-[11px] font-mono text-primary">${escapeHtml(s.key)}</kbd>
           </div>
-        `).join('')}
+        `
+          )
+          .join("")}
       </div>
     </div>
   `;
@@ -1826,8 +1975,8 @@ function renderShortcutsSettingsView(container) {
 function renderConversationsSettingsView(container) {
   const projects = window.appStore?.state?.projects || [];
   const allConvs = [];
-  projects.forEach(p => {
-    (p.conversations || []).forEach(c => {
+  projects.forEach((p) => {
+    (p.conversations || []).forEach((c) => {
       allConvs.push({ project: p, conv: c });
     });
   });
@@ -1842,9 +1991,14 @@ function renderConversationsSettingsView(container) {
         <button type="button" id="btn-conv-tab-new" class="agy-button px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium cursor-pointer">+ Yeni Sohbet</button>
       </div>
       <div class="bg-card/40 border border-border/80 rounded-2xl overflow-hidden divide-y divide-border/50">
-        ${allConvs.length === 0 ? `
+        ${
+          allConvs.length === 0
+            ? `
           <div class="p-6 text-center text-xs text-muted-foreground">Henüz kayıtlı sohbet yok.</div>
-        ` : allConvs.map(({ project, conv }) => `
+        `
+            : allConvs
+                .map(
+                  ({ project, conv }) => `
           <div class="p-3.5 flex items-center justify-between gap-3 hover:bg-secondary/20 transition-colors">
             <div class="min-w-0 flex-1">
               <div class="text-xs font-medium text-foreground truncate">${escapeHtml(conv.title)}</div>
@@ -1853,7 +2007,7 @@ function renderConversationsSettingsView(container) {
                 <span>·</span>
                 <span>${(conv.messages || []).length} mesaj</span>
                 <span>·</span>
-                <span>${escapeHtml(conv.timestamp || 'Şimdi')}</span>
+                <span>${escapeHtml(conv.timestamp || "Şimdi")}</span>
               </div>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
@@ -1861,7 +2015,10 @@ function renderConversationsSettingsView(container) {
               <button type="button" class="btn-conv-export px-2.5 py-1 rounded-lg border border-border/70 hover:bg-secondary text-xs text-secondary-foreground cursor-pointer" data-conv-id="${escapeHtml(conv.id)}">.md</button>
             </div>
           </div>
-        `).join("")}
+        `
+                )
+                .join("")
+        }
       </div>
     </div>
   `;
@@ -1872,7 +2029,7 @@ function renderConversationsSettingsView(container) {
     window.renderApp();
   });
 
-  container.querySelectorAll(".btn-conv-jump").forEach(btn => {
+  container.querySelectorAll(".btn-conv-jump").forEach((btn) => {
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-conv-id");
       if (id) window.appStore.selectConversation(id);
@@ -1881,17 +2038,21 @@ function renderConversationsSettingsView(container) {
     });
   });
 
-  container.querySelectorAll(".btn-conv-export").forEach(btn => {
+  container.querySelectorAll(".btn-conv-export").forEach((btn) => {
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-conv-id");
-      const entry = allConvs.find(item => item.conv.id === id);
+      const entry = allConvs.find((item) => item.conv.id === id);
       if (!entry) return;
-      const md = (entry.conv.messages || []).map(m => `### ${m.role === 'user' ? 'Kullanıcı' : 'Lux AI'}\n\n${m.content}\n`).join('\n---\n\n');
+      const md = (entry.conv.messages || [])
+        .map((m) => `### ${m.role === "user" ? "Kullanıcı" : "Lux AI"}\n\n${m.content}\n`)
+        .join("\n---\n\n");
       const blob = new Blob([md], { type: "text/markdown" });
       const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
+      a.href = url;
       a.download = `${entry.conv.title || "lux_ai_chat"}.md`;
       a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
     });
   });
 }
@@ -1921,28 +2082,28 @@ const PROVIDERS_DATA = {
     color: "#3B82F6",
     icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/></svg>`
   },
-  "Anthropic": {
+  Anthropic: {
     endpoint: "https://api.anthropic.com/v1",
     placeholderModel: "claude-3-5-sonnet-20241022",
     badgeClass: "text-amber-400 bg-amber-500/10 border-amber-500/20",
     color: "#F59E0B",
     icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M6 12h12" stroke="#000" stroke-width="2"/></svg>`
   },
-  "OpenAI": {
+  OpenAI: {
     endpoint: "https://api.openai.com/v1",
     placeholderModel: "gpt-4o",
     badgeClass: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
     color: "#10B981",
     icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>`
   },
-  "DeepSeek": {
+  DeepSeek: {
     endpoint: "https://api.deepseek.com/v1",
     placeholderModel: "deepseek-chat",
     badgeClass: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
     color: "#6366F1",
     icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 3L2 12h5v9h10v-9h5L12 3z"/></svg>`
   },
-  "OpenRouter": {
+  OpenRouter: {
     endpoint: "https://openrouter.ai/api/v1",
     placeholderModel: "openrouter/free",
     badgeClass: "text-sky-400 bg-sky-500/10 border-sky-500/20",
@@ -1981,7 +2142,7 @@ function renderStatusBadge(model) {
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
           <path d="M20 6L9 17l-5-5"/>
         </svg>
-        <span>${escapeHtml(model.lastTested || 'Bağlantı Başarılı')}</span>
+        <span>${escapeHtml(model.lastTested || "Bağlantı Başarılı")}</span>
       </span>
     `;
   } else if (model.status === "error") {
@@ -1990,14 +2151,14 @@ function renderStatusBadge(model) {
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
-        <span>${escapeHtml(model.lastTested || 'Bağlantı Hatası')}</span>
+        <span>${escapeHtml(model.lastTested || "Bağlantı Hatası")}</span>
       </span>
     `;
   } else {
     return `
       <span class="inline-flex items-center gap-1 text-muted-foreground/70">
         <span class="w-1.5 h-1.5 rounded-full bg-muted-foreground/50"></span>
-        <span>${escapeHtml(model.lastTested || 'Henüz test edilmedi')}</span>
+        <span>${escapeHtml(model.lastTested || "Henüz test edilmedi")}</span>
       </span>
     `;
   }
@@ -2007,11 +2168,12 @@ function renderLocalDiscoveryBanner() {
   const ds = window.luxLocalDiscoveryState || {};
   const runtimes = Array.isArray(ds.runtimes) ? ds.runtimes : [];
   const models = window.appStore?.getModels?.() || [];
-  const missingOnline = runtimes.filter(rt => {
+  const missingOnline = runtimes.filter((rt) => {
     if (!rt.online) return false;
-    if (rt.id === "ollama") return !models.some(m => m.name === "Ollama (Yerel)" || m.provider === "Ollama / Yerel" || m.endpoint?.includes("11434"));
-    if (rt.id === "lmstudio") return !models.some(m => m.endpoint?.includes("1234") || /lm\s*studio/i.test(m.name || ""));
-    if (rt.id === "9router") return !models.some(m => m.endpoint?.includes("20128") || m.name === "9Router");
+    if (rt.id === "ollama")
+      return !models.some((m) => m.name === "Ollama (Yerel)" || m.provider === "Ollama / Yerel" || m.endpoint?.includes("11434"));
+    if (rt.id === "lmstudio") return !models.some((m) => m.endpoint?.includes("1234") || /lm\s*studio/i.test(m.name || ""));
+    if (rt.id === "9router") return !models.some((m) => m.endpoint?.includes("20128") || m.name === "9Router");
     return false;
   });
 
@@ -2020,28 +2182,46 @@ function renderLocalDiscoveryBanner() {
       <div class="flex flex-col gap-1.5 min-w-0">
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-xs font-semibold text-foreground">Yerel AI Durumu</span>
-          ${ds.skipped ? `
+          ${
+            ds.skipped
+              ? `
             <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">Yerel ağ izni kapalı</span>
-          ` : runtimes.length > 0 ? runtimes.map(rt => `
-            <span class="text-[10px] px-2 py-0.5 rounded-full font-mono border ${rt.online ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-secondary/60 text-muted-foreground border-border/40'}">
-              ${rt.online ? '●' : '○'} ${rt.label} · ${rt.port}${rt.online ? ` (${rt.modelsCount})` : ''}
+          `
+              : runtimes.length > 0
+                ? runtimes
+                    .map(
+                      (rt) => `
+            <span class="text-[10px] px-2 py-0.5 rounded-full font-mono border ${rt.online ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-secondary/60 text-muted-foreground border-border/40"}">
+              ${rt.online ? "●" : "○"} ${rt.label} · ${rt.port}${rt.online ? ` (${rt.modelsCount})` : ""}
             </span>
-          `).join('') : `
+          `
+                    )
+                    .join("")
+                : `
             <span class="text-[10px] text-muted-foreground">Henüz taranmadı</span>
-          `}
+          `
+          }
         </div>
         <span class="text-[11px] text-muted-foreground">
-          ${ds.skipped ? escapeHtml(ds.reason) : 'Ollama (11434), LM Studio (1234) ve 9Router (20128) portlarını algılar; silinen modelleri zorla geri eklemez. Ses seçiminizden tamamen bağımsızdır.'}
+          ${ds.skipped ? escapeHtml(ds.reason) : "Ollama (11434), LM Studio (1234) ve 9Router (20128) portlarını algılar; silinen modelleri zorla geri eklemez. Ses seçiminizden tamamen bağımsızdır."}
         </span>
-        ${missingOnline.length > 0 ? `
+        ${
+          missingOnline.length > 0
+            ? `
           <div class="flex items-center gap-1.5 flex-wrap pt-1">
-            ${missingOnline.map(rt => `
+            ${missingOnline
+              .map(
+                (rt) => `
               <button type="button" class="btn-add-discovered-runtime agy-button text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 cursor-pointer transition-colors" data-runtime-id="${escapeHtml(rt.id)}">
                 + ${escapeHtml(rt.label)} Ekle (İsteğe Bağlı)
               </button>
-            `).join('')}
+            `
+              )
+              .join("")}
           </div>
-        ` : ''}
+        `
+            : ""
+        }
       </div>
       <button type="button" id="btn-scan-local-ai" class="agy-button text-xs h-8 px-3 rounded-lg bg-primary/15 hover:bg-primary/25 text-primary border border-primary/30 cursor-pointer transition-colors flex items-center gap-1.5 shrink-0 font-medium">
         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -2054,12 +2234,14 @@ function renderLocalDiscoveryBanner() {
 function renderModelsSettingsView(container) {
   if (!container) return;
   const models = window.appStore.getModels();
-  const editingModel = editingModelId ? models.find(m => m.id === editingModelId) : null;
+  const editingModel = editingModelId ? models.find((m) => m.id === editingModelId) : null;
   const activeProvider = editingModel ? editingModel.provider : "Google Gemini";
   const provConfig = PROVIDERS_DATA[activeProvider] || PROVIDERS_DATA["Özel / OpenAI Uyumlu"];
-  const editingIsOpenRouter = Boolean(editingModel && (editingModel.provider === "OpenRouter" || /openrouter\.ai/i.test(editingModel.endpoint || "")));
+  const editingIsOpenRouter = Boolean(
+    editingModel && (editingModel.provider === "OpenRouter" || /openrouter\.ai/i.test(editingModel.endpoint || ""))
+  );
   const editingEffectiveKey = editingModel
-    ? ((editingModel.apiKey || "").trim() || (editingIsOpenRouter ? (window.appStore?.getOpenRouterApiKey?.() || "") : ""))
+    ? (editingModel.apiKey || "").trim() || (editingIsOpenRouter ? window.appStore?.getOpenRouterApiKey?.() || "" : "")
     : "";
 
   container.innerHTML = `
@@ -2072,24 +2254,29 @@ function renderModelsSettingsView(container) {
       <div class="bg-card/40 border border-border/80 rounded-xl p-5 shadow-sm" id="model-form-container">
         <div class="flex items-center justify-between pb-3 mb-4 border-b border-border/40">
           <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg ${editingModel ? 'bg-amber-500/20 text-amber-400' : 'bg-primary/15 text-primary'} flex items-center justify-center">
-              ${editingModel ? 
-                `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 -960 960 960" fill="currentColor"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>` : 
-                `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor"><path d="M450-450H250q-12.75,0-21.37-8.63T220-480.01t8.62-21.37T250-510H450V-710q0-12.75 8.63-21.37T480.01-740t21.37,8.62T510-710v200H710q12.75,0 21.37,8.63T740-479.99t-8.62,21.37T710-450H510v200q0,12.75-8.63,21.37T479.99-220t-21.37-8.62T450-250V-450Z"/></svg>`
+            <div class="w-8 h-8 rounded-lg ${editingModel ? "bg-amber-500/20 text-amber-400" : "bg-primary/15 text-primary"} flex items-center justify-center">
+              ${
+                editingModel
+                  ? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 -960 960 960" fill="currentColor"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>`
+                  : `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor"><path d="M450-450H250q-12.75,0-21.37-8.63T220-480.01t8.62-21.37T250-510H450V-710q0-12.75 8.63-21.37T480.01-740t21.37,8.62T510-710v200H710q12.75,0 21.37,8.63T740-479.99t-8.62,21.37T710-450H510v200q0,12.75-8.63,21.37T479.99-220t-21.37-8.62T450-250V-450Z"/></svg>`
               }
             </div>
             <div>
               <h3 class="text-sm font-semibold text-foreground m-0">
-                ${editingModel ? `Modeli Düzenle: <span class="text-amber-400 font-mono">${escapeHtml(editingModel.name)}</span>` : 'Yeni Model Ekle'}
+                ${editingModel ? `Modeli Düzenle: <span class="text-amber-400 font-mono">${escapeHtml(editingModel.name)}</span>` : "Yeni Model Ekle"}
               </h3>
               <p class="text-xs text-muted-foreground m-0 mt-0.5">Yapay zeka sağlayıcınızı, API kimlik bilgilerinizi ve endpoint adresini yapılandırın.</p>
             </div>
           </div>
-          ${editingModel ? `
+          ${
+            editingModel
+              ? `
             <button id="btn-cancel-edit-mode" class="agy-button text-xs h-7 px-2.5 rounded-lg border border-border/80 hover:bg-secondary text-muted-foreground hover:text-foreground cursor-pointer transition-colors">
               ✕ Vazgeç / Yeni Ekle
             </button>
-          ` : ''}
+          `
+              : ""
+          }
         </div>
 
         <!-- Form Alanları (2 Sütunlu Izgara) -->
@@ -2100,7 +2287,7 @@ function renderModelsSettingsView(container) {
               <span>Model Adı (Etiket)</span>
               <span class="text-red-400">*</span>
             </label>
-            <input type="text" id="mf-name" value="${escapeHtml(editingModel ? editingModel.name : '')}" placeholder="örn: Gemini 1.5 Pro, Claude 3.5 Sonnet, Llama 3 70B" class="model-input-field" />
+            <input type="text" id="mf-name" value="${escapeHtml(editingModel ? editingModel.name : "")}" placeholder="örn: Gemini 1.5 Pro, Claude 3.5 Sonnet, Llama 3 70B" class="model-input-field" />
           </div>
 
           <!-- Sağlayıcı / API Tipi -->
@@ -2110,9 +2297,13 @@ function renderModelsSettingsView(container) {
               <span class="text-red-400">*</span>
             </label>
             <select id="mf-provider" class="model-input-field cursor-pointer" style="background-color: #141418; color: #FAFAFA; color-scheme: dark;">
-              ${Object.keys(PROVIDERS_DATA).map(p => `
-                <option value="${escapeHtml(p)}" ${p === activeProvider ? 'selected' : ''} class="bg-[#16161b] text-[#f3f4f6]" style="background-color: #16161b; color: #f3f4f6;">${escapeHtml(p)}</option>
-              `).join('')}
+              ${Object.keys(PROVIDERS_DATA)
+                .map(
+                  (p) => `
+                <option value="${escapeHtml(p)}" ${p === activeProvider ? "selected" : ""} class="bg-[#16161b] text-[#f3f4f6]" style="background-color: #16161b; color: #f3f4f6;">${escapeHtml(p)}</option>
+              `
+                )
+                .join("")}
             </select>
           </div>
 
@@ -2132,7 +2323,7 @@ function renderModelsSettingsView(container) {
               <select id="mf-model-preset-select" class="model-input-field cursor-pointer flex-1 text-xs" style="background-color: #141418; color: #FAFAFA; color-scheme: dark;">
                 <option value="" class="bg-[#16161b] text-[#f3f4f6]" style="background-color: #16161b; color: #f3f4f6;">-- Listeden Model Seçin --</option>
               </select>
-              <input type="text" id="mf-model-id" value="${escapeHtml(editingModel ? editingModel.modelId : (provConfig.placeholderModel || ''))}" placeholder="${escapeHtml(provConfig.placeholderModel)}" class="model-input-field font-mono flex-1 text-xs" />
+              <input type="text" id="mf-model-id" value="${escapeHtml(editingModel ? editingModel.modelId : provConfig.placeholderModel || "")}" placeholder="${escapeHtml(provConfig.placeholderModel)}" class="model-input-field font-mono flex-1 text-xs" />
             </div>
           </div>
 
@@ -2141,7 +2332,7 @@ function renderModelsSettingsView(container) {
             <label class="text-xs font-medium text-foreground">
               <span>API Endpoint / Base URL (Opsiyonel)</span>
             </label>
-            <input type="text" id="mf-endpoint" value="${escapeHtml(editingModel ? editingModel.endpoint : (provConfig.endpoint || ''))}" placeholder="https://api.openai.com/v1 veya http://localhost:11434/v1" class="model-input-field font-mono" />
+            <input type="text" id="mf-endpoint" value="${escapeHtml(editingModel ? editingModel.endpoint : provConfig.endpoint || "")}" placeholder="https://api.openai.com/v1 veya http://localhost:11434/v1" class="model-input-field font-mono" />
           </div>
 
           <!-- API Key / Token (Tam Genişlik) -->
@@ -2168,7 +2359,7 @@ function renderModelsSettingsView(container) {
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-5 pt-4 border-t border-border/40">
           <div class="flex items-center gap-3">
             <label class="flex items-center gap-2 cursor-pointer select-none text-xs text-secondary-foreground hover:text-foreground">
-              <input type="checkbox" id="mf-is-default" ${editingModel?.isDefault ? 'checked' : ''} class="w-4 h-4 rounded bg-secondary border-border text-primary cursor-pointer" />
+              <input type="checkbox" id="mf-is-default" ${editingModel?.isDefault ? "checked" : ""} class="w-4 h-4 rounded bg-secondary border-border text-primary cursor-pointer" />
               <span>Bu modeli varsayılan yap</span>
             </label>
             <div id="mf-test-status" class="text-xs transition-all"></div>
@@ -2188,7 +2379,7 @@ function renderModelsSettingsView(container) {
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 -960 960 960" fill="currentColor">
                 <path d="M840-680v480q0 33-23.5 56.5T760-120H200q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h480l160 160Zm-80 34L646-760H200v560h560v-446ZM480-240q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35ZM240-560h360v-160H240v160Zm-40-86v446-560 114Z"/>
               </svg>
-              <span>${editingModel ? 'Değişiklikleri Güncelle' : '+ Modeli Kaydet'}</span>
+              <span>${editingModel ? "Değişiklikleri Güncelle" : "+ Modeli Kaydet"}</span>
             </button>
           </div>
         </div>
@@ -2208,23 +2399,32 @@ function renderModelsSettingsView(container) {
 
         <!-- Modeller Listesi (Alt alta yatay liste) -->
         <div class="flex flex-col gap-2.5" id="models-cards-list">
-          ${models.length === 0 ? `
+          ${
+            models.length === 0
+              ? `
             <div class="border border-dashed border-border/60 rounded-xl p-8 text-center text-muted-foreground text-xs flex flex-col items-center gap-3">
               <span>Kayıtlı model bulunmuyor. Yukarıdaki formdan dilediğin LLM modelini ekleyebilirsin.</span>
               <button type="button" id="btn-restore-default-models" class="agy-button text-xs h-7 px-3 rounded-lg border border-border/70 hover:bg-secondary text-secondary-foreground hover:text-foreground cursor-pointer transition-colors">
                 Örnek Modelleri Yükle
               </button>
             </div>
-          ` : models.map(m => {
-            const pConf = PROVIDERS_DATA[m.provider] || PROVIDERS_DATA["Özel / OpenAI Uyumlu"];
-            const isOpenRouterCard = m.provider === "OpenRouter" || /openrouter\.ai/i.test(m.endpoint || "");
-            const effectiveKey = (m.apiKey || "").trim() || (isOpenRouterCard ? (window.appStore?.getOpenRouterApiKey?.() || "") : "");
-            const isLocalCard = m.provider?.includes("Yerel") || /localhost|127\.0\.0\.1/.test(m.endpoint || "");
-            const maskedKey = effectiveKey
-              ? (effectiveKey.length > 8 ? `${effectiveKey.slice(0, 4)}••••••••${effectiveKey.slice(-4)}` : '••••••••')
-              : (isLocalCard ? 'Anahtarsız (Yerel)' : 'API Anahtarı Gerekli');
-            return `
-              <div class="model-card-item bg-card/30 border ${m.id === editingModelId ? 'border-amber-500/60 shadow-[0_0_12px_rgba(245,158,11,0.15)]' : 'border-border/70'} rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 select-none" data-model-id="${escapeHtml(m.id)}">
+          `
+              : models
+                  .map((m) => {
+                    const pConf = PROVIDERS_DATA[m.provider] || PROVIDERS_DATA["Özel / OpenAI Uyumlu"];
+                    const isOpenRouterCard = m.provider === "OpenRouter" || /openrouter\.ai/i.test(m.endpoint || "");
+                    const effectiveKey =
+                      (m.apiKey || "").trim() || (isOpenRouterCard ? window.appStore?.getOpenRouterApiKey?.() || "" : "");
+                    const isLocalCard = m.provider?.includes("Yerel") || /localhost|127\.0\.0\.1/.test(m.endpoint || "");
+                    const maskedKey = effectiveKey
+                      ? effectiveKey.length > 8
+                        ? `${effectiveKey.slice(0, 4)}••••••••${effectiveKey.slice(-4)}`
+                        : "••••••••"
+                      : isLocalCard
+                        ? "Anahtarsız (Yerel)"
+                        : "API Anahtarı Gerekli";
+                    return `
+              <div class="model-card-item bg-card/30 border ${m.id === editingModelId ? "border-amber-500/60 shadow-[0_0_12px_rgba(245,158,11,0.15)]" : "border-border/70"} rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 select-none" data-model-id="${escapeHtml(m.id)}">
                 
                 <!-- Sol Taraf: Model Bilgileri & Rozetler -->
                 <div class="flex items-start gap-3.5 min-w-0">
@@ -2234,18 +2434,22 @@ function renderModelsSettingsView(container) {
                   <div class="flex flex-col min-w-0">
                     <div class="flex items-center gap-2 flex-wrap">
                       <span class="text-sm font-semibold text-foreground">${escapeHtml(m.name)}</span>
-                      ${m.isDefault ? `
+                      ${
+                        m.isDefault
+                          ? `
                         <span class="bg-primary/20 text-primary border border-primary/40 text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
                           ★ Varsayılan
                         </span>
-                      ` : ''}
+                      `
+                          : ""
+                      }
                       <span class="text-[10px] px-2 py-0.5 rounded border ${pConf.badgeClass} font-medium">
                         ${escapeHtml(m.provider)}
                       </span>
                       <!-- Tıklanabilir Model Seçici Rozeti -->
                       <button type="button" class="btn-card-choose-submodel text-[11px] font-mono px-2.5 py-0.5 rounded bg-primary/10 hover:bg-primary/25 text-primary border border-primary/30 flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs group/smbtn" data-id="${escapeHtml(m.id)}" title="Bu sağlayıcı içerisindeki modeli seç veya değiştir">
                         <span class="text-primary/70 font-sans font-medium text-[10px]">Model:</span>
-                        <span class="font-semibold text-foreground group-hover/smbtn:text-primary font-mono">${escapeHtml(m.modelId || 'Model Seç')}</span>
+                        <span class="font-semibold text-foreground group-hover/smbtn:text-primary font-mono">${escapeHtml(m.modelId || "Model Seç")}</span>
                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                       </button>
                     </div>
@@ -2255,11 +2459,15 @@ function renderModelsSettingsView(container) {
                       <span class="font-mono text-[11px] text-muted-foreground/80 flex items-center gap-1">
                         🔑 ${maskedKey}
                       </span>
-                      ${m.endpoint ? `
+                      ${
+                        m.endpoint
+                          ? `
                         <span class="font-mono text-[11px] text-muted-foreground/60 truncate max-w-xs" title="${escapeHtml(m.endpoint)}">
-                          🌐 ${escapeHtml(m.endpoint.replace(/^https?:\/\//, ''))}
+                          🌐 ${escapeHtml(m.endpoint.replace(/^https?:\/\//, ""))}
                         </span>
-                      ` : ''}
+                      `
+                          : ""
+                      }
                       <!-- Status Badge -->
                       <span class="flex items-center gap-1.5 text-[11px]" id="status-badge-${m.id}">
                         ${renderStatusBadge(m)}
@@ -2294,11 +2502,15 @@ function renderModelsSettingsView(container) {
                   </button>
 
                   <!-- VARSAYILAN YAP BUTONU (Eğer zaten varsayılan değilse) -->
-                  ${!m.isDefault ? `
+                  ${
+                    !m.isDefault
+                      ? `
                     <button type="button" class="btn-action-default agy-button text-xs h-7 px-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground cursor-pointer transition-colors" data-id="${escapeHtml(m.id)}" title="Bu modeli aktif ve varsayılan yap">
                       ★ Seç
                     </button>
-                  ` : ''}
+                  `
+                      : ""
+                  }
 
                   <!-- SİL BUTONU -->
                   <button type="button" class="btn-action-delete agy-button text-xs h-7 w-7 rounded-lg hover:bg-red-500/15 text-muted-foreground hover:text-red-400 flex items-center justify-center cursor-pointer transition-colors" data-id="${escapeHtml(m.id)}" title="Modeli Sil">
@@ -2310,7 +2522,9 @@ function renderModelsSettingsView(container) {
 
               </div>
             `;
-          }).join('')}
+                  })
+                  .join("")
+          }
         </div>
       </div>
 
@@ -2341,18 +2555,19 @@ function attachModelViewEvents(container) {
     renderModelsSettingsView(container);
   });
 
-  container.querySelectorAll(".btn-add-discovered-runtime[data-runtime-id]").forEach(btn => {
+  container.querySelectorAll(".btn-add-discovered-runtime[data-runtime-id]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const rtId = btn.getAttribute("data-runtime-id");
       const ds = window.luxLocalDiscoveryState || {};
-      const rt = (ds.runtimes || []).find(r => r.id === rtId);
+      const rt = (ds.runtimes || []).find((r) => r.id === rtId);
       if (!rt || !window.appStore?.addModel) return;
       if (rtId === "ollama") {
-        const fastOllamaPick = (rt.models || []).find(id => id === "qwen3.5:4b")
-          || (rt.models || []).find(id => id === "qwen2.5:3b")
-          || rt.models?.[0]
-          || "qwen2.5:3b";
+        const fastOllamaPick =
+          (rt.models || []).find((id) => id === "qwen3.5:4b") ||
+          (rt.models || []).find((id) => id === "qwen2.5:3b") ||
+          rt.models?.[0] ||
+          "qwen2.5:3b";
         window.appStore.addModel({
           name: "Ollama (Yerel)",
           provider: "Ollama / Yerel",
@@ -2397,19 +2612,23 @@ function attachModelViewEvents(container) {
     const submodels = (window.KNOWN_PROVIDER_SUBMODELS?.[providerName] || []).slice();
     presetSelect.innerHTML = `
       <option value="" class="bg-[#16161b] text-[#f3f4f6]" style="background-color: #16161b; color: #f3f4f6;">-- Listeden Model Seçin (${submodels.length} model) --</option>
-      ${submodels.map(sm => `
-        <option value="${escapeHtml(sm.id)}" class="bg-[#16161b] text-[#f3f4f6]" style="background-color: #16161b; color: #f3f4f6;">${escapeHtml(sm.name)} (${escapeHtml(sm.id)}) ${sm.badge ? `[${escapeHtml(sm.badge)}]` : ''}</option>
-      `).join('')}
+      ${submodels
+        .map(
+          (sm) => `
+        <option value="${escapeHtml(sm.id)}" class="bg-[#16161b] text-[#f3f4f6]" style="background-color: #16161b; color: #f3f4f6;">${escapeHtml(sm.name)} (${escapeHtml(sm.id)}) ${sm.badge ? `[${escapeHtml(sm.badge)}]` : ""}</option>
+      `
+        )
+        .join("")}
       <option value="__custom__" class="bg-[#16161b] text-primary" style="background-color: #16161b; color: #3B82F6;">+ Özel Model ID Gir</option>
     `;
     presetSelect._customSelectRefresh?.();
   }
   if (providerSelect) populatePresetSelect(providerSelect.value);
 
-  // Initialize Antigravity Custom Dropdowns
-  if (window.makeAntigravityCustomSelect) {
-    if (providerSelect) window.makeAntigravityCustomSelect(providerSelect);
-    if (presetSelect) window.makeAntigravityCustomSelect(presetSelect);
+  // Initialize Lux Custom Dropdowns
+  if (window.makeLuxCustomSelect) {
+    if (providerSelect) window.makeLuxCustomSelect(providerSelect);
+    if (presetSelect) window.makeLuxCustomSelect(presetSelect);
   }
 
   // Model Listesinden Seçilince ID Kutusunu Otomatik Doldur
@@ -2451,7 +2670,7 @@ function attachModelViewEvents(container) {
     try {
       const headers = {};
       const isOpenRouterReq = providerSelect.value === "OpenRouter" || /openrouter\.ai/i.test(ep);
-      const effKey = apiKeyInput.value.trim() || (isOpenRouterReq ? (window.appStore?.getOpenRouterApiKey?.() || "") : "");
+      const effKey = apiKeyInput.value.trim() || (isOpenRouterReq ? window.appStore?.getOpenRouterApiKey?.() || "" : "");
       if (effKey) headers["Authorization"] = `Bearer ${effKey}`;
       if (isOpenRouterReq) {
         headers["X-Title"] = "Lux AI";
@@ -2465,10 +2684,10 @@ function attachModelViewEvents(container) {
         let list = data.data.slice();
         let freeCount = 0;
         if (isOpenRouterReq) {
-          const freeSet = new Set(list.filter(m => window.isOpenRouterFreeChatModel?.(m)).map(m => m.id));
+          const freeSet = new Set(list.filter((m) => window.isOpenRouterFreeChatModel?.(m)).map((m) => m.id));
           freeCount = freeSet.size;
           list = list
-            .filter(m => !/^(?:google\/lyria-|fish-audio\/|heygen\/)/i.test(m.id || ""))
+            .filter((m) => !/^(?:google\/lyria-|fish-audio\/|heygen\/)/i.test(m.id || ""))
             .sort((a, b) => {
               if (a.id === "openrouter/free") return -1;
               if (b.id === "openrouter/free") return 1;
@@ -2478,13 +2697,13 @@ function attachModelViewEvents(container) {
             });
           presetSelect.innerHTML = `
             <option value="">-- Canlı OpenRouter (${freeCount} Ücretsiz · ${list.length} Toplam) --</option>
-            ${list.map(m => `<option value="${escapeHtml(m.id)}">${freeSet.has(m.id) ? '★ [Ücretsiz] ' : ''}${escapeHtml(m.id)}</option>`).join('')}
+            ${list.map((m) => `<option value="${escapeHtml(m.id)}">${freeSet.has(m.id) ? "★ [Ücretsiz] " : ""}${escapeHtml(m.id)}</option>`).join("")}
           `;
           btnFetchLive.innerHTML = `<span class="text-emerald-400">✓ ${freeCount} Ücretsiz / ${list.length}</span>`;
         } else {
           presetSelect.innerHTML = `
             <option value="">-- Canlı Modeller (${list.length} adet) --</option>
-            ${list.map(m => `<option value="${escapeHtml(m.id)}">${escapeHtml(m.id)}</option>`).join('')}
+            ${list.map((m) => `<option value="${escapeHtml(m.id)}">${escapeHtml(m.id)}</option>`).join("")}
           `;
           btnFetchLive.innerHTML = `<span class="text-emerald-400">✓ ${list.length} Model Geldi</span>`;
         }
@@ -2553,9 +2772,11 @@ function attachModelViewEvents(container) {
       </span>
     `;
 
-    const isLocal = providerSelect.value.includes("Yerel") || (endpointInput.value && (endpointInput.value.includes("localhost") || endpointInput.value.includes("127.0.0.1")));
+    const isLocal =
+      providerSelect.value.includes("Yerel") ||
+      (endpointInput.value && (endpointInput.value.includes("localhost") || endpointInput.value.includes("127.0.0.1")));
     const isOrProvider = providerSelect.value === "OpenRouter" || /openrouter\.ai/i.test(endpointInput.value || "");
-    const rawKey = apiKeyInput.value.trim() || (isOrProvider ? (window.appStore?.getOpenRouterApiKey?.() || "") : "");
+    const rawKey = apiKeyInput.value.trim() || (isOrProvider ? window.appStore?.getOpenRouterApiKey?.() || "" : "");
     if (!rawKey && !isLocal) {
       testStatusEl.innerHTML = '<span class="text-rose-400 font-medium">⚠ API Anahtarı eksik!</span>';
     } else if (isOrProvider && rawKey) {
@@ -2563,14 +2784,14 @@ function attachModelViewEvents(container) {
       try {
         const baseEp = (endpointInput.value.trim() || "https://openrouter.ai/api/v1").replace(/\/+$/, "");
         const res = await fetch(`${baseEp}/key`, {
-          headers: { "Authorization": `Bearer ${rawKey}`, "X-Title": "Lux AI" },
+          headers: { Authorization: `Bearer ${rawKey}`, "X-Title": "Lux AI" },
           signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined
         });
         const elapsed = Date.now() - t0;
         if (res.ok) {
           const kjson = await res.json().catch(() => ({}));
           const fq = kjson?.data?.free_model_daily_requests;
-          const qInfo = (fq && typeof fq.remaining === "number") ? ` · Kalan: ${fq.remaining}/${fq.limit}` : "";
+          const qInfo = fq && typeof fq.remaining === "number" ? ` · Kalan: ${fq.remaining}/${fq.limit}` : "";
           testStatusEl.innerHTML = `<span class="text-emerald-400 font-medium flex items-center gap-1">✓ Başarılı (200 OK${qInfo} - ${elapsed}ms)</span>`;
         } else {
           const errJson = await res.json().catch(() => ({}));
@@ -2611,7 +2832,10 @@ function attachModelViewEvents(container) {
           if (isLocal && /11434/.test(endpointInput.value || "")) {
             await window.luxAPI?.ensureOllama?.().catch(() => {});
           }
-          const base = (endpointInput.value.trim() || (isLocal ? "http://127.0.0.1:11434/v1" : "https://api.openai.com/v1")).replace(/\/+$/, "");
+          const base = (endpointInput.value.trim() || (isLocal ? "http://127.0.0.1:11434/v1" : "https://api.openai.com/v1")).replace(
+            /\/+$/,
+            ""
+          );
           const headers = { "Content-Type": "application/json" };
           if (rawKey) headers["Authorization"] = `Bearer ${rawKey}`;
           if (isLocal && /11434/.test(base)) {
@@ -2692,7 +2916,7 @@ function attachModelViewEvents(container) {
   });
 
   // List Item Buttons: Test, Edit, Default, Delete
-  container.querySelectorAll(".btn-action-test").forEach(btn => {
+  container.querySelectorAll(".btn-action-test").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
       e.stopPropagation();
       const id = btn.getAttribute("data-id");
@@ -2711,14 +2935,14 @@ function attachModelViewEvents(container) {
 
       // Update badge in place
       const badge = container.querySelector(`#status-badge-${id}`);
-      const updatedModel = window.appStore.getModels().find(m => m.id === id);
+      const updatedModel = window.appStore.getModels().find((m) => m.id === id);
       if (badge && updatedModel) {
         badge.innerHTML = renderStatusBadge(updatedModel);
       }
     });
   });
 
-  container.querySelectorAll(".btn-action-edit").forEach(btn => {
+  container.querySelectorAll(".btn-action-edit").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const id = btn.getAttribute("data-id");
@@ -2731,7 +2955,7 @@ function attachModelViewEvents(container) {
     });
   });
 
-  container.querySelectorAll(".btn-action-default").forEach(btn => {
+  container.querySelectorAll(".btn-action-default").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const id = btn.getAttribute("data-id");
@@ -2741,7 +2965,7 @@ function attachModelViewEvents(container) {
     });
   });
 
-  container.querySelectorAll(".btn-action-delete").forEach(btn => {
+  container.querySelectorAll(".btn-action-delete").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       if (btn.dataset.confirmPending !== "true") {
@@ -2770,11 +2994,11 @@ function attachModelViewEvents(container) {
   });
 
   // MODEL SEÇME TIKLAMA OLAYLARI (Hem rozet hem de 'Model Seç' butonu)
-  container.querySelectorAll(".btn-action-pick-submodel, .btn-card-choose-submodel").forEach(btn => {
+  container.querySelectorAll(".btn-action-pick-submodel, .btn-card-choose-submodel").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const id = btn.getAttribute("data-id");
-      const model = window.appStore.getModels().find(m => m.id === id);
+      const model = window.appStore.getModels().find((m) => m.id === id);
       if (model) {
         openCardModelSelectionModal(model, container);
       }
@@ -2782,16 +3006,12 @@ function attachModelViewEvents(container) {
   });
 }
 
-// 1:1 Antigravity Card Model Selection Modal Component
+// 1:1 Lux Card Model Selection Modal Component
 function openCardModelSelectionModal(model, parentContainer) {
   document.getElementById("card-model-picker-modal")?.remove();
 
   const providerName = model.name;
-  let submodels = (
-    window.KNOWN_PROVIDER_SUBMODELS?.[providerName] ||
-    window.KNOWN_PROVIDER_SUBMODELS?.[model.provider] ||
-    []
-  ).slice();
+  let submodels = (window.KNOWN_PROVIDER_SUBMODELS?.[providerName] || window.KNOWN_PROVIDER_SUBMODELS?.[model.provider] || []).slice();
 
   if (submodels.length === 0) {
     if (model.endpoint?.includes("1234") || model.name.includes("LM Studio")) {
@@ -2803,14 +3023,12 @@ function openCardModelSelectionModal(model, parentContainer) {
     } else if (model.endpoint?.includes("openrouter.ai") || model.provider === "OpenRouter") {
       submodels = (window.KNOWN_PROVIDER_SUBMODELS?.["OpenRouter"] || []).slice();
     } else {
-      submodels = [
-        { id: model.modelId || "default", name: model.name, tag: "Mevcut Model", badge: "Aktif" }
-      ];
+      submodels = [{ id: model.modelId || "default", name: model.name, tag: "Mevcut Model", badge: "Aktif" }];
     }
   }
 
   // Ensure current active modelId is in the list
-  if (model.modelId && !submodels.some(sm => sm.id === model.modelId)) {
+  if (model.modelId && !submodels.some((sm) => sm.id === model.modelId)) {
     submodels.unshift({
       id: model.modelId,
       name: model.modelId,
@@ -2827,7 +3045,7 @@ function openCardModelSelectionModal(model, parentContainer) {
   const renderModalContent = (filterText = "") => {
     const q = filterText.toLowerCase().trim();
     const filtered = q
-      ? submodels.filter(sm => (sm.name && sm.name.toLowerCase().includes(q)) || (sm.id && sm.id.toLowerCase().includes(q)))
+      ? submodels.filter((sm) => (sm.name && sm.name.toLowerCase().includes(q)) || (sm.id && sm.id.toLowerCase().includes(q)))
       : submodels;
 
     return `
@@ -2873,33 +3091,39 @@ function openCardModelSelectionModal(model, parentContainer) {
 
         <!-- Models List -->
         <div class="flex-1 overflow-y-auto p-3 flex flex-col gap-1.5 max-h-[380px] custom-scrollbar" id="card-picker-models-list">
-          ${filtered.length === 0 ? `
+          ${
+            filtered.length === 0
+              ? `
             <div class="p-6 text-center text-xs text-muted-foreground">
               Arama kriterine uygun model bulunamadı. Aşağıdan özel model ID girebilirsiniz.
             </div>
-          ` : filtered.map(sm => {
-            const isSelected = sm.id === model.modelId;
-            return `
-              <div class="card-submodel-row p-2.5 rounded-xl border ${isSelected ? 'border-primary/50 bg-primary/10 shadow-sm' : 'border-border/50 bg-background/40 hover:bg-secondary/60 hover:border-border'} flex items-center justify-between gap-3 cursor-pointer transition-all" data-submodel-id="${escapeHtml(sm.id)}">
+          `
+              : filtered
+                  .map((sm) => {
+                    const isSelected = sm.id === model.modelId;
+                    return `
+              <div class="card-submodel-row p-2.5 rounded-xl border ${isSelected ? "border-primary/50 bg-primary/10 shadow-sm" : "border-border/50 bg-background/40 hover:bg-secondary/60 hover:border-border"} flex items-center justify-between gap-3 cursor-pointer transition-all" data-submodel-id="${escapeHtml(sm.id)}">
                 <div class="flex items-center gap-3 min-w-0 flex-1">
-                  <div class="w-4 h-4 rounded-full border ${isSelected ? 'border-primary bg-primary flex items-center justify-center text-primary-foreground' : 'border-border/80'} shrink-0">
-                    ${isSelected ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+                  <div class="w-4 h-4 rounded-full border ${isSelected ? "border-primary bg-primary flex items-center justify-center text-primary-foreground" : "border-border/80"} shrink-0">
+                    ${isSelected ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ""}
                   </div>
                   <div class="flex flex-col min-w-0 flex-1">
                     <div class="flex items-center gap-2 flex-wrap">
                       <span class="text-xs font-semibold font-mono text-foreground tracking-tight">${escapeHtml(sm.id)}</span>
-                      ${sm.badge ? `<span class="text-[9px] px-1.5 py-0.2 rounded-full ${sm.badge === 'Önerilen' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-secondary text-muted-foreground border border-border/40'} font-medium shrink-0">${escapeHtml(sm.badge)}</span>` : ''}
+                      ${sm.badge ? `<span class="text-[9px] px-1.5 py-0.2 rounded-full ${sm.badge === "Önerilen" ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-secondary text-muted-foreground border border-border/40"} font-medium shrink-0">${escapeHtml(sm.badge)}</span>` : ""}
                     </div>
-                    ${sm.desc || sm.tag ? `<p class="text-[11px] text-muted-foreground m-0 mt-0.5 truncate">${escapeHtml(sm.desc || sm.tag)}</p>` : ''}
+                    ${sm.desc || sm.tag ? `<p class="text-[11px] text-muted-foreground m-0 mt-0.5 truncate">${escapeHtml(sm.desc || sm.tag)}</p>` : ""}
                   </div>
                 </div>
 
-                <button type="button" class="agy-button text-xs px-2.5 py-1 rounded-lg ${isSelected ? 'bg-primary text-primary-foreground' : 'border border-border/70 hover:bg-secondary text-secondary-foreground'} font-medium shrink-0 pointer-events-none">
-                  ${isSelected ? '✓ Aktif Model' : 'Seç'}
+                <button type="button" class="agy-button text-xs px-2.5 py-1 rounded-lg ${isSelected ? "bg-primary text-primary-foreground" : "border border-border/70 hover:bg-secondary text-secondary-foreground"} font-medium shrink-0 pointer-events-none">
+                  ${isSelected ? "✓ Aktif Model" : "Seç"}
                 </button>
               </div>
             `;
-          }).join('')}
+                  })
+                  .join("")
+          }
         </div>
 
         <!-- Custom Model Input Bottom Bar -->
@@ -2935,7 +3159,7 @@ function openCardModelSelectionModal(model, parentContainer) {
     });
 
     // Select row click
-    modalEl.querySelectorAll(".card-submodel-row").forEach(row => {
+    modalEl.querySelectorAll(".card-submodel-row").forEach((row) => {
       row.addEventListener("click", () => {
         const subId = row.getAttribute("data-submodel-id");
         if (subId) {
@@ -2999,7 +3223,7 @@ function openCardModelSelectionModal(model, parentContainer) {
       const url = base.endsWith("/models") ? base : `${base}/models`;
       try {
         const isOr = model.provider === "OpenRouter" || /openrouter\.ai/i.test(endpoint);
-        const effKey = (model.apiKey || "").trim() || (isOr ? (window.appStore?.getOpenRouterApiKey?.() || "") : "");
+        const effKey = (model.apiKey || "").trim() || (isOr ? window.appStore?.getOpenRouterApiKey?.() || "" : "");
         const headers = {};
         if (effKey) headers["Authorization"] = `Bearer ${effKey}`;
         if (isOr) headers["X-Title"] = "Lux AI";
@@ -3011,29 +3235,29 @@ function openCardModelSelectionModal(model, parentContainer) {
         if (data?.data && Array.isArray(data.data)) {
           let list = data.data.slice();
           if (isOr) {
-            const freeSet = new Set(list.filter(m => window.isOpenRouterFreeChatModel?.(m)).map(m => m.id));
+            const freeSet = new Set(list.filter((m) => window.isOpenRouterFreeChatModel?.(m)).map((m) => m.id));
             list = list
-              .filter(m => !/^(?:google\/lyria-|fish-audio\/|heygen\/)/i.test(m.id || ""))
+              .filter((m) => !/^(?:google\/lyria-|fish-audio\/|heygen\/)/i.test(m.id || ""))
               .sort((a, b) => {
                 if (a.id === "openrouter/free") return -1;
                 if (b.id === "openrouter/free") return 1;
                 return (freeSet.has(a.id) ? 0 : 1) - (freeSet.has(b.id) ? 0 : 1);
               });
-            list.forEach(m => {
-              if (!submodels.some(sm => sm.id === m.id)) {
+            list.forEach((m) => {
+              if (!submodels.some((sm) => sm.id === m.id)) {
                 const isFree = freeSet.has(m.id);
                 const ctxK = m.context_length ? `${Math.round(m.context_length / 1000)}K` : "";
                 submodels.push({
                   id: m.id,
                   name: m.name || m.id,
-                  tag: isFree ? `${ctxK ? ctxK + ' · ' : ''}Canlı OpenRouter ($0)` : `${ctxK ? ctxK + ' · ' : ''}OpenRouter Ücretli`,
+                  tag: isFree ? `${ctxK ? ctxK + " · " : ""}Canlı OpenRouter ($0)` : `${ctxK ? ctxK + " · " : ""}OpenRouter Ücretli`,
                   badge: isFree ? "Ücretsiz" : "OpenRouter"
                 });
               }
             });
           } else {
-            list.forEach(m => {
-              if (!submodels.some(sm => sm.id === m.id)) {
+            list.forEach((m) => {
+              if (!submodels.some((sm) => sm.id === m.id)) {
                 submodels.push({
                   id: m.id,
                   name: m.id,
@@ -3058,12 +3282,19 @@ function openCardModelSelectionModal(model, parentContainer) {
   attachPickerEvents();
 
   // Auto-fetch in background if 9Router, Ollama or OpenRouter to get complete live models list
-  if (model.endpoint?.includes("20128") || model.endpoint?.includes("11434") || model.endpoint?.includes("openrouter.ai") || model.provider === "OpenRouter" || model.name.includes("9Router") || model.name.includes("Ollama")) {
+  if (
+    model.endpoint?.includes("20128") ||
+    model.endpoint?.includes("11434") ||
+    model.endpoint?.includes("openrouter.ai") ||
+    model.provider === "OpenRouter" ||
+    model.name.includes("9Router") ||
+    model.name.includes("Ollama")
+  ) {
     fetchLiveModels();
   }
 }
 
-window.openSettingsModal = function(tab = "general") {
+window.openSettingsModal = function (tab = "general") {
   const modal = document.getElementById("settings-modal");
   if (modal) {
     modal.classList.add("show");
@@ -3072,12 +3303,12 @@ window.openSettingsModal = function(tab = "general") {
   }
 };
 
-window.closeSettingsModal = function() {
+window.closeSettingsModal = function () {
   editingModelId = null;
   document.getElementById("settings-modal")?.classList.remove("show");
 };
 
-window.openPalette = function() {
+window.openPalette = function () {
   const modal = document.getElementById("palette-modal");
   const input = document.getElementById("palette-input");
   if (modal) {
@@ -3089,49 +3320,8 @@ window.openPalette = function() {
   }
 };
 
-window.closePalette = function() {
+window.closePalette = function () {
   document.getElementById("palette-modal")?.classList.remove("show");
-};
-
-window.giveFeedback = function() {
-  document.getElementById("feedback-modal-dialog")?.remove();
-  const modal = document.createElement("div");
-  modal.id = "feedback-modal-dialog";
-  modal.className = "lux-modal-backdrop show";
-  modal.style.zIndex = "2600";
-  modal.innerHTML = `
-    <div class="lux-modal max-w-md w-full p-5 flex flex-col gap-3 select-none">
-      <div class="flex items-center justify-between">
-        <h3 class="text-sm font-semibold text-foreground m-0">Geri Bildirim Gönder</h3>
-        <button type="button" id="btn-close-feedback-modal" class="p-1 rounded text-muted-foreground hover:text-foreground cursor-pointer">✕</button>
-      </div>
-      <p class="text-xs text-muted-foreground m-0">Fikirlerinizi, hata bildirimlerinizi veya geliştirme taleplerinizi yazın.</p>
-      <textarea id="feedback-textarea" rows="4" placeholder="Görüşlerinizi paylaşın..." class="model-input-field text-xs resize-none"></textarea>
-      <div id="feedback-status-msg" class="text-xs text-emerald-400 hidden">✓ Geri bildiriminiz kaydedildi. Teşekkür ederiz!</div>
-      <div class="flex items-center justify-end gap-2 pt-1">
-        <button type="button" id="btn-cancel-feedback" class="agy-button px-3 py-1.5 rounded-lg border border-border/70 text-xs text-muted-foreground hover:text-foreground cursor-pointer">Vazgeç</button>
-        <button type="button" id="btn-submit-feedback" class="agy-button px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium cursor-pointer">Gönder</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-
-  modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
-  modal.querySelector("#btn-close-feedback-modal")?.addEventListener("click", () => modal.remove());
-  modal.querySelector("#btn-cancel-feedback")?.addEventListener("click", () => modal.remove());
-  modal.querySelector("#btn-submit-feedback")?.addEventListener("click", () => {
-    const val = modal.querySelector("#feedback-textarea")?.value?.trim();
-    if (!val) {
-      modal.querySelector("#feedback-textarea")?.focus();
-      return;
-    }
-    if (!Array.isArray(window.appStore.state.feedbackLog)) window.appStore.state.feedbackLog = [];
-    window.appStore.state.feedbackLog.unshift({ text: val, createdAt: new Date().toISOString() });
-    window.appStore.saveState();
-    modal.querySelector("#feedback-status-msg")?.classList.remove("hidden");
-    setTimeout(() => modal.remove(), 900);
-  });
-  setTimeout(() => modal.querySelector("#feedback-textarea")?.focus(), 40);
 };
 
 window.switchSettingsTab = switchSettingsTab;

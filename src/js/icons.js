@@ -1,4 +1,4 @@
-// Lux AI Exact Antigravity Vector SVGs (100% extracted from Antigravity dump)
+// Lux AI Exact Lux Vector SVGs (100% extracted from Lux dump)
 
 const ICONS = {
   // Lux AI Monogram "L" Logo
@@ -147,6 +147,6 @@ const ICONS = {
   </svg>`
 };
 
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = ICONS;
 }

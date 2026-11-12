@@ -1,4 +1,4 @@
-// Google Antigravity Voice Mode (Gemini Live) 1:1 Implementation for Lux AI
+// Google Lux Voice Mode (Gemini Live) 1:1 Implementation for Lux AI
 // Supports Live Session Floating HUD, Organic Luminous Fluid Orb, Voice Carousel, Speed Control & High-Fidelity Neural Voice Synthesis
 
 let voiceSessionActive = false;
@@ -69,7 +69,7 @@ function createVoiceFrameAnalyzer(sampleRate = 16000) {
         bandSum += bp * bp;
         const bAbs = bp < 0 ? -bp : bp;
         if (bAbs > bandPeak) bandPeak = bAbs;
-        if ((bp >= 0) !== (prevBp >= 0)) zcrCount++;
+        if (bp >= 0 !== prevBp >= 0) zcrCount++;
         prevBp = bp;
       }
 
@@ -110,37 +110,38 @@ function classifyVocalFrame(stats) {
 function isLikelySpeakerEcho(recognizedText) {
   const lastSpoken = String(window.__luxLastSpokenText || "").trim();
   if (!lastSpoken) return false;
-  const recentlyEnded = (Date.now() - (window.lastAiAudioEndedAt || 0)) < 2200;
+  const recentlyEnded = Date.now() - (window.lastAiAudioEndedAt || 0) < 2200;
   if (!recentlyEnded && !window.currentVoiceAudio) return false;
   if (window.parseLuxVoiceStopCommand?.(recognizedText)) return false;
 
-  const norm = (s) => String(s || "")
-    .toLocaleLowerCase("tr-TR")
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  const norm = (s) =>
+    String(s || "")
+      .toLocaleLowerCase("tr-TR")
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
   const spokenNorm = norm(lastSpoken);
   const heardNorm = norm(recognizedText);
   if (!heardNorm || !spokenNorm) return false;
   if (heardNorm.length >= 8 && spokenNorm.includes(heardNorm)) return true;
 
-  const spokenWords = new Set(spokenNorm.split(" ").filter(w => w.length >= 2));
-  const heardWords = heardNorm.split(" ").filter(w => w.length >= 2);
+  const spokenWords = new Set(spokenNorm.split(" ").filter((w) => w.length >= 2));
+  const heardWords = heardNorm.split(" ").filter((w) => w.length >= 2);
   if (heardWords.length < 2) return false;
   let overlap = 0;
   for (const w of heardWords) {
     if (spokenWords.has(w)) overlap++;
   }
-  return (overlap / heardWords.length) >= 0.70;
+  return overlap / heardWords.length >= 0.7;
 }
 
 window.luxVoiceDsp = { createVoiceFrameAnalyzer, classifyVocalFrame };
 
-window.isTentativeBargeInActive = function() {
+window.isTentativeBargeInActive = function () {
   return Boolean(bargeInCandidate && bargeInCandidate.active);
 };
 
-window.waitForTentativeBargeInResolution = function() {
+window.waitForTentativeBargeInResolution = function () {
   if (!bargeInCandidate || !bargeInCandidate.active) {
     return Promise.resolve("none");
   }
@@ -149,19 +150,17 @@ window.waitForTentativeBargeInResolution = function() {
   });
 };
 
-// Antigravity Official Sound Effects Player
-function playAntigravitySound(soundName) {
+// Lux Official Sound Effects Player
+function playLuxSound(soundName) {
   const notifs = window.appStore?.state?.notifications;
   if (notifs && notifs.agentSounds === false) return;
   const vol = notifs ? (notifs.soundVolume ?? 100) / 100 : 1.0;
   try {
-    const audio = new Audio(`assets/sounds/${soundName}.mp3`);
-    audio.volume = Math.max(0, Math.min(1, vol));
-    audio.play().catch(() => {});
+    window.luxAudioCache?.play(`assets/sounds/${soundName}.mp3`, { volume: Math.max(0, Math.min(1, vol)) });
   } catch (e) {}
 }
 
-window.playAntigravitySound = playAntigravitySound;
+window.playLuxSound = playLuxSound;
 
 // Gentle Lullaby Music-Box & Soothing Voice Player (never touches DSP VAD)
 const lullabyState = {
@@ -181,22 +180,26 @@ function updateLullabyUiButtons(isPlaying) {
   });
 }
 
-window.isLullabyPlaying = function() {
+window.isLullabyPlaying = function () {
   return Boolean(lullabyState.active);
 };
 
-window.stopLullabyAudio = function() {
+window.stopLullabyAudio = function () {
   lullabyState.active = false;
   while (lullabyState.timers.length > 0) {
     clearTimeout(lullabyState.timers.pop());
   }
   while (lullabyState.audios.length > 0) {
     const a = lullabyState.audios.pop();
-    try { a.pause(); } catch (_) {}
+    try {
+      a.stop ? a.stop() : a.pause?.();
+    } catch (_) {}
   }
   if (lullabyState.voiceAudio) {
     lullabyState.voiceAudio.__luxTentativePause = false;
-    try { lullabyState.voiceAudio.pause(); } catch (_) {}
+    try {
+      lullabyState.voiceAudio.pause();
+    } catch (_) {}
     if (window.currentVoiceAudio === lullabyState.voiceAudio) {
       window.currentVoiceAudio = null;
     }
@@ -205,7 +208,7 @@ window.stopLullabyAudio = function() {
   updateLullabyUiButtons(false);
 };
 
-window.playLullabyNotes = function(options = {}) {
+window.playLullabyNotes = function (options = {}) {
   const settings = window.appStore?.getVoiceSettings?.() || {};
   if (settings.isSpeakerMuted) return false;
   const notifs = window.appStore?.state?.notifications;
@@ -215,12 +218,39 @@ window.playLullabyNotes = function(options = {}) {
 
   // Soft Brahms / cradle melody using verified src/assets/sounds/*.mp3 notes
   const pattern = [
-    ["E4", 0], ["E4", 460], ["G4", 920], ["E4", 1680], ["E4", 2140], ["G4", 2600],
-    ["E4", 3400], ["G4", 3860], ["C5", 4350], ["B4", 5100], ["A4", 5650], ["A4", 6250], ["G4", 6850],
-    ["D4", 7750], ["E4", 8210], ["F4", 8680], ["D4", 9300], ["D4", 9760], ["E4", 10220], ["F4", 10680], ["D4", 11300],
-    ["F4", 12050], ["B4", 12520], ["A4", 13000], ["G4", 13520], ["B4", 14050], ["C5", 14700]
+    ["E4", 0],
+    ["E4", 460],
+    ["G4", 920],
+    ["E4", 1680],
+    ["E4", 2140],
+    ["G4", 2600],
+    ["E4", 3400],
+    ["G4", 3860],
+    ["C5", 4350],
+    ["B4", 5100],
+    ["A4", 5650],
+    ["A4", 6250],
+    ["G4", 6850],
+    ["D4", 7750],
+    ["E4", 8210],
+    ["F4", 8680],
+    ["D4", 9300],
+    ["D4", 9760],
+    ["E4", 10220],
+    ["F4", 10680],
+    ["D4", 11300],
+    ["F4", 12050],
+    ["B4", 12520],
+    ["A4", 13000],
+    ["G4", 13520],
+    ["B4", 14050],
+    ["C5", 14700]
   ];
   const cycleMs = 15800;
+  // Notaları belleğe önceden yükle — ilk çevrimde decode gecikmesi olmasın
+  try {
+    window.luxAudioCache?.preload(pattern.map(([note]) => `assets/sounds/${note}.mp3`));
+  } catch (_) {}
 
   lullabyState.active = true;
   updateLullabyUiButtons(true);
@@ -231,30 +261,37 @@ window.playLullabyNotes = function(options = {}) {
       const t = setTimeout(() => {
         if (!lullabyState.active) return;
         try {
-          const noteAudio = new Audio(`assets/sounds/${note}.mp3`);
-          noteAudio.volume = vol;
-          lullabyState.audios.push(noteAudio);
-          noteAudio.onended = () => {
-            lullabyState.audios = lullabyState.audios.filter((x) => x !== noteAudio);
-          };
-          noteAudio.play().catch(() => {});
+          window.luxAudioCache?.play(`assets/sounds/${note}.mp3`, { volume: vol }).then((handle) => {
+            if (!handle) return;
+            if (!lullabyState.active) {
+              handle.stop();
+              return;
+            }
+            lullabyState.audios.push(handle);
+            handle.onended = () => {
+              lullabyState.audios = lullabyState.audios.filter((x) => x !== handle);
+            };
+          });
         } catch (_) {}
       }, baseOffset + offsetMs);
       lullabyState.timers.push(t);
     }
   }
 
-  const endTimer = setTimeout(() => {
-    if (!lullabyState.voiceAudio) {
-      lullabyState.active = false;
-      updateLullabyUiButtons(false);
-    }
-  }, loops * cycleMs + 1200);
+  const endTimer = setTimeout(
+    () => {
+      if (!lullabyState.voiceAudio) {
+        lullabyState.active = false;
+        updateLullabyUiButtons(false);
+      }
+    },
+    loops * cycleMs + 1200
+  );
   lullabyState.timers.push(endTimer);
   return true;
 };
 
-window.playLullabyExperience = async function(lyricsText, options = {}) {
+window.playLullabyExperience = async function (lyricsText, options = {}) {
   window.stopLullabyAudio?.();
   const settings = window.appStore?.getVoiceSettings?.() || {};
   if (settings.isSpeakerMuted) return false;
@@ -263,13 +300,12 @@ window.playLullabyExperience = async function(lyricsText, options = {}) {
   window.playLullabyNotes({ volume: options.skipVoice ? 0.22 : 0.14, loops });
 
   if (!options.skipVoice && lyricsText && window.luxAPI?.voice?.synthesize) {
-    const cleanSpeech = typeof window.cleanTextForSpeech === "function"
-      ? window.cleanTextForSpeech(lyricsText)
-      : String(lyricsText).slice(0, 440);
+    const cleanSpeech =
+      typeof window.cleanTextForSpeech === "function" ? window.cleanTextForSpeech(lyricsText) : String(lyricsText).slice(0, 440);
     if (cleanSpeech) {
       try {
         const calmSpeed = Math.max(0.75, Math.min(0.92, (settings.speed || 1.0) * 0.86));
-        const openrouterApiKey = window.appStore?.getOpenRouterApiKey?.() || "";
+        const openrouterApiKey = (await window.appStore?.resolveOpenRouterApiKey?.()) || "";
         const res = await window.luxAPI.voice.synthesize(
           cleanSpeech,
           settings.voice || "Fola",
@@ -299,8 +335,13 @@ window.playLullabyExperience = async function(lyricsText, options = {}) {
             }
             updateLullabyUiButtons(false);
           };
-          audio.onended = () => { audio.__luxTentativePause = false; finishVoice(); };
-          audio.onpause = () => { if (!audio.ended && !audio.__luxTentativePause) finishVoice(); };
+          audio.onended = () => {
+            audio.__luxTentativePause = false;
+            finishVoice();
+          };
+          audio.onpause = () => {
+            if (!audio.ended && !audio.__luxTentativePause) finishVoice();
+          };
           audio.onerror = finishVoice;
           await audio.play().catch(() => finishVoice());
         }
@@ -336,7 +377,7 @@ function encodeWAVBuffer(samples, sampleRate = 16000) {
   let offset = 44;
   for (let i = 0; i < samples.length; i++, offset += 2) {
     const s = Math.max(-1, Math.min(1, samples[i]));
-    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
   }
 
   return buffer;
@@ -488,6 +529,86 @@ function toggleVoiceMode(forceState) {
   }
 }
 
+// --- Ses motoru pre-warm + ilk STT indirmesi için kullanıcı onayı ---
+// faster-whisper ilk ısıtmada HF Hub'dan ~244 MB indirebilir; bunu sessizce yapmak
+// yerine kullanıcıya tek seferlik, kapatılamayan-ama-ertelenebilen bir bant gösterir.
+function showSttConsentBanner(onAccept) {
+  if (document.getElementById("lux-stt-consent")) return;
+  const bar = document.createElement("div");
+  bar.id = "lux-stt-consent";
+  bar.setAttribute("role", "alert");
+  bar.style.cssText =
+    "position:fixed;left:50%;transform:translateX(-50%);bottom:96px;z-index:99998;display:flex;align-items:center;gap:12px;max-width:540px;background:#111827;border:1px solid rgba(96,165,250,0.45);border-radius:14px;box-shadow:0 16px 48px rgba(0,0,0,0.5);padding:10px 14px;color:#e5e7eb;font-size:12px;line-height:1.45;";
+  const vt = (key) => (window.LuxI18n && window.LuxI18n.t(key)) || null;
+  const text = document.createElement("div");
+  const cTitle = vt("voice.consentTitle") || "Ses tanıma modeli ilk kullanımda indirilecek.";
+  const cBody = vt("voice.consentBody") || "faster-whisper (small, int8) bir kez iner (~244 MB), sonra tamamen çevrimdışı çalışır.";
+  text.innerHTML = `<strong style="color:#93c5fd">${cTitle}</strong><br>${cBody}`;
+  const no = document.createElement("button");
+  no.type = "button";
+  no.textContent = vt("voice.consentNo") || "Şimdi Değil";
+  no.style.cssText =
+    "flex:0 0 auto;padding:8px 12px;border-radius:10px;border:1px solid rgba(148,163,184,0.4);background:transparent;color:#d1d5db;font-size:12px;cursor:pointer;";
+  const yes = document.createElement("button");
+  yes.type = "button";
+  yes.textContent = vt("voice.consentYes") || "İndir ve Hazırla";
+  yes.style.cssText =
+    "flex:0 0 auto;padding:8px 12px;border-radius:10px;border:1px solid rgba(147,197,253,0.5);background:#2563eb;color:#fff;font-size:12px;font-weight:700;cursor:pointer;";
+  const close = (choice) => {
+    if (!document.getElementById("lux-stt-consent")) return;
+    window.__luxSttConsent = choice;
+    bar.remove();
+    if (choice === "accepted" && typeof onAccept === "function") {
+      try {
+        onAccept();
+      } catch (_) {}
+    }
+  };
+  no.addEventListener("click", () => close("declined"));
+  yes.addEventListener("click", () => close("accepted"));
+  bar.appendChild(text);
+  bar.appendChild(no);
+  bar.appendChild(yes);
+  document.body.appendChild(bar);
+  try {
+    no.focus();
+  } catch (_) {}
+  setTimeout(() => close("declined"), 45000); // sessizlikte onay verilmemiş say: indirme başlamaz
+}
+
+function warmupVoiceEngine(opts) {
+  const run = () => {
+    try {
+      return window.luxAPI?.voice?.warmup?.(opts)?.catch?.(() => {});
+    } catch (_) {}
+  };
+  (async () => {
+    try {
+      const engine = String(opts?.sttModel || "auto").toLowerCase();
+      const wantsLocal = !engine || engine === "auto" || engine.includes("whisper") || engine.includes("moonshine") || engine === "local";
+      if (!wantsLocal) {
+        run();
+        return;
+      }
+      if (window.__luxSttConsent === "accepted") {
+        run();
+        return;
+      }
+      if (window.__luxSttConsent === "declined") {
+        return;
+      } // kullanıcı istemedi: pre-warm yok (ilk çeviri yine HF indirme akışını kullanır)
+      const status = await window.luxAPI?.voice?.modelStatus?.();
+      if (!status?.success || status.whisperCached) {
+        run();
+        return;
+      } // model zaten diskte → sessiz pre-warm
+      showSttConsentBanner(run);
+    } catch (_) {
+      run();
+    }
+  })();
+}
+
 async function startVoiceSession() {
   voiceSessionActive = true;
   window.voiceSessionActive = true;
@@ -521,14 +642,14 @@ async function startVoiceSession() {
 
   // Pre-warm active STT/TTS engine matching engineMode so cloud voices don't load 18s local Piper needlessly
   const curVoiceSettings = window.appStore?.getVoiceSettings?.() || {};
-  window.luxAPI?.voice?.warmup?.({
+  warmupVoiceEngine({
     sttModel: curVoiceSettings.sttEngine || "auto",
     voice: curVoiceSettings.voice || "Fola",
     mode: curVoiceSettings.engineMode || "auto"
-  }).catch?.(() => {});
+  });
 
-  // Play Antigravity official session start sound
-  playAntigravitySound("voiceRecordingStarted");
+  // Play Lux official session start sound
+  playLuxSound("voiceRecordingStarted");
 
   // Start real microphone capture & VAD
   startAudioCapture();
@@ -544,7 +665,9 @@ function clearCandidateBargeIn(status = "cancelled") {
   const waiters = candidate.waiters || [];
   candidate.waiters = [];
   for (const w of waiters) {
-    try { w(status); } catch (_) {}
+    try {
+      w(status);
+    } catch (_) {}
   }
 }
 
@@ -555,7 +678,7 @@ function stopVoiceSession() {
   clearInterval(voiceSessionTimer);
 
   clearCandidateBargeIn("cancelled");
-  playAntigravitySound("voiceRecordingStopped");
+  playLuxSound("voiceRecordingStopped");
 
   const hud = document.getElementById("voice-mode-hud");
   const btnLive = document.getElementById("btn-voice-live");
@@ -567,7 +690,9 @@ function stopVoiceSession() {
 
   if (window.currentVoiceAudio) {
     window.currentVoiceAudio.__luxTentativePause = false;
-    try { window.currentVoiceAudio.pause(); } catch (e) {}
+    try {
+      window.currentVoiceAudio.pause();
+    } catch (e) {}
     window.currentVoiceAudio = null;
   }
   window.stopLullabyAudio?.();
@@ -577,12 +702,23 @@ function stopVoiceSession() {
   isTranscribing = false;
 }
 
-window.stopSpeaking = function() {
+window.stopSpeaking = function () {
   window.__luxSpeechEpoch = (window.__luxSpeechEpoch || 0) + 1;
+  // Python tarafındaki çalışan TTS/STT görevini de iptal et; aksi halde
+  // kullanıcı durdurduktan sonra motor CPU'da çalışmaya devam ediyordu.
+  try {
+    const pending = window.__luxPendingVoiceRequestId;
+    if (pending) {
+      window.luxAPI?.voice?.cancel?.(pending).catch(() => {});
+      window.__luxPendingVoiceRequestId = null;
+    }
+  } catch (_) {}
   clearCandidateBargeIn("cancelled");
   if (window.currentVoiceAudio) {
     window.currentVoiceAudio.__luxTentativePause = false;
-    try { window.currentVoiceAudio.pause(); } catch (e) {}
+    try {
+      window.currentVoiceAudio.pause();
+    } catch (e) {}
     window.currentVoiceAudio = null;
   }
   window.stopLullabyAudio?.();
@@ -594,7 +730,7 @@ window.stopSpeaking = function() {
 
 let onBargeInReset = null;
 
-window.triggerVoiceBargeIn = function(preChunks = []) {
+window.triggerVoiceBargeIn = function (preChunks = []) {
   if (!voiceSessionActive && !window.voiceSessionActive) return false;
   clearCandidateBargeIn("committed");
   activeSpokenTurnId++;
@@ -605,14 +741,16 @@ window.triggerVoiceBargeIn = function(preChunks = []) {
     silenceTimer = null;
   }
   if (typeof onBargeInReset === "function") {
-    try { onBargeInReset(); } catch (_) {}
+    try {
+      onBargeInReset();
+    } catch (_) {}
   }
   window.isAIResponding = false;
   window.lastAiAudioEndedAt = 0;
 
   const hasLiveCapture = Boolean(voiceProcessorNode);
   if (Array.isArray(preChunks) && preChunks.length > 0) {
-    recordedSamples = preChunks.map(c => new Float32Array(c));
+    recordedSamples = preChunks.map((c) => new Float32Array(c));
     isSpeaking = true;
   } else {
     recordedSamples = [];
@@ -632,7 +770,7 @@ window.triggerVoiceBargeIn = function(preChunks = []) {
       ⚡ Söz kesildi — Dinliyor...
     </span>`;
   }
-  playAntigravitySound("voiceRecordingStarted");
+  playLuxSound("voiceRecordingStarted");
   return true;
 };
 
@@ -641,13 +779,14 @@ function beginTentativeBargeIn(preChunks = []) {
   if (bargeInCandidate && bargeInCandidate.active) return false;
 
   const transcriptEl = document.getElementById("voice-hud-transcript");
-  const pausedAudio = (window.currentVoiceAudio && !window.currentVoiceAudio.paused && !window.currentVoiceAudio.ended)
-    ? window.currentVoiceAudio
-    : null;
+  const pausedAudio =
+    window.currentVoiceAudio && !window.currentVoiceAudio.paused && !window.currentVoiceAudio.ended ? window.currentVoiceAudio : null;
 
   if (pausedAudio) {
     pausedAudio.__luxTentativePause = true;
-    try { pausedAudio.pause(); } catch (_) {}
+    try {
+      pausedAudio.pause();
+    } catch (_) {}
   }
 
   bargeInCandidate = {
@@ -664,10 +803,12 @@ function beginTentativeBargeIn(preChunks = []) {
     silenceTimer = null;
   }
   if (typeof onBargeInReset === "function") {
-    try { onBargeInReset(); } catch (_) {}
+    try {
+      onBargeInReset();
+    } catch (_) {}
   }
 
-  recordedSamples = Array.isArray(preChunks) ? preChunks.map(c => new Float32Array(c)) : [];
+  recordedSamples = Array.isArray(preChunks) ? preChunks.map((c) => new Float32Array(c)) : [];
   isSpeaking = true;
 
   silenceTimer = setTimeout(() => {
@@ -689,7 +830,9 @@ function restoreFalseBargeIn(candidate) {
   candidate.waiters = [];
   if (bargeInCandidate === candidate) bargeInCandidate = null;
   for (const w of waiters) {
-    try { w("resumed"); } catch (_) {}
+    try {
+      w("resumed");
+    } catch (_) {}
   }
 
   const transcriptEl = document.getElementById("voice-hud-transcript");
@@ -717,8 +860,9 @@ function restoreFalseBargeIn(candidate) {
   if (window.isGenerating) {
     window.isAIResponding = true;
     if (transcriptEl && voiceSessionActive) {
-      transcriptEl.innerHTML = candidate.prevTranscriptHtml
-        || `<span class="text-primary italic flex items-center gap-2"><span class="inline-block w-2 h-2 rounded-full bg-primary animate-ping"></span>Antigravity düşünüyor...</span>`;
+      transcriptEl.innerHTML =
+        candidate.prevTranscriptHtml ||
+        `<span class="text-primary italic flex items-center gap-2"><span class="inline-block w-2 h-2 rounded-full bg-primary animate-ping"></span>Lux düşünüyor...</span>`;
     }
     return;
   }
@@ -752,7 +896,9 @@ async function startAudioCapture() {
 
     voiceMicStream = await navigator.mediaDevices.getUserMedia(constraints);
     if (!voiceMicStream || !voiceSessionActive) {
-      try { voiceMicStream?.getTracks?.().forEach(t => t.stop()); } catch (_) {}
+      try {
+        voiceMicStream?.getTracks?.().forEach((t) => t.stop());
+      } catch (_) {}
       return;
     }
 
@@ -859,7 +1005,7 @@ async function startAudioCapture() {
       const peakSpeechThreshold = Math.max(0.0016, Math.min(0.08, peakFloor * 3.2));
       const peakHoldThreshold = Math.max(0.0011, Math.min(0.06, peakFloor * 2.3));
       const bandSpeechThreshold = Math.max(0.00018, Math.min(0.016, bandNoiseFloor * 3.2));
-      const bargeBandThreshold = Math.max(0.00050, Math.min(0.025, bandNoiseFloor * 7.2, bandSpeechThreshold * 2.6));
+      const bargeBandThreshold = Math.max(0.0005, Math.min(0.025, bandNoiseFloor * 7.2, bandSpeechThreshold * 2.6));
 
       const aiBusy = Boolean(window.currentVoiceAudio || window.isAIResponding || window.isGenerating || window.isLullabyPlaying?.());
       if (aiBusy && !(bargeInCandidate && bargeInCandidate.active)) {
@@ -889,13 +1035,11 @@ async function startAudioCapture() {
           }
         }
 
-        const reqFrames = (window.currentVoiceAudio || window.isLullabyPlaying?.())
-          ? requiredBargeAudioFrames
-          : requiredBargeThinkFrames;
+        const reqFrames = window.currentVoiceAudio || window.isLullabyPlaying?.() ? requiredBargeAudioFrames : requiredBargeThinkFrames;
         if (bargeInFrames >= reqFrames) {
           bargeInFrames = 0;
           bargeGapGrace = 0;
-          const chunksToKeep = bargeInPreBuffer.map(chunk => new Float32Array(chunk));
+          const chunksToKeep = bargeInPreBuffer.map((chunk) => new Float32Array(chunk));
           bargeInPreBuffer.length = 0;
           beginTentativeBargeIn(chunksToKeep);
         }
@@ -909,7 +1053,7 @@ async function startAudioCapture() {
       // Short start-chime gate (180ms) and brief 90ms speaker decay guard
       const now = Date.now();
       const inCandidate = Boolean(bargeInCandidate && bargeInCandidate.active);
-      if (!inCandidate && ((now - captureStartedAt) < 180 || (now - (window.lastAiAudioEndedAt || 0)) < 90)) {
+      if (!inCandidate && (now - captureStartedAt < 180 || now - (window.lastAiAudioEndedAt || 0) < 90)) {
         preRollBuffer.length = 0;
         return;
       }
@@ -918,9 +1062,16 @@ async function startAudioCapture() {
         const clampedRms = Math.min(0.012, rms);
         const clampedPeak = Math.min(0.04, framePeak);
         const clampedBand = Math.min(0.008, bandRms);
-        noiseFloor = calibrationFrames === 1 ? Math.max(0.00005, clampedRms) : (noiseFloor * (calibrationFrames - 1) + clampedRms) / calibrationFrames;
-        peakFloor = calibrationFrames === 1 ? Math.max(0.00015, clampedPeak) : (peakFloor * (calibrationFrames - 1) + clampedPeak) / calibrationFrames;
-        bandNoiseFloor = calibrationFrames === 1 ? Math.max(0.00002, clampedBand) : (bandNoiseFloor * (calibrationFrames - 1) + clampedBand) / calibrationFrames;
+        noiseFloor =
+          calibrationFrames === 1 ? Math.max(0.00005, clampedRms) : (noiseFloor * (calibrationFrames - 1) + clampedRms) / calibrationFrames;
+        peakFloor =
+          calibrationFrames === 1
+            ? Math.max(0.00015, clampedPeak)
+            : (peakFloor * (calibrationFrames - 1) + clampedPeak) / calibrationFrames;
+        bandNoiseFloor =
+          calibrationFrames === 1
+            ? Math.max(0.00002, clampedBand)
+            : (bandNoiseFloor * (calibrationFrames - 1) + clampedBand) / calibrationFrames;
         return;
       }
 
@@ -931,21 +1082,21 @@ async function startAudioCapture() {
       }
 
       const rawLoud = rms > speechThreshold || framePeak > peakSpeechThreshold || bandRms > bandSpeechThreshold;
-      const activeSpeech = isSpeaking ? rawLoud : (rawLoud && cls.idleQuality);
+      const activeSpeech = isSpeaking ? rawLoud : rawLoud && cls.idleQuality;
       const softHold = rms > holdThreshold || framePeak > peakHoldThreshold || bandRms > bandSpeechThreshold * 0.7;
 
       // Adapt noise floor slowly during real room silence
       if (!isSpeaking && !activeSpeech) {
         noiseFloor = Math.max(0.00005, noiseFloor * 0.94 + Math.min(0.015, rms) * 0.06);
         peakFloor = Math.max(0.00015, peakFloor * 0.94 + Math.min(0.045, framePeak) * 0.06);
-        bandNoiseFloor = Math.max(0.00002, bandNoiseFloor * 0.94 + Math.min(0.010, bandRms) * 0.06);
+        bandNoiseFloor = Math.max(0.00002, bandNoiseFloor * 0.94 + Math.min(0.01, bandRms) * 0.06);
       }
 
       if (activeSpeech) {
         if (!isSpeaking) {
           isSpeaking = true;
           // Prepend pre-roll buffer so initial Turkish consonants & soft words aren't clipped
-          recordedSamples = [...preRollBuffer.map(chunk => new Float32Array(chunk))];
+          recordedSamples = [...preRollBuffer.map((chunk) => new Float32Array(chunk))];
           preRollBuffer.length = 0;
           const transcriptEl = document.getElementById("voice-hud-transcript");
           if (transcriptEl) {
@@ -979,9 +1130,12 @@ async function startAudioCapture() {
         if (recordedSamples.length >= maxCaptureChunks) {
           processRecordedAudio();
         } else if (!silenceTimer) {
-          silenceTimer = setTimeout(() => {
-            processRecordedAudio();
-          }, inCandidate ? 420 : 480);
+          silenceTimer = setTimeout(
+            () => {
+              processRecordedAudio();
+            },
+            inCandidate ? 420 : 480
+          );
         }
       }
     };
@@ -1033,7 +1187,6 @@ async function startAudioCapture() {
       voiceAnimFrame = requestAnimationFrame(animateBars);
     };
     animateBars();
-
   } catch (err) {
     console.error("Audio capture initialization error:", err);
     const transcriptEl = document.getElementById("voice-hud-transcript");
@@ -1049,20 +1202,30 @@ function stopAudioCapture() {
     silenceTimer = null;
   }
   if (voiceProcessorNode) {
-    try { voiceProcessorNode.port?.postMessage?.("stop"); } catch (e) {}
-    try { voiceProcessorNode.disconnect(); } catch (e) {}
+    try {
+      voiceProcessorNode.port?.postMessage?.("stop");
+    } catch (e) {}
+    try {
+      voiceProcessorNode.disconnect();
+    } catch (e) {}
     voiceProcessorNode = null;
   }
   if (voiceAnalyser) {
-    try { voiceAnalyser.disconnect(); } catch (e) {}
+    try {
+      voiceAnalyser.disconnect();
+    } catch (e) {}
     voiceAnalyser = null;
   }
   if (voiceMicStream) {
-    try { voiceMicStream.getTracks().forEach(t => t.stop()); } catch (e) {}
+    try {
+      voiceMicStream.getTracks().forEach((t) => t.stop());
+    } catch (e) {}
     voiceMicStream = null;
   }
   if (voiceAudioContext) {
-    try { voiceAudioContext.close(); } catch (e) {}
+    try {
+      voiceAudioContext.close();
+    } catch (e) {}
     voiceAudioContext = null;
   }
   if (voiceAnimFrame) {
@@ -1110,7 +1273,7 @@ async function processRecordedAudio() {
     const a = Math.abs(mergedSamples[i]);
     if (a > peak) peak = a;
   }
-  if (totalLength < actualRate * 0.22 || peak < 0.0020) {
+  if (totalLength < actualRate * 0.22 || peak < 0.002) {
     isTranscribing = false;
     if (candidate) {
       restoreFalseBargeIn(candidate);
@@ -1141,7 +1304,7 @@ async function processRecordedAudio() {
         curSettings.engineMode || "auto",
         curSettings.sttEngine || "auto"
       );
-      const rawText = (res && res.success && res.text) ? res.text.trim() : "";
+      const rawText = res && res.success && res.text ? res.text.trim() : "";
       const alnumLen = rawText.replace(/[^\p{L}\p{N}]/gu, "").length;
       if (alnumLen >= 2) {
         recognizedText = rawText;
@@ -1183,7 +1346,9 @@ async function processRecordedAudio() {
       if (bargeInCandidate === candidate) bargeInCandidate = null;
       if (candidate.pausedAudio) candidate.pausedAudio.__luxTentativePause = false;
       for (const w of waiters) {
-        try { w("committed"); } catch (_) {}
+        try {
+          w("committed");
+        } catch (_) {}
       }
       activeSpokenTurnId++;
       window.stopAllAssistantOutput?.(true);
@@ -1199,7 +1364,7 @@ async function processRecordedAudio() {
         composerInput.value = "";
         composerInput.style.height = "auto";
       }
-      playAntigravitySound("voiceRecordingStopped");
+      playLuxSound("voiceRecordingStopped");
       if (transcriptEl) {
         transcriptEl.innerHTML = `<span class="text-amber-400 font-medium">⏹ Durduruldu — Dinliyor...</span>`;
       }
@@ -1216,13 +1381,15 @@ async function processRecordedAudio() {
     const isNeuralLocal = engineLabel.includes("whisper") || engineLabel.includes("moonshine");
     const neuralBadgeLabel = engineLabel.includes("moonshine")
       ? "🌙 Moonshine STT"
-      : (engineLabel.includes("turbo") ? "🎧 Whisper Turbo" : "🎧 Nöral STT");
+      : engineLabel.includes("turbo")
+        ? "🎧 Whisper Turbo"
+        : "🎧 Nöral STT";
     const engineBadge = isNeuralLocal
       ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 ml-2 align-middle">${neuralBadgeLabel}</span>`
-      : (engineLabel.includes("offline")
+      : engineLabel.includes("offline")
         ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 ml-2 align-middle">⚡ Çevrimdışı Nöral</span>`
-        : "");
-    playAntigravitySound("requestSent");
+        : "";
+    playLuxSound("requestSent");
     if (transcriptEl) {
       transcriptEl.innerHTML = `<span class="text-foreground font-medium">"${escapeHtml(effectiveSpoken)}"</span>${engineBadge}`;
     }
@@ -1246,7 +1413,7 @@ async function handleUserSpokenInput(spokenText) {
   window.isAIResponding = true;
   const transcriptEl = document.getElementById("voice-hud-transcript");
   if (transcriptEl) {
-    transcriptEl.innerHTML = `<span class="text-primary italic flex items-center gap-2"><span class="inline-block w-2 h-2 rounded-full bg-primary animate-ping"></span>Antigravity düşünüyor...</span>`;
+    transcriptEl.innerHTML = `<span class="text-primary italic flex items-center gap-2"><span class="inline-block w-2 h-2 rounded-full bg-primary animate-ping"></span>Lux düşünüyor...</span>`;
   }
 
   try {
@@ -1254,7 +1421,7 @@ async function handleUserSpokenInput(spokenText) {
     await window.submitUserMessage(spokenText, { isVoice: true });
   } catch (err) {
     console.error("AI response error:", err);
-    playAntigravitySound("error");
+    playLuxSound("error");
     if (transcriptEl) {
       transcriptEl.innerHTML = `<span class="text-red-400">Hata: ${escapeHtml(err.message)}</span>`;
     }
@@ -1271,32 +1438,35 @@ async function speakAssistantResponse(text) {
 
   if (window.currentVoiceAudio) {
     window.currentVoiceAudio.__luxTentativePause = false;
-    try { window.currentVoiceAudio.pause(); } catch (e) {}
+    try {
+      window.currentVoiceAudio.pause();
+    } catch (e) {}
     window.currentVoiceAudio = null;
   }
 
   const transcriptEl = document.getElementById("voice-hud-transcript");
 
-  const speechText = typeof window.cleanTextForSpeech === "function"
-    ? window.cleanTextForSpeech(text)
-    : String(text || "")
-        .replace(/```[\s\S]*?```/g, "kod bloğu")
-        .replace(/`([^`]+)`/g, "$1")
-        .replace(/[\p{Extended_Pictographic}\u2600-\u27BF\u{1F000}-\u{1FAFF}]/gu, " ")
-        .replace(/[*#_~>]/g, "")
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-        .replace(/\s+/g, " ")
-        .trim()
-        .slice(0, 440);
+  const speechText =
+    typeof window.cleanTextForSpeech === "function"
+      ? window.cleanTextForSpeech(text)
+      : String(text || "")
+          .replace(/```[\s\S]*?```/g, "kod bloğu")
+          .replace(/`([^`]+)`/g, "$1")
+          .replace(/[\p{Extended_Pictographic}\u2600-\u27BF\u{1F000}-\u{1FAFF}]/gu, " ")
+          .replace(/[*#_~>]/g, "")
+          .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 440);
   if (!speechText) return;
   window.__luxLastSpokenText = speechText;
   window.__luxLastSpokenAt = Date.now();
 
   try {
-    playAntigravitySound("responseReceived1");
+    playLuxSound("responseReceived1");
 
     if (window.luxAPI?.voice?.synthesize) {
-      const openrouterApiKey = window.appStore?.getOpenRouterApiKey?.() || "";
+      const openrouterApiKey = (await window.appStore?.resolveOpenRouterApiKey?.()) || "";
       const res = await window.luxAPI.voice.synthesize(
         speechText,
         settings.voice || "Arlo",
@@ -1305,6 +1475,7 @@ async function speakAssistantResponse(text) {
         settings.cloneRefPath || "",
         { openrouterApiKey }
       );
+      window.__luxPendingVoiceRequestId = res?.requestId || null;
 
       if (res && res.success && res.audioBase64) {
         await new Promise((resolve) => {
@@ -1329,7 +1500,7 @@ async function speakAssistantResponse(text) {
 
           audio.onended = () => {
             audio.__luxTentativePause = false;
-            playAntigravitySound("taskCompleted");
+            playLuxSound("taskCompleted");
             if (transcriptEl && voiceSessionActive) {
               transcriptEl.textContent = "Dinliyor. Herhangi bir şey sorun.";
             }
@@ -1359,7 +1530,7 @@ async function speakAssistantResponse(text) {
   }
 }
 
-// 1:1 Antigravity Voice Mode Settings View (LLM seçiminden tamamen bağımsız)
+// 1:1 Lux Voice Mode Settings View (LLM seçiminden tamamen bağımsız)
 function renderVoiceModeSettingsSection() {
   const settings = window.appStore.getVoiceSettings();
   const volume = typeof settings.volume === "number" ? settings.volume : 100;
@@ -1495,7 +1666,7 @@ function renderVoiceModeSettingsSection() {
             <button type="button" id="btn-settings-pick-clone-audio" class="agy-button bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 text-xs font-medium px-3 py-1.5 rounded-lg border border-purple-500/35 cursor-pointer transition-colors">
               Dosya Seç...
             </button>
-            <button type="button" id="btn-settings-reset-clone-audio" class="agy-button bg-secondary/70 hover:bg-secondary text-muted-foreground hover:text-foreground text-xs px-2.5 py-1.5 rounded-lg border border-border/60 cursor-pointer transition-colors ${cloneRefPath ? '' : 'opacity-40 pointer-events-none'}" title="Varsayılan örneğe dön">
+            <button type="button" id="btn-settings-reset-clone-audio" class="agy-button bg-secondary/70 hover:bg-secondary text-muted-foreground hover:text-foreground text-xs px-2.5 py-1.5 rounded-lg border border-border/60 cursor-pointer transition-colors ${cloneRefPath ? "" : "opacity-40 pointer-events-none"}" title="Varsayılan örneğe dön">
               Sıfırla
             </button>
           </div>
@@ -1509,8 +1680,8 @@ function renderVoiceModeSettingsSection() {
           <div class="flex flex-col gap-1 pr-4 flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="text-sm font-medium text-foreground tracking-tight">OpenRouter API Anahtarı (Ücretsiz :free Sesler)</span>
-              <span id="settings-voice-or-status" class="text-[10px] px-2 py-0.5 rounded-full font-mono border ${openrouterKey ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-secondary/60 text-muted-foreground border-border/60'}">
-                ${openrouterKey ? '✓ Bağlı · $0 Free' : 'Girilmedi'}
+              <span id="settings-voice-or-status" class="text-[10px] px-2 py-0.5 rounded-full font-mono border ${openrouterKey ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30" : "bg-secondary/60 text-muted-foreground border-border/60"}">
+                ${openrouterKey ? "✓ Bağlı · $0 Free" : "Girilmedi"}
               </span>
             </div>
             <p class="text-xs text-muted-foreground leading-relaxed m-0">
@@ -1532,7 +1703,7 @@ function renderVoiceModeSettingsSection() {
           <div class="flex flex-col gap-1 pr-6 flex-1 min-w-0">
             <span class="text-sm font-medium text-foreground tracking-tight">Ses Düzeyi</span>
             <p class="text-xs text-muted-foreground leading-relaxed m-0">
-              Antigravity sesli yanıtlarının ses yüksekliği.
+              Lux sesli yanıtlarının ses yüksekliği.
             </p>
           </div>
           <div class="flex items-center gap-4 shrink-0">
@@ -1572,16 +1743,16 @@ function attachVoiceModeSettingsEvents(container) {
   });
 
   const sttSelect = container.querySelector("#settings-voice-stt-select");
-  if (sttSelect && window.makeAntigravityCustomSelect) {
-    window.makeAntigravityCustomSelect(sttSelect);
+  if (sttSelect && window.makeLuxCustomSelect) {
+    window.makeLuxCustomSelect(sttSelect);
   }
   sttSelect?.addEventListener("change", (e) => {
     window.appStore.setVoiceSetting("sttEngine", e.target.value);
   });
 
   const engineSelect = container.querySelector("#settings-voice-engine-select");
-  if (engineSelect && window.makeAntigravityCustomSelect) {
-    window.makeAntigravityCustomSelect(engineSelect);
+  if (engineSelect && window.makeLuxCustomSelect) {
+    window.makeLuxCustomSelect(engineSelect);
   }
   engineSelect?.addEventListener("change", (e) => {
     window.appStore.setVoiceSetting("engineMode", e.target.value);
@@ -1634,7 +1805,9 @@ function attachVoiceModeSettingsEvents(container) {
     }
     if (orSaveBtn) {
       orSaveBtn.textContent = val ? "✓ Kaydedildi" : "Temizlendi";
-      setTimeout(() => { if (orSaveBtn.isConnected) orSaveBtn.textContent = "Kaydet"; }, 1800);
+      setTimeout(() => {
+        if (orSaveBtn.isConnected) orSaveBtn.textContent = "Kaydet";
+      }, 1800);
     }
   };
   orSaveBtn?.addEventListener("click", saveOrKey);
@@ -1648,35 +1821,40 @@ function attachVoiceModeSettingsEvents(container) {
   // Query live voice backend status (Whisper + Moonshine + Piper + Kokoro + XTTS availability on D:)
   const engineStatusEl = container.querySelector("#settings-voice-engine-status");
   if (engineStatusEl && window.luxAPI?.voice?.getStatus) {
-    window.luxAPI.voice.getStatus().then((st) => {
-      if (st?.success) {
-        const readyParts = [];
-        if (st.offlineSttAvailable) readyParts.push(st.whisperTurboCached ? "Whisper Small/Turbo" : "Whisper");
-        if (st.moonshineAvailable) readyParts.push("Moonshine");
-        if (st.offlineTtsAvailable) readyParts.push(`Piper x${st.piperVoicesCount || 1}`);
-        if (st.kokoroAvailable) readyParts.push("Kokoro-82M");
-        if (st.xttsAvailable) readyParts.push("XTTS-v2");
-        if (st.openrouterTtsAvailable && (window.appStore?.getOpenRouterApiKey?.() || st.openrouterConfigured)) {
-          readyParts.push("OpenRouter :free");
-        }
-        if (readyParts.length > 0) {
-          engineStatusEl.className = "text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono";
-          engineStatusEl.textContent = `✓ D:\\ Hazır (${readyParts.join(" · ")})`;
+    window.luxAPI.voice
+      .getStatus()
+      .then((st) => {
+        if (st?.success) {
+          const readyParts = [];
+          if (st.offlineSttAvailable) readyParts.push(st.whisperTurboCached ? "Whisper Small/Turbo" : "Whisper");
+          if (st.moonshineAvailable) readyParts.push("Moonshine");
+          if (st.offlineTtsAvailable) readyParts.push(`Piper x${st.piperVoicesCount || 1}`);
+          if (st.kokoroAvailable) readyParts.push("Kokoro-82M");
+          if (st.xttsAvailable) readyParts.push("XTTS-v2");
+          if (st.openrouterTtsAvailable && (window.appStore?.getOpenRouterApiKey?.() || st.openrouterConfigured)) {
+            readyParts.push("OpenRouter :free");
+          }
+          if (readyParts.length > 0) {
+            engineStatusEl.className =
+              "text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono";
+            engineStatusEl.textContent = `✓ D:\\ Hazır (${readyParts.join(" · ")})`;
+          } else {
+            engineStatusEl.className =
+              "text-[11px] px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 font-mono";
+            engineStatusEl.textContent = "Bulut Hazır (Yerel Kısmi)";
+          }
         } else {
-          engineStatusEl.className = "text-[11px] px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 font-mono";
-          engineStatusEl.textContent = "Bulut Hazır (Yerel Kısmi)";
+          engineStatusEl.textContent = "Durum alınamadı";
         }
-      } else {
-        engineStatusEl.textContent = "Durum alınamadı";
-      }
-    }).catch(() => {
-      engineStatusEl.textContent = "Bulut Modu";
-    });
+      })
+      .catch(() => {
+        engineStatusEl.textContent = "Bulut Modu";
+      });
   }
 
   const micSelect = container.querySelector("#settings-voice-mic-select");
-  if (micSelect && window.makeAntigravityCustomSelect) {
-    window.makeAntigravityCustomSelect(micSelect);
+  if (micSelect && window.makeLuxCustomSelect) {
+    window.makeLuxCustomSelect(micSelect);
   }
   micSelect?.addEventListener("change", (e) => {
     window.appStore.setVoiceSetting("microphone", e.target.value);
@@ -1688,31 +1866,38 @@ function attachVoiceModeSettingsEvents(container) {
 
   // Populate actual audio input devices if available
   if (navigator.mediaDevices?.enumerateDevices) {
-    navigator.mediaDevices.enumerateDevices().then(devices => {
-      const audioInputs = devices.filter(d => d.kind === "audioinput");
-      if (audioInputs.length > 0 && micSelect) {
-        const curMic = window.appStore.getVoiceSettings().microphone || "default";
-        const optionsHtml = [
-          `<option value="default" ${curMic === "default" ? "selected" : ""} class="bg-[#16161b] text-[#f3f4f6]" style="background-color: #16161b; color: #f3f4f6;">Varsayılan Sistem Mikrofonu</option>`,
-          ...audioInputs.filter(d => d.deviceId !== "default" && d.deviceId !== "communications").map((d, idx) => `
+    navigator.mediaDevices
+      .enumerateDevices()
+      .then((devices) => {
+        const audioInputs = devices.filter((d) => d.kind === "audioinput");
+        if (audioInputs.length > 0 && micSelect) {
+          const curMic = window.appStore.getVoiceSettings().microphone || "default";
+          const optionsHtml = [
+            `<option value="default" ${curMic === "default" ? "selected" : ""} class="bg-[#16161b] text-[#f3f4f6]" style="background-color: #16161b; color: #f3f4f6;">Varsayılan Sistem Mikrofonu</option>`,
+            ...audioInputs
+              .filter((d) => d.deviceId !== "default" && d.deviceId !== "communications")
+              .map(
+                (d, idx) => `
             <option value="${escapeHtml(d.deviceId)}" ${d.deviceId === curMic ? "selected" : ""} class="bg-[#16161b] text-[#f3f4f6]" style="background-color: #16161b; color: #f3f4f6;">${escapeHtml(d.label || `Giriş Aygıtı ${idx + 1}`)}</option>
-          `)
-        ].join("");
-        micSelect.innerHTML = optionsHtml;
-        micSelect.value = curMic;
-        micSelect._customSelectRefresh?.();
-      }
-    }).catch(() => {});
+          `
+              )
+          ].join("");
+          micSelect.innerHTML = optionsHtml;
+          micSelect.value = curMic;
+          micSelect._customSelectRefresh?.();
+        }
+      })
+      .catch(() => {});
   }
 }
 
-// 1:1 Antigravity "Choose Antigravity's Voice" Carousel Modal (Image 3 & 4 - media_1794235564020_c0035b7f.png)
+// 1:1 Lux "Choose Lux's Voice" Carousel Modal (Image 3 & 4 - media_1794235564020_c0035b7f.png)
 function openVoiceOrbModal() {
   document.getElementById("choose-voice-modal")?.remove();
 
   const voices = window.appStore.getAvailableVoices();
   const currentVoiceId = window.appStore.getVoiceSettings().voice;
-  currentVoiceCarouselIndex = voices.findIndex(v => v.id === currentVoiceId);
+  currentVoiceCarouselIndex = voices.findIndex((v) => v.id === currentVoiceId);
   if (currentVoiceCarouselIndex < 0) currentVoiceCarouselIndex = 0;
 
   const modalEl = document.createElement("div");
@@ -1729,7 +1914,7 @@ function openVoiceOrbModal() {
         <div class="flex items-center justify-between w-full mb-2">
           <span class="w-6"></span>
           <h3 class="text-base font-semibold text-foreground m-0 text-center flex-1">
-            Choose Antigravity's Voice
+            Choose Lux's Voice
           </h3>
           <button type="button" id="btn-close-voice-modal" class="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors" title="Kapat">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -1744,9 +1929,9 @@ function openVoiceOrbModal() {
           </button>
 
           <!-- Organic Luminous Fluid Cloud / Orb (Matches Image 3 & 4) -->
-          <div class="antigravity-voice-orb-container" style="--voice-accent: ${v.color}; --voice-secondary: ${v.secondaryColor};">
-            <div class="antigravity-voice-orb-outer"></div>
-            <div class="antigravity-voice-orb-core"></div>
+          <div class="lux-voice-orb-container" style="--voice-accent: ${v.color}; --voice-secondary: ${v.secondaryColor};">
+            <div class="lux-voice-orb-outer"></div>
+            <div class="lux-voice-orb-core"></div>
           </div>
 
           <!-- Next Button -->
@@ -1763,12 +1948,14 @@ function openVoiceOrbModal() {
 
         <!-- Carousel Pagination Dots (Active pill indicator) -->
         <div class="flex items-center justify-center gap-1.5 mb-5">
-          ${voices.map((item, idx) => {
-            const isActive = idx === currentVoiceCarouselIndex;
-            return isActive
-              ? `<span class="w-6 h-1.5 rounded-full transition-all duration-300" style="background-color: ${v.color}; box-shadow: 0 0 10px ${v.color};"></span>`
-              : `<span class="w-1.5 h-1.5 rounded-full bg-white/20 transition-all duration-300"></span>`;
-          }).join('')}
+          ${voices
+            .map((item, idx) => {
+              const isActive = idx === currentVoiceCarouselIndex;
+              return isActive
+                ? `<span class="w-6 h-1.5 rounded-full transition-all duration-300" style="background-color: ${v.color}; box-shadow: 0 0 10px ${v.color};"></span>`
+                : `<span class="w-1.5 h-1.5 rounded-full bg-white/20 transition-all duration-300"></span>`;
+            })
+            .join("")}
         </div>
 
         <!-- Bottom Action Button: "Use [Voice]" -->
@@ -1854,10 +2041,18 @@ async function stopAndTranscribeComposerDictation() {
   btn?.setAttribute("title", "Sesle Yaz (Dikte)");
 
   const sampleRate = dictationContext?.sampleRate || 16000;
-  try { dictationProcessor?.port?.postMessage?.("stop"); } catch (_) {}
-  try { dictationProcessor?.disconnect(); } catch (_) {}
-  try { dictationStream?.getTracks().forEach(t => t.stop()); } catch (_) {}
-  try { dictationContext?.close(); } catch (_) {}
+  try {
+    dictationProcessor?.port?.postMessage?.("stop");
+  } catch (_) {}
+  try {
+    dictationProcessor?.disconnect();
+  } catch (_) {}
+  try {
+    dictationStream?.getTracks().forEach((t) => t.stop());
+  } catch (_) {}
+  try {
+    dictationContext?.close();
+  } catch (_) {}
   dictationProcessor = null;
   dictationStream = null;
   dictationContext = null;
@@ -1880,12 +2075,7 @@ async function stopAndTranscribeComposerDictation() {
   try {
     const b64 = encodeWAVBase64(merged, sampleRate);
     const settings = window.appStore?.getVoiceSettings?.() || {};
-    const res = await window.luxAPI?.voice?.transcribe?.(
-      b64,
-      "tr-TR",
-      settings.engineMode || "auto",
-      settings.sttEngine || "auto"
-    );
+    const res = await window.luxAPI?.voice?.transcribe?.(b64, "tr-TR", settings.engineMode || "auto", settings.sttEngine || "auto");
     if (res?.success && res.text && res.text.trim()) {
       const textarea = document.getElementById("composer-textarea");
       if (textarea) {
@@ -1895,14 +2085,14 @@ async function stopAndTranscribeComposerDictation() {
         textarea.style.height = Math.min(textarea.scrollHeight, 220) + "px";
         textarea.focus();
       }
-      playAntigravitySound("voiceRecordingStopped");
+      playLuxSound("voiceRecordingStopped");
     }
   } catch (err) {
     console.warn("Composer dictation error:", err);
   }
 }
 
-window.toggleComposerDictation = async function() {
+window.toggleComposerDictation = async function () {
   if (composerDictationActive) {
     await stopAndTranscribeComposerDictation();
     return;
@@ -1935,12 +2125,12 @@ window.toggleComposerDictation = async function() {
 
     dictationChunks = [];
     composerDictationActive = true;
-    window.luxAPI?.voice?.warmup?.({
+    warmupVoiceEngine({
       sttModel: settings.sttEngine || "auto",
       voice: settings.voice || "Fola",
       mode: settings.engineMode || "auto"
-    }).catch?.(() => {});
-    playAntigravitySound("voiceRecordingStarted");
+    });
+    playLuxSound("voiceRecordingStarted");
     btn?.classList.add("bg-red-500/20", "text-red-400", "ring-2", "ring-red-500/50", "animate-pulse");
     btn?.setAttribute("title", "Dikte Kaydını Durdur ve Metne Çevir");
 
@@ -1958,7 +2148,7 @@ window.toggleComposerDictation = async function() {
       if (hasLevel && (speechSeen || cls.idleQuality)) {
         speechSeen = true;
         lastSoundAt = Date.now();
-      } else if (speechSeen && (Date.now() - lastSoundAt > 1200)) {
+      } else if (speechSeen && Date.now() - lastSoundAt > 1200) {
         stopAndTranscribeComposerDictation();
       }
     };

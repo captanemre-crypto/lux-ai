@@ -1,37 +1,37 @@
-// 1:1 Antigravity Overview Floating Panel & Live Git Diff Review Component (Türkçe Arayüz)
+// 1:1 Lux Overview Floating Panel & Live Git Diff Review Component (Türkçe Arayüz)
 
 let activeOverviewSubView = null; // null | 'review' | 'files' | 'terminal' | 'extensions'
 
-let terminalHistory = [
-  "Lux AI Terminal Motoru v1.0.0 (PowerShell)",
-  "Komutlar için hazır. Bir komut yazıp Enter tuşuna basın."
-];
+const terminalShellLabel = (navigator.platform || "").startsWith("Win") ? "PowerShell" : "/bin/bash";
+let terminalHistory = [`Lux AI Terminal Motoru v1.2.0 (${terminalShellLabel})`, "Komutlar için hazır. Bir komut yazıp Enter tuşuna basın."];
 
 // Global unified diff renderer shared between RightPanel and IDE Split Panel
-window.renderDiffLinesHtml = function(diffText) {
+window.renderDiffLinesHtml = function (diffText) {
   if (!diffText || !diffText.trim()) {
     return `<div class="p-2 text-[11px] text-muted-foreground font-mono">Satır düzeyinde fark bulunamadı.</div>`;
   }
-  const lines = diffText.replace(/\r\n/g, '\n').split('\n').slice(0, 180);
-  return lines.map((line) => {
-    const safe = escapeHtml(line) || "&nbsp;";
-    if (line.startsWith('+++') || line.startsWith('---')) {
-      return `<div class="px-2 py-0.5 text-[10px] font-mono text-muted-foreground/70 bg-white/[0.02] truncate">${safe}</div>`;
-    }
-    if (line.startsWith('@@')) {
-      return `<div class="px-2 py-0.5 text-[10px] font-mono text-blue-400/90 bg-blue-500/10 border-y border-blue-500/10">${safe}</div>`;
-    }
-    if (line.startsWith('+')) {
-      return `<div class="px-2 py-0.5 text-[11px] font-mono bg-emerald-500/15 text-emerald-300 border-l-2 border-emerald-500 whitespace-pre overflow-x-auto">${safe}</div>`;
-    }
-    if (line.startsWith('-')) {
-      return `<div class="px-2 py-0.5 text-[11px] font-mono bg-rose-500/15 text-rose-300 border-l-2 border-rose-500 whitespace-pre overflow-x-auto">${safe}</div>`;
-    }
-    return `<div class="px-2 py-0.5 text-[11px] font-mono text-secondary-foreground/75 whitespace-pre overflow-x-auto">${safe}</div>`;
-  }).join('');
+  const lines = diffText.replace(/\r\n/g, "\n").split("\n").slice(0, 180);
+  return lines
+    .map((line) => {
+      const safe = escapeHtml(line) || "&nbsp;";
+      if (line.startsWith("+++") || line.startsWith("---")) {
+        return `<div class="px-2 py-0.5 text-[10px] font-mono text-muted-foreground/70 bg-white/[0.02] truncate">${safe}</div>`;
+      }
+      if (line.startsWith("@@")) {
+        return `<div class="px-2 py-0.5 text-[10px] font-mono text-blue-400/90 bg-blue-500/10 border-y border-blue-500/10">${safe}</div>`;
+      }
+      if (line.startsWith("+")) {
+        return `<div class="px-2 py-0.5 text-[11px] font-mono bg-emerald-500/15 text-emerald-300 border-l-2 border-emerald-500 whitespace-pre overflow-x-auto">${safe}</div>`;
+      }
+      if (line.startsWith("-")) {
+        return `<div class="px-2 py-0.5 text-[11px] font-mono bg-rose-500/15 text-rose-300 border-l-2 border-rose-500 whitespace-pre overflow-x-auto">${safe}</div>`;
+      }
+      return `<div class="px-2 py-0.5 text-[11px] font-mono text-secondary-foreground/75 whitespace-pre overflow-x-auto">${safe}</div>`;
+    })
+    .join("");
 };
 
-window.renderDiffReviewContainerHtml = function(diffState, compact = false) {
+window.renderDiffReviewContainerHtml = function (diffState, compact = false) {
   const files = diffState?.files || [];
   const isGitRepo = Boolean(diffState?.isGitRepo);
   const branch = diffState?.branch || "main";
@@ -41,58 +41,67 @@ window.renderDiffReviewContainerHtml = function(diffState, compact = false) {
       <!-- Top Repo/Snapshot Header -->
       <div class="flex items-center justify-between gap-2 pb-1.5 border-b border-border/50">
         <div class="flex items-center gap-1.5 min-w-0 flex-wrap">
-          ${isGitRepo ? `
+          ${
+            isGitRepo
+              ? `
             <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono truncate">
               ⎇ ${escapeHtml(branch)}
             </span>
-          ` : `
+          `
+              : `
             <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 font-medium">
               Canlı İzleme
             </span>
             <button type="button" class="btn-git-init text-[10px] px-2 py-0.5 rounded-full bg-secondary hover:bg-secondary/80 text-foreground border border-border/60 cursor-pointer transition-colors" title="Bu klasörde Git deposu başlat">
               + Git Başlat
             </button>
-          `}
+          `
+          }
           <span class="text-[10px] text-muted-foreground font-mono">
             ${files.length} dosya
           </span>
         </div>
         <button type="button" class="btn-diff-refresh p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground cursor-pointer transition-colors text-xs flex items-center gap-1" title="Değişiklikleri Yenile">
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          ${!compact ? '<span>Yenile</span>' : ''}
+          ${!compact ? "<span>Yenile</span>" : ""}
         </button>
       </div>
 
       <div id="diff-action-feedback" class="hidden text-[11px] px-2.5 py-1.5 rounded-lg border"></div>
 
       <!-- Diff Files List -->
-      ${files.length === 0 ? `
+      ${
+        files.length === 0
+          ? `
         <div class="p-4 rounded-xl border border-dashed border-border/60 bg-background/40 text-center flex flex-col gap-1.5">
           <span class="text-xs font-medium text-foreground">Bekleyen değişiklik yok</span>
           <span class="text-[11px] text-muted-foreground leading-relaxed">
             Düzenleyicide bir dosyayı kaydettiğinizde veya yapay zeka ajanları kod güncellediğinde canlı satır farkları burada görünecektir.
           </span>
         </div>
-      ` : files.map((f, idx) => {
-        const statusClass = f.status === 'Yeni'
-          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-          : (f.status === 'Silindi'
-            ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
-            : 'bg-amber-500/15 text-amber-400 border-amber-500/30');
-        const expanded = idx === 0;
-        const targetPath = f.fullPath || f.path;
-        return `
+      `
+          : files
+              .map((f, idx) => {
+                const statusClass =
+                  f.status === "Yeni"
+                    ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                    : f.status === "Silindi"
+                      ? "bg-rose-500/15 text-rose-400 border-rose-500/30"
+                      : "bg-amber-500/15 text-amber-400 border-amber-500/30";
+                const expanded = idx === 0;
+                const targetPath = f.fullPath || f.path;
+                return `
           <div class="lux-diff-card rounded-xl bg-background/80 border border-border/80 overflow-hidden flex flex-col">
             <!-- File Header -->
             <div class="p-2.5 flex flex-col gap-2 bg-card/30">
               <div class="flex items-center justify-between gap-2 min-w-0">
                 <button type="button" class="btn-diff-toggle flex items-center gap-1.5 min-w-0 flex-1 text-left cursor-pointer text-xs text-foreground hover:text-primary transition-colors">
-                  <svg class="diff-chevron w-3 h-3 shrink-0 text-muted-foreground transition-transform ${expanded ? 'rotate-90' : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  <svg class="diff-chevron w-3 h-3 shrink-0 text-muted-foreground transition-transform ${expanded ? "rotate-90" : ""}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                   <span class="font-mono text-[11px] truncate text-primary" title="${escapeHtml(f.path)}">${escapeHtml(f.path)}</span>
                 </button>
                 <div class="flex items-center gap-1.5 shrink-0 font-mono text-[10px]">
                   <span class="px-1.5 py-0.5 rounded border ${statusClass}">${escapeHtml(f.status)}</span>
-                  ${f.staged ? `<span class="px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/30">Onaylı</span>` : ''}
+                  ${f.staged ? `<span class="px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/30">Onaylı</span>` : ""}
                   <span class="text-emerald-400">+${f.additions || 0}</span>
                   <span class="text-rose-400">-${f.deletions || 0}</span>
                 </div>
@@ -113,23 +122,25 @@ window.renderDiffReviewContainerHtml = function(diffState, compact = false) {
             </div>
 
             <!-- Collapsible Diff Hunks -->
-            <div class="lux-diff-body ${expanded ? '' : 'hidden'} border-t border-border/50 bg-[#050507] max-h-60 overflow-y-auto custom-scrollbar">
+            <div class="lux-diff-body ${expanded ? "" : "hidden"} border-t border-border/50 bg-[#050507] max-h-60 overflow-y-auto custom-scrollbar">
               ${window.renderDiffLinesHtml(f.diffText)}
             </div>
           </div>
         `;
-      }).join('')}
+              })
+              .join("")
+      }
     </div>
   `;
 };
 
-window.attachDiffReviewEvents = function(container, reloadFn) {
+window.attachDiffReviewEvents = function (container, reloadFn) {
   if (!container) return;
 
   const showFeedback = (msg, ok = true) => {
     const el = container.querySelector("#diff-action-feedback");
     if (!el) return;
-    el.className = `text-[11px] px-2.5 py-1.5 rounded-lg border ${ok ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-400'}`;
+    el.className = `text-[11px] px-2.5 py-1.5 rounded-lg border ${ok ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : "bg-rose-500/10 border-rose-500/30 text-rose-400"}`;
     el.textContent = msg;
     el.classList.remove("hidden");
   };
@@ -141,7 +152,7 @@ window.attachDiffReviewEvents = function(container, reloadFn) {
   container.querySelector(".btn-git-init")?.addEventListener("click", async () => {
     const res = await window.luxAPI?.git?.action({ action: "init" });
     if (res?.success) {
-      window.playAntigravitySound?.("codeActionApplied");
+      window.playLuxSound?.("codeActionApplied");
       reloadFn();
     } else {
       showFeedback(res?.output || "Git başlatılamadı (git kurulu olmayabilir).", false);
@@ -170,7 +181,7 @@ window.attachDiffReviewEvents = function(container, reloadFn) {
       const fp = btn.getAttribute("data-file-path");
       const res = await window.luxAPI?.git?.action({ action: "stage", filePath: fp });
       if (res?.success) {
-        window.playAntigravitySound?.("codeActionApplied");
+        window.playLuxSound?.("codeActionApplied");
         window.refreshDiffViews?.();
       } else {
         showFeedback(res?.error || "Onaylama başarısız oldu.", false);
@@ -197,7 +208,7 @@ window.attachDiffReviewEvents = function(container, reloadFn) {
       const fp = btn.getAttribute("data-file-path");
       const res = await window.luxAPI?.git?.action({ action: "discard", filePath: fp });
       if (res?.success) {
-        window.playAntigravitySound?.("diffLineDeleted");
+        window.playLuxSound?.("diffLineDeleted");
         window.invalidateWorkspaceFilesCache?.();
         if (window.activeEditorPath && fp && window.activeEditorPath().toLowerCase() === fp.toLowerCase()) {
           window.loadEditorFile?.(fp);
@@ -210,7 +221,7 @@ window.attachDiffReviewEvents = function(container, reloadFn) {
   });
 };
 
-window.refreshDiffViews = function() {
+window.refreshDiffViews = function () {
   if (activeOverviewSubView === "review") {
     loadOverviewReview();
   }
@@ -347,13 +358,15 @@ function renderRightPanel() {
     });
 
     // Quick badge update for pending diff count
-    window.luxAPI?.git?.getDiff?.().then((diffState) => {
-      const badgeHost = document.getElementById("overview-review-badge");
-      if (badgeHost && diffState?.files?.length > 0) {
-        badgeHost.innerHTML = `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-mono">${diffState.files.length}</span>`;
-      }
-    }).catch(() => {});
-
+    window.luxAPI?.git
+      ?.getDiff?.()
+      .then((diffState) => {
+        const badgeHost = document.getElementById("overview-review-badge");
+        if (badgeHost && diffState?.files?.length > 0) {
+          badgeHost.innerHTML = `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-mono">${diffState.files.length}</span>`;
+        }
+      })
+      .catch(() => {});
   } else {
     // Alt görünüm başlığı ve gövdesi
     const titleMap = {
@@ -406,25 +419,25 @@ function renderRightPanel() {
 
 function renderSubViewContent(view) {
   switch (view) {
-    case 'review':
+    case "review":
       return `
         <div id="overview-review-container" class="flex flex-col gap-2">
           <div class="text-xs text-muted-foreground py-4 text-center">Değişiklikler taranıyor...</div>
         </div>
       `;
 
-    case 'files':
+    case "files":
       return `
         <div class="flex flex-col gap-1 text-xs font-mono" id="files-tree-list">
           <div class="text-muted-foreground py-2 text-center">Dosyalar yükleniyor...</div>
         </div>
       `;
 
-    case 'terminal':
+    case "terminal":
       return `
         <div class="flex flex-col h-full min-h-[260px] font-mono text-xs bg-background rounded-lg p-2 border border-border">
           <div id="terminal-output-box" class="flex-1 overflow-y-auto space-y-1 mb-2 text-muted-foreground">
-            ${terminalHistory.map((line) => `<div class="leading-relaxed whitespace-pre-wrap">${escapeHtml(line)}</div>`).join('')}
+            ${terminalHistory.map((line) => `<div class="leading-relaxed whitespace-pre-wrap">${escapeHtml(line)}</div>`).join("")}
           </div>
           <div class="flex items-center gap-1.5 pt-1.5 border-t border-border/40 shrink-0">
             <span class="text-primary font-bold">PS &gt;</span>
@@ -433,7 +446,7 @@ function renderSubViewContent(view) {
         </div>
       `;
 
-    case 'extensions':
+    case "extensions":
       return `
         <div class="flex flex-col gap-2">
           <div class="text-xs font-medium text-foreground py-1">Yüklü Eklentiler ve Servisler</div>
@@ -457,7 +470,7 @@ function renderSubViewContent(view) {
       `;
 
     default:
-      return '';
+      return "";
   }
 }
 
@@ -487,28 +500,30 @@ async function loadFilesList() {
     const files = await window.luxAPI.fs.listFiles();
     if (Array.isArray(files)) {
       const renderTreeNodes = (nodes, depth = 0) => {
-        return nodes.map((f) => {
-          const pad = 6 + depth * 12;
-          if (f.isDirectory) {
-            return `
+        return nodes
+          .map((f) => {
+            const pad = 6 + depth * 12;
+            if (f.isDirectory) {
+              return `
               <div class="lux-tree-dir-group">
                 <div class="lux-tree-dir flex items-center gap-1.5 py-1 pr-1.5 rounded hover:bg-secondary cursor-pointer" style="padding-left: ${pad}px;">
                   <span class="text-muted-foreground">${ICONS.folder}</span>
                   <span class="truncate font-medium text-foreground">${escapeHtml(f.name)}</span>
                 </div>
                 <div class="lux-tree-children hidden">
-                  ${Array.isArray(f.children) ? renderTreeNodes(f.children, depth + 1) : ''}
+                  ${Array.isArray(f.children) ? renderTreeNodes(f.children, depth + 1) : ""}
                 </div>
               </div>
             `;
-          }
-          return `
+            }
+            return `
             <div class="lux-tree-file flex items-center gap-1.5 py-1 pr-1.5 rounded hover:bg-secondary cursor-pointer" style="padding-left: ${pad}px;" data-file-path="${escapeHtml(f.path)}">
               <span class="text-muted-foreground">${ICONS.files}</span>
               <span class="truncate text-secondary-foreground">${escapeHtml(f.name)}</span>
             </div>
           `;
-        }).join('');
+          })
+          .join("");
       };
 
       container.innerHTML = renderTreeNodes(files);
@@ -556,8 +571,8 @@ function setupTerminalInput() {
       if (!cmd) return;
 
       input.value = "";
-      terminalHistory.push(`PS > ${cmd}`);
-      outputBox.innerHTML += `<div class="text-primary leading-relaxed">PS &gt; ${escapeHtml(cmd)}</div>`;
+      terminalHistory.push(`> ${cmd}`);
+      outputBox.innerHTML += `<div class="text-primary leading-relaxed">&gt; ${escapeHtml(cmd)}</div>`;
 
       if (window.luxAPI?.terminal) {
         const res = await window.luxAPI.terminal.execute(cmd);
@@ -610,7 +625,7 @@ function openOverviewCustomizeModal() {
   window.openSettingsModal();
 }
 
-window.openRightPanelTerminal = function() {
+window.openRightPanelTerminal = function () {
   window.appStore.state.rightPanelOpen = true;
   activeOverviewSubView = "terminal";
   window.appStore.saveState();

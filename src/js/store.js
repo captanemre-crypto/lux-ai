@@ -1,19 +1,29 @@
-// Store & State Manager for Lux AI (Exact Antigravity Replica)
+// Store & State Manager for Lux AI (Exact Lux Replica)
 
-const UNLIMITED_PERMISSIONS = {
+// Varsayılan izin politikası.
+//
+// ÖNEMLİ: Önceki sürümde TÜM yetenekler varsayılan olarak açıktı ve
+// env_secrets_protection kapalıydı; yani ajan .env / id_rsa gibi dosyaları
+// okuyabiliyor, çalışma alanı dışına yazabiliyordu. Yeni varsayılan:
+//   - okuma/araştırma/yerel ağ: açık (günlük kullanım için gerekli)
+//   - yazma: açık, silme: açık ama geri dönüşüm kutusuna
+//   - sır koruması: AÇIK
+//   - PC kontrolü / arka plan ajanları / tarayıcı otomasyonu: KAPALI (opt-in)
+// Kullanıcı Ayarlar > İzinler ekranından istediğini açabilir.
+const DEFAULT_PERMISSIONS = {
   terminal_execute: true,
-  auto_approve_commands: true,
-  system_env_read: true,
+  auto_approve_commands: false, // komutlar kullanıcı onayından geçsin
+  system_env_read: false, // ortam değişkenleri (anahtarlar) okunmasın
   file_read: true,
   file_write: true,
   file_delete: true,
-  env_secrets_protection: false,
+  env_secrets_protection: true, // .env / *.pem / id_rsa okunamaz
   network_internet: true,
   network_localhost: true,
-  agent_background_tasks: true,
-  agent_subagents: true,
-  browser_automation: true,
-  pc_control: true,
+  agent_background_tasks: false,
+  agent_subagents: false,
+  browser_automation: false,
+  pc_control: false, // fare/klavye kontrolü varsayılan kapalı
   web_search: true,
   image_generation: true
 };
@@ -87,7 +97,10 @@ const DEFAULT_STATE = {
     autoHeal: true
   },
   application: {
-    workspaceDir: "c:\\Users\\SERVER\\Desktop\\LUX_ai",
+    // Boş bırakılır: açılışta window.luxAppInfo (main process'ten gelen
+    // home/desktop yolları) üzerinden dinamik olarak çözülür.
+    // Sabit "c:\Users\SERVER\..." yolu başka makinede çalışmıyordu.
+    workspaceDir: "",
     hardwareAccel: true,
     autoDevTools: false
   },
@@ -119,8 +132,8 @@ const DEFAULT_STATE = {
     isSpeakerMuted: false,
     active: false
   },
-  permissionsPolicyVersion: 2,
-  permissions: { ...UNLIMITED_PERMISSIONS },
+  permissionsPolicyVersion: 3,
+  permissions: { ...DEFAULT_PERMISSIONS },
   models: JSON.parse(JSON.stringify(DEFAULT_MODELS))
 };
 
@@ -146,17 +159,109 @@ function sanitizePersistedModels(rawModels, isLegacyMigration = false) {
   return cleaned;
 }
 
+/** Çalışma klasörü hiç ayarlanmamışsa işletim sistemine göre güvenli bir varsayılan üretir. */
+function resolveDefaultWorkspaceDir() {
+  try {
+    const info = window.luxAppInfo || {};
+    if (info.currentWorkspace && !/SERVER/.test(info.currentWorkspace)) return info.currentWorkspace;
+    if (info.documentsPath) return info.documentsPath;
+    if (info.desktopPath) return info.desktopPath;
+    if (info.homePath) return info.homePath;
+  } catch (_) {}
+  return "";
+}
+
+/**
+ * State'in localStorage'a yazılacak güvenli kopyası: API anahtarları
+ * "••••1234" maskesine çevrilir (boş/demo/zaten maskeli anahtarlara dokunulmaz).
+ */
+function maskSecretsForPersist(state) {
+  try {
+    const clone = JSON.parse(JSON.stringify(state));
+    const maskOne = (k) => {
+      const s = String(k || "").trim();
+      if (!s || s.includes("••••") || s.includes("demoKey")) return s;
+      return `••••${s.slice(-4)}`;
+    };
+    if (clone?.voiceMode) clone.voiceMode.openrouterApiKey = maskOne(clone.voiceMode.openrouterApiKey);
+    if (Array.isArray(clone?.models)) {
+      clone.models.forEach((m) => {
+        if (m && typeof m === "object") m.apiKey = maskOne(m.apiKey);
+      });
+    }
+    return clone;
+  } catch (_) {
+    return null;
+  }
+}
+
 class AppStore {
   constructor() {
     this.state = this.loadState();
+    // Sabit "c:\Users\SERVER\..." yerine dinamik varsayılan.
+    if (!String(this.state?.application?.workspaceDir || "").trim() || /c:\\Users\\SERVER/i.test(this.state.application.workspaceDir)) {
+      const def = resolveDefaultWorkspaceDir();
+      if (def) this.state.application.workspaceDir = def;
+    }
     this.listeners = [];
     this.navHistory = this.state.activeConversationId ? [this.state.activeConversationId] : [];
     this.navHistoryIndex = this.navHistory.length - 1;
   }
 
+  /**
+   * Kalıcı state'i main process'ten (userData/lux_ai_data.json) YALNIZCA
+   * asenkron okur. (Senkron IPC — sendSync — renderer'ı kilitleyebildiği için
+   * kullanılmıyor.)
+   */
+  async loadDurableState() {
+    try {
+      const res = await window.luxAPI?.state?.loadDurable?.();
+      if (res && res.data && res.data.state) return res.data.state;
+    } catch (_) {}
+    return null;
+  }
+
+  /**
+   * Açılışta bir kez çağrılır: localStorage'daki anlık durumun üzerine kalıcı
+   * dosyadaki (daha güvenilir) veriyi bindirir.
+   * @returns {Promise<boolean>} değişiklik olduysa true
+   */
+  async hydrateFromDurable() {
+    const durable = await this.loadDurableState();
+    if (!durable || typeof durable !== "object") return false;
+    const localShadow = this.state; // localStorage'dan yüklenen (maskeli) anahtarlar
+    const merged = { ...DEFAULT_STATE, ...durable };
+    merged.general = { autoHeal: true, ...(durable.general || {}) };
+    merged.application = { ...DEFAULT_STATE.application, ...(durable.application || {}) };
+    merged.appearance = { ...DEFAULT_STATE.appearance, ...(durable.appearance || {}) };
+    merged.permissions = { ...DEFAULT_PERMISSIONS, ...(durable.permissions || {}) };
+    if (!String(merged.application.workspaceDir || "").trim()) {
+      const def = resolveDefaultWorkspaceDir();
+      if (def) merged.application.workspaceDir = def;
+    }
+    // Durable kopyada anahtarlar bilerek boşaltıldı; yeniden yüklemede alan
+    // boş görünmesin diye localStorage'daki MASKE değerlerini id eşlemesiyle
+    // geri koy (gerçek değer kasada, çözümleme resolve*ApiKey'de yapılır).
+    try {
+      if (Array.isArray(merged.models) && Array.isArray(localShadow?.models)) {
+        const maskById = new Map(localShadow.models.map((m) => [m?.id, String(m?.apiKey || "")]));
+        merged.models.forEach((m) => {
+          const prev = maskById.get(m?.id);
+          if (prev && prev.includes("••••")) m.apiKey = prev;
+        });
+      }
+      const lsVoice = String(localShadow?.voiceMode?.openrouterApiKey || "");
+      if (merged.voiceMode && lsVoice.includes("••••")) merged.voiceMode.openrouterApiKey = lsVoice;
+    } catch (_) {}
+    this.state = merged;
+    this.notify();
+    return true;
+  }
+
   loadState() {
     try {
-      const data = localStorage.getItem("lux_ai_state_v2");
+      const lsRaw = localStorage.getItem("lux_ai_state_v2");
+      const data = lsRaw;
       if (data) {
         const parsed = JSON.parse(data);
         const isLegacyMigration = (parsed.memoryResetVersion || 0) < CURRENT_MEMORY_RESET_VERSION;
@@ -175,12 +280,8 @@ class AppStore {
           accentColor: "#2F71E3",
           ...(parsed.appearance || {})
         };
-        state.automations = isLegacyMigration
-          ? []
-          : (Array.isArray(parsed.automations) ? parsed.automations : []);
-        state.feedbackLog = isLegacyMigration
-          ? []
-          : (Array.isArray(parsed.feedbackLog) ? parsed.feedbackLog : []);
+        state.automations = isLegacyMigration ? [] : Array.isArray(parsed.automations) ? parsed.automations : [];
+        state.feedbackLog = isLegacyMigration ? [] : Array.isArray(parsed.feedbackLog) ? parsed.feedbackLog : [];
         if (isLegacyMigration) {
           state.projects = createEmptyWorkspaceProjects();
           state.activeProjectId = "lux-ai";
@@ -224,12 +325,15 @@ class AppStore {
         if (typeof state.voiceMode.cloneRefPath !== "string") {
           state.voiceMode.cloneRefPath = "";
         }
-        if (parsed.permissionsPolicyVersion !== 2) {
-          state.permissions = { ...UNLIMITED_PERMISSIONS };
-          state.permissionsPolicyVersion = 2;
+        // Politika v3: güvenli varsayılanlar. Eski profillerden (v2) gelen
+        // "her şey açık" ayarı korunmaz; kullanıcı isterse tekrar açar.
+        const POLICY_VERSION = 3;
+        if (parsed.permissionsPolicyVersion !== POLICY_VERSION) {
+          state.permissions = { ...DEFAULT_PERMISSIONS };
+          state.permissionsPolicyVersion = POLICY_VERSION;
         } else {
           state.permissions = {
-            ...UNLIMITED_PERMISSIONS,
+            ...DEFAULT_PERMISSIONS,
             ...(parsed.permissions || {})
           };
         }
@@ -250,7 +354,7 @@ class AppStore {
 
           // Auto-heal broken 9Router modelId & deduplicate isDefault
           let seenDefault = false;
-          state.models.forEach(m => {
+          state.models.forEach((m) => {
             if (m.endpoint && m.endpoint.includes("20128") && (m.modelId === "openrouter/free" || m.modelId === "vscombo" || !m.modelId)) {
               m.modelId = "oc/beam-free";
             }
@@ -261,9 +365,9 @@ class AppStore {
           });
 
           // Ensure a clean OpenRouter card exists if legacy profile had never been migrated and hadn't removed everything
-          const existingOrCard = state.models.find(m => m.provider === "OpenRouter" || /openrouter\.ai/i.test(m.endpoint || ""));
+          const existingOrCard = state.models.find((m) => m.provider === "OpenRouter" || /openrouter\.ai/i.test(m.endpoint || ""));
           if (!parsed.openrouterSeeded && !existingOrCard && state.models.length > 0) {
-            const defOpenRouter = DEFAULT_MODELS.find(m => m.id === "model-openrouter");
+            const defOpenRouter = DEFAULT_MODELS.find((m) => m.id === "model-openrouter");
             if (defOpenRouter) {
               const copy = JSON.parse(JSON.stringify(defOpenRouter));
               if (state.voiceMode.openrouterApiKey && state.voiceMode.openrouterApiKey.trim()) {
@@ -278,12 +382,16 @@ class AppStore {
 
           // Keep OpenRouter key synced bidirectionally between Voice settings & existing OpenRouter model card
           const vmKey = (state.voiceMode.openrouterApiKey || "").trim();
-          const cardWithKey = state.models.find(m =>
-            (m.provider === "OpenRouter" || /openrouter\.ai/i.test(m.endpoint || "")) &&
-            m.apiKey && m.apiKey.trim() && !m.apiKey.includes("demoKey") && !m.apiKey.includes("••••")
+          const cardWithKey = state.models.find(
+            (m) =>
+              (m.provider === "OpenRouter" || /openrouter\.ai/i.test(m.endpoint || "")) &&
+              m.apiKey &&
+              m.apiKey.trim() &&
+              !m.apiKey.includes("demoKey") &&
+              !m.apiKey.includes("••••")
           );
           if (vmKey) {
-            state.models.forEach(m => {
+            state.models.forEach((m) => {
               if ((m.provider === "OpenRouter" || /openrouter\.ai/i.test(m.endpoint || "")) && !m.apiKey?.trim()) {
                 m.apiKey = vmKey;
               }
@@ -296,11 +404,11 @@ class AppStore {
             state.selectedModel = "";
           } else {
             if (!seenDefault) {
-              const match = state.models.find(m => m.name === state.selectedModel) || state.models[0];
+              const match = state.models.find((m) => m.name === state.selectedModel) || state.models[0];
               match.isDefault = true;
             }
-            if (!state.models.some(m => m.name === state.selectedModel)) {
-              const defModel = state.models.find(m => m.isDefault) || state.models[0];
+            if (!state.models.some((m) => m.name === state.selectedModel)) {
+              const defModel = state.models.find((m) => m.isDefault) || state.models[0];
               if (defModel) state.selectedModel = defModel.name;
             }
           }
@@ -361,7 +469,7 @@ class AppStore {
         this.state.voiceMode.openrouterApiKey = "";
       }
       if (Array.isArray(this.state.models)) {
-        this.state.models.forEach(m => {
+        this.state.models.forEach((m) => {
           m.apiKey = "";
           m.status = "idle";
           m.lastTested = "Sıfırlandı";
@@ -375,12 +483,110 @@ class AppStore {
   }
 
   saveState() {
+    // localStorage'a ASLA düz metin anahtar yazma — maskeli kopya yaz.
+    // (Gerçek anahtarlar syncSecretsToVault ile şifreli kasada saklanır.)
     try {
-      localStorage.setItem("lux_ai_state_v2", JSON.stringify(this.state));
+      const snapshot = maskSecretsForPersist(this.state);
+      localStorage.setItem("lux_ai_state_v2", JSON.stringify(snapshot || this.state));
     } catch (e) {
-      console.error("Failed to save state to localStorage", e);
+      // Kota aşımı (uzun sohbet geçmişi) artık veri kaybına yol açmaz:
+      // asıl kopya main process'te kalıcı JSON dosyasına yazılıyor.
+      console.warn("localStorage yazılamadı (kota?), kalıcı dosya kullanılacak:", e?.message || e);
     }
+    try {
+      window.luxAPI?.state?.saveDurable?.({ state: this.state, savedAt: Date.now() });
+    } catch (_) {}
+    // API anahtarlarını OS anahtar zinciriyle şifreli kasaya taşı; bellekteki
+    // (ve localStorage'a giden) kopyayı maskele ki düz metin yayılmasın.
+    this.syncSecretsToVault();
     this.notify();
+  }
+
+  /**
+   * Model kartlarındaki ve ses ayarlarındaki API anahtarlarını main process'te
+   * safeStorage/AES-256-GCM ile şifreli kasaya yazar; başarılıysa bellekte
+   * "••••<son4>" maskesine çevirir. Böylece localStorage'a düz metin anahtar
+   * yazılmaz, ekran görüntüsü/log sızıntısı riski azalır.
+   */
+  syncSecretsToVault() {
+    const api = window.luxAPI?.secrets;
+    if (!api) return;
+    const mask = (key) => `••••${String(key).slice(-4)}`;
+    const jobs = [];
+
+    const models = Array.isArray(this.state.models) ? this.state.models : [];
+    models.forEach((m) => {
+      const key = String(m?.apiKey || "").trim();
+      if (!key || key.includes("••••") || key.includes("demoKey")) return;
+      jobs.push(
+        Promise.resolve(api.set(`model:${m.id}`, key))
+          .then((res) => {
+            if (res?.success) m.apiKey = mask(key);
+          })
+          .catch(() => {})
+      );
+    });
+
+    const vm = this.state.voiceMode;
+    const voiceKey = String(vm?.openrouterApiKey || "").trim();
+    if (voiceKey && !voiceKey.includes("••••")) {
+      jobs.push(
+        Promise.resolve(api.set("voice-openrouter", voiceKey))
+          .then((res) => {
+            if (res?.success) vm.openrouterApiKey = mask(voiceKey);
+          })
+          .catch(() => {})
+      );
+    }
+
+    if (jobs.length > 0) {
+      Promise.allSettled(jobs).catch(() => {});
+    }
+  }
+
+  /** Şifreli kasadan gerçek (maskesiz) anahtarı çeker. */
+  async getSecret(id) {
+    try {
+      const res = await window.luxAPI?.secrets?.get?.(id);
+      return res?.success ? String(res.value || "") : "";
+    } catch (_) {
+      return "";
+    }
+  }
+
+  /** Model kartı için gerçek anahtar: kasa -> bellek -> boş. */
+  async resolveModelApiKey(model) {
+    if (!model) return "";
+    const inMemory = String(model.apiKey || "").trim();
+    // Masksiz, geçerli bir anahtar bellekte varsa doğrudan kullan.
+    if (inMemory && !inMemory.includes("••••")) return inMemory;
+    const fromVault = await this.getSecret(`model:${model.id}`);
+    if (fromVault) return fromVault;
+    return "";
+  }
+
+  /** OpenRouter ses anahtarını (şifreli kasadan) çözer. */
+  async resolveOpenRouterApiKey() {
+    const vm = this.getVoiceSettings();
+    const inMemory = String(vm.openrouterApiKey || "").trim();
+    if (inMemory && !inMemory.includes("••••")) return inMemory;
+    const vaultVoice = await this.getSecret("voice-openrouter");
+    if (vaultVoice) {
+      this._cachedOpenRouterKey = vaultVoice;
+      return vaultVoice;
+    }
+    // OpenRouter model kartına düş.
+    const models = this.getModels();
+    for (const m of models) {
+      if (m.provider === "OpenRouter" || /openrouter\.ai/i.test(m.endpoint || "")) {
+        const k = await this.resolveModelApiKey(m);
+        if (k) {
+          this._cachedOpenRouterKey = k;
+          return k;
+        }
+      }
+    }
+    return "";
   }
 
   subscribe(listener) {
@@ -451,7 +657,7 @@ class AppStore {
   }
 
   _conversationExists(convId) {
-    return this.state.projects.some(p => (p.conversations || []).some(c => c.id === convId));
+    return this.state.projects.some((p) => (p.conversations || []).some((c) => c.id === convId));
   }
 
   canGoBack() {
@@ -494,7 +700,7 @@ class AppStore {
 
   selectConversation(convId, recordHistory = true) {
     for (const proj of this.state.projects) {
-      const found = (proj.conversations || []).find(c => c.id === convId);
+      const found = (proj.conversations || []).find((c) => c.id === convId);
       if (found) {
         this.state.activeProjectId = proj.id;
         this.state.activeConversationId = found.id;
@@ -539,7 +745,7 @@ class AppStore {
   }
 
   createConversationInProject(projId, title = "Yeni Sohbet") {
-    let proj = this.state.projects.find(p => p.id === projId);
+    let proj = this.state.projects.find((p) => p.id === projId);
     if (!proj) proj = this.getActiveProject();
     if (!proj) return null;
 
@@ -581,18 +787,20 @@ class AppStore {
 
   setConversationTitleIfDefault(convId, promptText) {
     for (const proj of this.state.projects) {
-      const conv = (proj.conversations || []).find(c => c.id === convId);
+      const conv = (proj.conversations || []).find((c) => c.id === convId);
       if (conv) {
         conv.timestamp = "Şimdi";
         conv.updatedAt = Date.now();
         if (!conv.title || conv.title === "Yeni Sohbet") {
-          const clean = String(promptText || "")
-            .replace(/@(file|folder|screen|terminal):[^\s]+/g, "")
-            .replace(/\s+/g, " ")
-            .trim() || String(promptText || "")
-            .replace(/@(file|folder|screen|terminal):/gi, "")
-            .replace(/\s+/g, " ")
-            .trim();
+          const clean =
+            String(promptText || "")
+              .replace(/@(file|folder|screen|terminal):[^\s]+/g, "")
+              .replace(/\s+/g, " ")
+              .trim() ||
+            String(promptText || "")
+              .replace(/@(file|folder|screen|terminal):/gi, "")
+              .replace(/\s+/g, " ")
+              .trim();
           if (clean.length > 0) {
             conv.title = clean.length > 38 ? clean.slice(0, 35) + "..." : clean;
           }
@@ -604,7 +812,7 @@ class AppStore {
   }
 
   deleteProject(projId) {
-    const idx = this.state.projects.findIndex(p => p.id === projId);
+    const idx = this.state.projects.findIndex((p) => p.id === projId);
     if (idx === -1) return false;
 
     const deletedProj = this.state.projects[idx];
@@ -621,12 +829,10 @@ class AppStore {
     }
 
     // If active conversation belonged to deleted project, reset active conversation
-    const activeConvStillExists = this.state.projects.some(p => 
-      p.conversations?.some(c => c.id === this.state.activeConversationId)
-    );
+    const activeConvStillExists = this.state.projects.some((p) => p.conversations?.some((c) => c.id === this.state.activeConversationId));
 
     if (!activeConvStillExists) {
-      const firstProjWithConv = this.state.projects.find(p => p.conversations && p.conversations.length > 0);
+      const firstProjWithConv = this.state.projects.find((p) => p.conversations && p.conversations.length > 0);
       if (firstProjWithConv) {
         this.state.activeProjectId = firstProjWithConv.id;
         this.state.activeConversationId = firstProjWithConv.conversations[0].id;
@@ -652,16 +858,16 @@ class AppStore {
 
   restoreDefaultModels() {
     const existing = this.getModels();
-    DEFAULT_MODELS.forEach(defM => {
-      if (!existing.some(m => m.id === defM.id || m.name === defM.name)) {
+    DEFAULT_MODELS.forEach((defM) => {
+      if (!existing.some((m) => m.id === defM.id || m.name === defM.name)) {
         existing.push(JSON.parse(JSON.stringify(defM)));
       }
     });
-    if (existing.length > 0 && !existing.some(m => m.isDefault)) {
+    if (existing.length > 0 && !existing.some((m) => m.isDefault)) {
       existing[0].isDefault = true;
     }
-    if (existing.length > 0 && !existing.some(m => m.name === this.state.selectedModel)) {
-      const def = existing.find(m => m.isDefault) || existing[0];
+    if (existing.length > 0 && !existing.some((m) => m.name === this.state.selectedModel)) {
+      const def = existing.find((m) => m.isDefault) || existing[0];
       this.state.selectedModel = def.name;
     }
     this.state.defaultsSeeded = true;
@@ -687,7 +893,7 @@ class AppStore {
     };
 
     if (newModel.isDefault || models.length === 0) {
-      models.forEach(m => m.isDefault = false);
+      models.forEach((m) => (m.isDefault = false));
       newModel.isDefault = true;
       this.state.selectedModel = newModel.name;
     }
@@ -710,7 +916,7 @@ class AppStore {
 
     if ((newModel.provider === "OpenRouter" || /openrouter\.ai/i.test(newModel.endpoint || "")) && newModel.apiKey) {
       const vm = this.getVoiceSettings();
-      vm.openrouterApiKey = newModel.apiKey;
+      vm.openrouterApiKey = `••••${String(newModel.apiKey).slice(-4)}`;
     }
     this.saveState();
     return newModel;
@@ -718,14 +924,14 @@ class AppStore {
 
   updateModel(modelId, data) {
     const models = this.getModels();
-    const idx = models.findIndex(m => m.id === modelId);
+    const idx = models.findIndex((m) => m.id === modelId);
     if (idx === -1) return false;
 
     const oldName = models[idx].name;
     const newName = data.name !== undefined ? data.name.trim() : oldName;
 
     if (data.isDefault) {
-      models.forEach(m => m.isDefault = false);
+      models.forEach((m) => (m.isDefault = false));
       this.state.selectedModel = newName;
     } else if (this.state.selectedModel === oldName) {
       this.state.selectedModel = newName;
@@ -743,7 +949,7 @@ class AppStore {
 
     if ((models[idx].provider === "OpenRouter" || /openrouter\.ai/i.test(models[idx].endpoint || "")) && data.apiKey !== undefined) {
       const vm = this.getVoiceSettings();
-      vm.openrouterApiKey = models[idx].apiKey;
+      vm.openrouterApiKey = models[idx].apiKey ? `••••${String(models[idx].apiKey).slice(-4)}` : "";
     }
 
     this.saveState();
@@ -752,10 +958,10 @@ class AppStore {
 
   deleteModel(modelId) {
     const models = this.getModels();
-    const target = models.find(m => m.id === modelId);
+    const target = models.find((m) => m.id === modelId);
     const wasDefault = target?.isDefault;
     const wasSelected = target && target.name === this.state.selectedModel;
-    this.state.models = models.filter(m => m.id !== modelId);
+    this.state.models = models.filter((m) => m.id !== modelId);
     this.state.defaultsSeeded = true;
     this.state.openrouterSeeded = true;
 
@@ -779,7 +985,7 @@ class AppStore {
         this.state.models[0].isDefault = true;
       }
       if (wasDefault || wasSelected) {
-        const def = this.state.models.find(m => m.isDefault) || this.state.models[0];
+        const def = this.state.models.find((m) => m.isDefault) || this.state.models[0];
         this.state.selectedModel = def.name;
       }
     } else {
@@ -792,8 +998,8 @@ class AppStore {
 
   setDefaultModel(modelId) {
     const models = this.getModels();
-    models.forEach(m => {
-      m.isDefault = (m.id === modelId);
+    models.forEach((m) => {
+      m.isDefault = m.id === modelId;
       if (m.isDefault) {
         this.state.selectedModel = m.name;
       }
@@ -804,7 +1010,7 @@ class AppStore {
 
   async testModel(modelId) {
     const models = this.getModels();
-    const model = models.find(m => m.id === modelId);
+    const model = models.find((m) => m.id === modelId);
     if (!model) return { success: false, message: "Model bulunamadı" };
 
     model.status = "testing";
@@ -866,7 +1072,10 @@ class AppStore {
         if (isOpenRouter) headers["X-Title"] = "Lux AI";
 
         let testModelId = model.modelId || (isOpenRouter ? "openrouter/free" : "gpt-4o");
-        if (model.endpoint?.includes("20128") && (testModelId === "yapay" || testModelId === "vscombo" || testModelId === "openrouter/free" || !testModelId)) {
+        if (
+          model.endpoint?.includes("20128") &&
+          (testModelId === "yapay" || testModelId === "vscombo" || testModelId === "openrouter/free" || !testModelId)
+        ) {
           testModelId = "oc/flint-40b-free";
           model.modelId = "oc/flint-40b-free";
         }
@@ -888,7 +1097,7 @@ class AppStore {
             } catch (_) {}
           }
         } else {
-          const url = (base.endsWith("/chat/completions") || /\/api\/chat$/i.test(base)) ? base : `${base}/chat/completions`;
+          const url = base.endsWith("/chat/completions") || /\/api\/chat$/i.test(base) ? base : `${base}/chat/completions`;
           const isNativeOllamaChat = /\/api\/chat$/i.test(url);
           res = await fetch(url, {
             method: "POST",
@@ -919,41 +1128,50 @@ class AppStore {
         this.saveState();
         return { success: true, message: `200 OK${quotaText} (${elapsed}ms)` };
       } else {
-        let errDetail = `HTTP ${res ? res.status : 'Hata'}`;
+        let errDetail = `HTTP ${res ? res.status : "Hata"}`;
         try {
           const errData = await res.json();
           if (errData?.error?.message) errDetail = errData.error.message;
         } catch (_) {}
         model.status = "error";
-        model.lastTested = `Hata (${res ? res.status : '400'}): ${errDetail.slice(0, 50)}`;
+        model.lastTested = `Hata (${res ? res.status : "400"}): ${errDetail.slice(0, 50)}`;
         this.saveState();
         return { success: false, message: errDetail };
       }
     } catch (err) {
       model.status = "error";
-      model.lastTested = `Erişim Hatası: ${err.message || 'Zaman aşımı'}`;
+      model.lastTested = `Erişim Hatası: ${err.message || "Zaman aşımı"}`;
       this.saveState();
       return { success: false, message: err.message };
     }
   }
 
-  // Model & Agent Permissions Management (1:1 Antigravity Security Architecture)
+  // Model & Agent Permissions Management (1:1 Lux Security Architecture)
   getPermissions() {
     if (!this.state.permissions) {
-      this.state.permissions = { ...UNLIMITED_PERMISSIONS };
+      this.state.permissions = { ...DEFAULT_PERMISSIONS };
     }
     return this.state.permissions;
   }
 
   isUnlimitedMode() {
     const p = this.getPermissions();
-    const capabilityKeys = Object.keys(UNLIMITED_PERMISSIONS).filter(k => k !== "env_secrets_protection");
-    return capabilityKeys.every(k => p[k] !== false) && p.env_secrets_protection === false;
+    const capabilityKeys = Object.keys(DEFAULT_PERMISSIONS).filter((k) => k !== "env_secrets_protection");
+    // Sınırsız mod artık sır dosyası korumasını KAPATMAZ (tek istisna).
+    return capabilityKeys.every((k) => p[k] !== false);
   }
 
+  /**
+   * "Sınırsız yetki" modu: tüm yetenekleri açar AMA sır/anahtar dosyası
+   * korumasını (env_secrets_protection) açık bırakır.
+   */
   enableUnlimitedMode() {
-    this.state.permissions = { ...UNLIMITED_PERMISSIONS };
-    this.state.permissionsPolicyVersion = 2;
+    this.state.permissions = { ...DEFAULT_PERMISSIONS };
+    Object.keys(this.state.permissions).forEach((k) => {
+      this.state.permissions[k] = true;
+    });
+    this.state.permissions.env_secrets_protection = true;
+    this.state.permissionsPolicyVersion = 3;
     this.saveState();
     return this.state.permissions;
   }
@@ -968,8 +1186,8 @@ class AppStore {
   }
 
   resetPermissions() {
-    this.state.permissions = { ...UNLIMITED_PERMISSIONS };
-    this.state.permissionsPolicyVersion = 2;
+    this.state.permissions = { ...DEFAULT_PERMISSIONS };
+    this.state.permissionsPolicyVersion = 3;
     this.saveState();
     return this.state.permissions;
   }
@@ -979,9 +1197,10 @@ class AppStore {
       this.getPermissions();
     }
     const target = Boolean(enabled);
-    Object.keys(UNLIMITED_PERMISSIONS).forEach(key => {
+    Object.keys(DEFAULT_PERMISSIONS).forEach((key) => {
       if (key === "env_secrets_protection") {
-        this.state.permissions[key] = !target;
+        // Sır koruması hiçbir durumda toplu açma ile kapatılmaz.
+        this.state.permissions[key] = true;
       } else {
         this.state.permissions[key] = target;
       }
@@ -990,7 +1209,7 @@ class AppStore {
     return this.state.permissions;
   }
 
-  // Notifications & Sound Preferences (1:1 Antigravity)
+  // Notifications & Sound Preferences (1:1 Lux)
   getNotifications() {
     if (!this.state.notifications) {
       this.state.notifications = {
@@ -1012,15 +1231,13 @@ class AppStore {
     return this.state.notifications;
   }
 
-  playAntigravitySound(soundName) {
+  playLuxSound(soundName) {
     const notifs = this.getNotifications();
     if (notifs && notifs.agentSounds === false) return;
     const vol = typeof notifs.soundVolume === "number" ? notifs.soundVolume : 100;
     if (vol <= 0) return;
     try {
-      const audio = new Audio(`assets/sounds/${soundName}.mp3`);
-      audio.volume = Math.max(0, Math.min(1, vol / 100));
-      audio.play().catch(() => {});
+      window.luxAudioCache?.play(`assets/sounds/${soundName}.mp3`, { volume: Math.max(0, Math.min(1, vol / 100)) });
     } catch (e) {}
   }
 
@@ -1035,15 +1252,13 @@ class AppStore {
 
     // Debounce to prevent repetitive looping
     const now = Date.now();
-    if (this._lastNotificationSoundTime && (now - this._lastNotificationSoundTime < 2500)) {
+    if (this._lastNotificationSoundTime && now - this._lastNotificationSoundTime < 2500) {
       return;
     }
     this._lastNotificationSoundTime = now;
 
     try {
-      const audio = new Audio("assets/sounds/chatUserActionRequired.mp3");
-      audio.volume = Math.max(0, Math.min(1, vol / 100));
-      audio.play().catch(() => {});
+      window.luxAudioCache?.play("assets/sounds/chatUserActionRequired.mp3", { volume: Math.max(0, Math.min(1, vol / 100)) });
     } catch (e) {
       console.warn("Audio chime playback error", e);
     }
@@ -1061,7 +1276,7 @@ class AppStore {
         if (Notification.permission === "granted") {
           new Notification(title, { body });
         } else if (Notification.permission !== "denied") {
-          Notification.requestPermission().then(permission => {
+          Notification.requestPermission().then((permission) => {
             if (permission === "granted") {
               new Notification(title, { body });
             }
@@ -1073,7 +1288,7 @@ class AppStore {
     }
   }
 
-  // Antigravity Voice Mode (Gemini Live) State & Voices (LLM seçiminden tamamen bağımsız)
+  // Lux Voice Mode (Gemini Live) State & Voices (LLM seçiminden tamamen bağımsız)
   getVoiceSettings() {
     if (!this.state.voiceMode) {
       this.state.voiceMode = {
@@ -1109,28 +1324,37 @@ class AppStore {
     return this.state.voiceMode;
   }
 
+  /**
+   * Senkron okuma: yalnızca bellekteki MASKESİZ anahtarı döndürür.
+   * Maskeli (••••) değer döndürmez — gerçek anahtar için `await resolveOpenRouterApiKey()`.
+   */
   getOpenRouterApiKey() {
+    // Şifreli kasadan bir kez çözülen anahtar (yalnızca bellekte, diske yazılmaz).
+    if (this._cachedOpenRouterKey) return this._cachedOpenRouterKey;
     const vm = this.getVoiceSettings();
-    if (vm.openrouterApiKey && vm.openrouterApiKey.trim()) {
-      return vm.openrouterApiKey.trim();
-    }
+    const vmKey = String(vm.openrouterApiKey || "").trim();
+    if (vmKey && !vmKey.includes("••••")) return vmKey;
     const models = this.getModels();
-    const orModel = models.find(m =>
-      (m.provider === "OpenRouter" || /openrouter\.ai/i.test(m.endpoint || "")) &&
-      m.apiKey &&
-      m.apiKey.trim() &&
-      !m.apiKey.includes("demoKey") &&
-      !m.apiKey.includes("••••")
+    const orModel = models.find(
+      (m) =>
+        (m.provider === "OpenRouter" || /openrouter\.ai/i.test(m.endpoint || "")) &&
+        m.apiKey &&
+        m.apiKey.trim() &&
+        !m.apiKey.includes("demoKey") &&
+        !m.apiKey.includes("••••")
     );
     return orModel ? orModel.apiKey.trim() : "";
   }
 
   setOpenRouterApiKey(apiKey) {
     const clean = String(apiKey || "").trim();
+    // Kasadaki eski kaydı her durumda güncelle (boşsa siler).
+    window.luxAPI?.secrets?.set?.("voice-openrouter", clean).catch(() => {});
+    this._cachedOpenRouterKey = clean || "";
     const vm = this.getVoiceSettings();
-    vm.openrouterApiKey = clean;
+    vm.openrouterApiKey = clean ? `••••${clean.slice(-4)}` : "";
     const models = this.getModels();
-    models.forEach(m => {
+    models.forEach((m) => {
       if (m.provider === "OpenRouter" || /openrouter\.ai/i.test(m.endpoint || "")) {
         m.apiKey = clean;
         if (clean) {
@@ -1398,13 +1622,15 @@ class AppStore {
 
   async playVoiceSample(voiceId) {
     const list = this.getAvailableVoices();
-    const v = list.find(item => item.id === voiceId) || list[0];
+    const v = list.find((item) => item.id === voiceId) || list[0];
     const settings = this.getVoiceSettings();
     if (settings.isSpeakerMuted) return;
 
     const seq = (this._sampleSeq = (this._sampleSeq || 0) + 1);
     if (this._sampleAudioPlayer) {
-      try { this._sampleAudioPlayer.pause(); } catch (_) {}
+      try {
+        this._sampleAudioPlayer.pause();
+      } catch (_) {}
       this._sampleAudioPlayer = null;
     }
 
@@ -1440,13 +1666,12 @@ class AppStore {
 }
 
 window.appStore = new AppStore();
-window.playAntigravitySound = function(soundName) {
-  if (window.appStore?.playAntigravitySound) {
-    window.appStore.playAntigravitySound(soundName);
+window.playLuxSound = function (soundName) {
+  if (window.appStore?.playLuxSound) {
+    window.appStore.playLuxSound(soundName);
   } else {
     try {
-      const audio = new Audio(`assets/sounds/${soundName}.mp3`);
-      audio.play().catch(() => {});
+      window.luxAudioCache?.play(`assets/sounds/${soundName}.mp3`);
     } catch (e) {}
   }
 };

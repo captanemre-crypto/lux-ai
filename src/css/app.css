@@ -1,4 +1,4 @@
-/* Lux AI Desktop Application Styles - Pixel-Perfect Antigravity Replica */
+/* Lux AI Desktop Application Styles - Pixel-Perfect Lux Replica */
 
 /* Drag regions */
 .app-drag-region {
@@ -38,39 +38,45 @@
 
 /* Font Family Defaults */
 body {
-  font-family: "Google Sans Flex", "Google Sans", system-ui, -apple-system, sans-serif;
+  font-family:
+    "Google Sans Flex",
+    "Google Sans",
+    system-ui,
+    -apple-system,
+    sans-serif;
   background-color: #070709;
-  color: #FAFAFA;
+  color: #fafafa;
   color-scheme: dark;
 }
 
-/* Antigravity Dark Theme Select and Options Styling */
+/* Lux Dark Theme Select and Options Styling */
 select {
   color-scheme: dark;
   background-color: #141418 !important;
-  color: #FAFAFA !important;
+  color: #fafafa !important;
 }
 
-select option, select optgroup {
+select option,
+select optgroup {
   color-scheme: dark;
   background-color: #16161b !important;
-  color: #FAFAFA !important;
+  color: #fafafa !important;
   padding: 8px 12px;
 }
 
 select option:hover,
 select option:focus,
 select option:checked {
-  background-color: #2F71E3 !important;
-  color: #FFFFFF !important;
+  background-color: #2f71e3 !important;
+  color: #ffffff !important;
 }
 
 select.model-input-field {
   background-color: #141418 !important;
-  color: #FAFAFA !important;
+  color: #fafafa !important;
 }
 
-/* Antigravity Custom Dark Dropdowns (Pixel-Perfect Replacement for Native Select) */
+/* Lux Custom Dark Dropdowns (Pixel-Perfect Replacement for Native Select) */
 .lux-custom-select-wrapper {
   position: relative;
   display: inline-flex;
@@ -84,7 +90,7 @@ select.model-input-field {
   justify-content: space-between;
   gap: 8px;
   background-color: #141418;
-  color: #FAFAFA;
+  color: #fafafa;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
@@ -104,7 +110,7 @@ select.model-input-field {
 
 .lux-custom-select-trigger:focus,
 .lux-custom-select-trigger.is-open {
-  border-color: #3B82F6;
+  border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
 }
 
@@ -114,7 +120,9 @@ select.model-input-field {
   background-color: #16161b;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 20px 48px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
   padding: 6px;
   max-height: 260px;
   overflow-y: auto;
@@ -129,7 +137,7 @@ select.model-input-field {
   gap: 8px;
   padding: 7px 10px;
   font-size: 12px;
-  color: #D1D2DC;
+  color: #d1d2dc;
   border-radius: 6px;
   cursor: pointer;
   transition: all 100ms ease;
@@ -137,25 +145,27 @@ select.model-input-field {
 
 .lux-custom-select-option:hover {
   background-color: rgba(255, 255, 255, 0.08);
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .lux-custom-select-option.is-selected {
   background-color: rgba(59, 130, 246, 0.18);
-  color: #60A5FA;
+  color: #60a5fa;
   font-weight: 500;
 }
 
 .lux-custom-select-option.is-custom-action {
-  color: #3B82F6;
+  color: #3b82f6;
   font-weight: 500;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   margin-top: 4px;
   padding-top: 8px;
 }
 
-code, pre, .font-mono {
-  font-family: 'Google Sans Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+code,
+pre,
+.font-mono {
+  font-family: "Google Sans Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 /* Base Buttons */
@@ -164,12 +174,15 @@ code, pre, .font-mono {
   align-items: center;
   justify-content: center;
   font-weight: 500;
-  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
   outline: none;
   user-select: none;
 }
 
-/* Table styling (1:1 Antigravity) */
+/* Table styling (1:1 Lux) */
 .md-table-el {
   width: 100%;
   border-collapse: separate;
@@ -178,7 +191,7 @@ code, pre, .font-mono {
 }
 .md-table-el th {
   background-color: var(--secondary, rgba(255, 255, 255, 0.075));
-  color: var(--secondary-foreground, #BCBDC6);
+  color: var(--secondary-foreground, #bcbdc6);
   font-weight: 500;
   padding: 8px 12px;
   text-align: left;
@@ -224,7 +237,9 @@ code, pre, .font-mono {
   background: #15151a;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
   padding: 4px;
   z-index: 100;
   display: none;
@@ -240,7 +255,7 @@ code, pre, .font-mono {
   justify-content: space-between;
   padding: 6px 10px;
   font-size: 0.8125rem;
-  color: var(--secondary-foreground, #BCBDC6);
+  color: var(--secondary-foreground, #bcbdc6);
   border-radius: 6px;
   cursor: pointer;
   transition: all 100ms ease;
@@ -248,11 +263,11 @@ code, pre, .font-mono {
 }
 .lux-dropdown-item:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #FFFFFF;
+  color: #ffffff;
 }
 .lux-dropdown-item.active {
   background: rgba(47, 113, 227, 0.15);
-  color: #5891FA;
+  color: #5891fa;
 }
 .lux-dropdown-divider {
   height: 1px;
@@ -278,7 +293,9 @@ code, pre, .font-mono {
   background: #141418;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 20px 48px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
   display: flex;
   flex-direction: column;
   animation: luxMenuFadeIn 120ms ease;
@@ -291,7 +308,7 @@ code, pre, .font-mono {
   background: rgba(255, 255, 255, 0.07);
 }
 
-/* Antigravity Toggle Switch for Permissions */
+/* Lux Toggle Switch for Permissions */
 .lux-toggle {
   position: relative;
   display: inline-block;
@@ -332,14 +349,14 @@ code, pre, .font-mono {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 .lux-toggle input:checked + .slider {
-  background-color: #2F71E3;
-  border-color: #4C8BF5;
+  background-color: #2f71e3;
+  border-color: #4c8bf5;
 }
 .lux-toggle input:checked + .slider:before {
   transform: translateX(18px);
 }
 
-/* Antigravity Range Slider for Volume */
+/* Lux Range Slider for Volume */
 .lux-range-slider {
   -webkit-appearance: none;
   appearance: none;
@@ -357,20 +374,22 @@ code, pre, .font-mono {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #2F71E3;
+  background: #2f71e3;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
   cursor: pointer;
-  transition: transform 0.1s ease, background 0.15s ease;
+  transition:
+    transform 0.1s ease,
+    background 0.15s ease;
 }
 .lux-range-slider::-webkit-slider-thumb:hover {
   transform: scale(1.2);
-  background: #4C8BF5;
+  background: #4c8bf5;
 }
 .lux-range-slider::-moz-range-thumb {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #2F71E3;
+  background: #2f71e3;
   cursor: pointer;
   border: none;
 }
@@ -387,7 +406,10 @@ code, pre, .font-mono {
   transform: translateX(-50%);
   z-index: 30;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-  transition: opacity 200ms ease, transform 200ms ease, background-color 150ms ease;
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease,
+    background-color 150ms ease;
 }
 .agy-scroll-bottom:hover {
   transform: translate(-50%, -2px);
@@ -396,7 +418,9 @@ code, pre, .font-mono {
 
 /* Floating Overview Panel Animation */
 .animate-overview-panel {
-  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), opacity 150ms ease;
+  transition:
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 150ms ease;
 }
 
 /* Modal Dialog Backdrop */
@@ -427,7 +451,7 @@ code, pre, .font-mono {
   flex-direction: column;
 }
 
-/* 1:1 Antigravity Settings Dialog Container */
+/* 1:1 Lux Settings Dialog Container */
 .settings-dialog-container {
   width: 92%;
   max-width: 1020px;
@@ -436,7 +460,9 @@ code, pre, .font-mono {
   background-color: var(--background, #070709);
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
   display: flex;
   position: relative;
   overflow: hidden;
@@ -473,40 +499,47 @@ code, pre, .font-mono {
 }
 .settings-nav-btn:hover {
   background: rgba(255, 255, 255, 0.06);
-  color: #FFFFFF;
+  color: #ffffff;
 }
 .settings-nav-btn.active {
   background: rgba(255, 255, 255, 0.12);
-  color: #FFFFFF;
+  color: #ffffff;
   font-weight: 500;
 }
 
 /* Auxiliary Split Panel Search Bar Focus */
 .aux-search-bar {
   transition: all 180ms ease;
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25), 0 2px 10px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.25),
+    0 2px 10px rgba(0, 0, 0, 0.4);
 }
 .aux-search-bar:focus-within {
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.6), 0 4px 16px rgba(59, 130, 246, 0.2);
-  border-color: #3B82F6;
+  box-shadow:
+    0 0 0 2px rgba(59, 130, 246, 0.6),
+    0 4px 16px rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
 }
 
 /* Draggable Split Sash & Resizing */
 .cursor-col-resize {
   cursor: col-resize !important;
 }
-body.resizing-col, body.resizing-col * {
+body.resizing-col,
+body.resizing-col * {
   cursor: col-resize !important;
   user-select: none !important;
   -webkit-user-select: none !important;
 }
 .split-sash-line {
-  transition: background-color 150ms ease, box-shadow 150ms ease;
+  transition:
+    background-color 150ms ease,
+    box-shadow 150ms ease;
 }
 #split-sash-handle:hover .split-sash-line,
 #split-sash-handle:active .split-sash-line,
 body.resizing-col #split-sash-handle .split-sash-line {
-  background-color: #3B82F6 !important;
+  background-color: #3b82f6 !important;
   box-shadow: 0 0 10px rgba(59, 130, 246, 0.7);
 }
 
@@ -515,7 +548,7 @@ body.resizing-col #split-sash-handle .split-sash-line {
   background-color: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  color: #FAFAFA;
+  color: #fafafa;
   padding: 0.5rem 0.75rem;
   font-size: 0.8125rem;
   outline: none;
@@ -523,7 +556,7 @@ body.resizing-col #split-sash-handle .split-sash-line {
   width: 100%;
 }
 .model-input-field:focus {
-  border-color: #3B82F6;
+  border-color: #3b82f6;
   background-color: rgba(255, 255, 255, 0.07);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
@@ -531,7 +564,10 @@ body.resizing-col #split-sash-handle .split-sash-line {
   color: rgba(255, 255, 255, 0.28);
 }
 .model-card-item {
-  transition: background-color 140ms ease, border-color 140ms ease, transform 140ms ease;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
 }
 .model-card-item:hover {
   background-color: rgba(255, 255, 255, 0.04);
@@ -540,29 +576,43 @@ body.resizing-col #split-sash-handle .split-sash-line {
 
 /* Chat Markdown and Code Typography */
 .prose {
-  color: #FAFAFA;
+  color: #fafafa;
 }
 .prose p {
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
   line-height: 1.625;
 }
-.prose h1, .prose h2, .prose h3, .prose h4 {
-  color: #FFFFFF;
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  color: #ffffff;
   font-weight: 600;
   margin-top: 1rem;
   margin-bottom: 0.5rem;
 }
-.prose h1 { font-size: 1.25rem; }
-.prose h2 { font-size: 1.125rem; }
-.prose h3 { font-size: 1rem; }
-.prose ul, .prose ol {
+.prose h1 {
+  font-size: 1.25rem;
+}
+.prose h2 {
+  font-size: 1.125rem;
+}
+.prose h3 {
+  font-size: 1rem;
+}
+.prose ul,
+.prose ol {
   padding-left: 1.25rem;
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
 }
-.prose ul { list-style-type: disc; }
-.prose ol { list-style-type: decimal; }
+.prose ul {
+  list-style-type: disc;
+}
+.prose ol {
+  list-style-type: decimal;
+}
 .prose li {
   margin-top: 0.25rem;
   margin-bottom: 0.25rem;
@@ -575,11 +625,11 @@ body.resizing-col #split-sash-handle .split-sash-line {
   overflow-x: auto;
   margin-top: 0.75rem;
   margin-bottom: 0.75rem;
-  font-family: 'Google Sans Code', monospace;
+  font-family: "Google Sans Code", monospace;
   font-size: 0.8125rem;
 }
 .prose code {
-  font-family: 'Google Sans Code', monospace;
+  font-family: "Google Sans Code", monospace;
   background-color: rgba(255, 255, 255, 0.08);
   color: #93c5fd;
   padding: 0.15rem 0.35rem;
@@ -606,8 +656,13 @@ body.resizing-col #split-sash-handle .split-sash-line {
 
 /* Streaming Cursor */
 @keyframes blinkCursor {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 .streaming-cursor {
   display: inline-block;
@@ -630,15 +685,18 @@ body.resizing-col #split-sash-handle .split-sash-line {
   transform: translateY(-1px);
 }
 
-/* Antigravity Sidebar Conversation Context Menu (Exact 1:1 Light Card) */
-/* Conversation Context Menu (100% Pixel-Perfect to Antigravity media_1794225252876_0e96222a.png) */
+/* Lux Sidebar Conversation Context Menu (Exact 1:1 Light Card) */
+/* Conversation Context Menu (100% Pixel-Perfect to Lux media_1794225252876_0e96222a.png) */
 .conv-context-menu {
   position: fixed;
   z-index: 9999;
-  background-color: #FFFFFF;
-  color: #1F2937;
+  background-color: #ffffff;
+  color: #1f2937;
   border-radius: 16px;
-  box-shadow: 0 16px 38px -4px rgba(0, 0, 0, 0.35), 0 6px 14px -2px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 16px 38px -4px rgba(0, 0, 0, 0.35),
+    0 6px 14px -2px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 0, 0, 0.06);
   padding: 8px 0;
   min-width: 170px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -651,25 +709,27 @@ body.resizing-col #split-sash-handle .split-sash-line {
   align-items: center;
   justify-content: space-between;
   padding: 7px 18px;
-  color: #1F2937;
+  color: #1f2937;
   cursor: pointer;
-  transition: background-color 100ms ease, color 100ms ease;
+  transition:
+    background-color 100ms ease,
+    color 100ms ease;
   position: relative;
   font-weight: 400;
   text-decoration: none;
   gap: 12px;
 }
 .conv-context-item:hover {
-  background-color: #F3F4F6;
+  background-color: #f3f4f6;
   color: #111827;
 }
 .conv-context-item.danger:hover {
-  background-color: #FEE2E2;
-  color: #DC2626;
+  background-color: #fee2e2;
+  color: #dc2626;
 }
 .conv-context-divider {
   height: 1px;
-  background-color: #E5E7EB;
+  background-color: #e5e7eb;
   margin: 6px 0;
 }
 .conv-submenu {
@@ -678,10 +738,13 @@ body.resizing-col #split-sash-handle .split-sash-line {
   left: 100%;
   top: -8px;
   margin-left: 2px;
-  background-color: #FFFFFF;
-  color: #1F2937;
+  background-color: #ffffff;
+  color: #1f2937;
   border-radius: 16px;
-  box-shadow: 0 16px 38px -4px rgba(0, 0, 0, 0.35), 0 6px 14px -2px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 16px 38px -4px rgba(0, 0, 0, 0.35),
+    0 6px 14px -2px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 0, 0, 0.06);
   padding: 8px 0;
   min-width: 190px;
 }
@@ -691,15 +754,19 @@ body.resizing-col #split-sash-handle .split-sash-line {
 }
 
 @keyframes luxFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* ==========================================================================
-   Google Antigravity Gemini Live / Voice Mode Styles (1:1 Replica)
+   Google Lux Gemini Live / Voice Mode Styles (1:1 Replica)
    ========================================================================== */
 
-/* Organic Fluid Luminous Cloud / Orb (Exact match to Antigravity media_1794235564020_c0035b7f.png) */
+/* Organic Fluid Luminous Cloud / Orb (Exact match to Lux media_1794235564020_c0035b7f.png) */
 @keyframes organicMorph {
   0% {
     border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
@@ -720,18 +787,19 @@ body.resizing-col #split-sash-handle .split-sash-line {
 }
 
 @keyframes organicGlowPulse {
-  0%, 100% {
-    filter: blur(26px) drop-shadow(0 0 35px var(--voice-accent, #3B82F6));
+  0%,
+  100% {
+    filter: blur(26px) drop-shadow(0 0 35px var(--voice-accent, #3b82f6));
     opacity: 0.88;
   }
   50% {
-    filter: blur(34px) drop-shadow(0 0 55px var(--voice-accent, #3B82F6));
+    filter: blur(34px) drop-shadow(0 0 55px var(--voice-accent, #3b82f6));
     opacity: 1;
     transform: scale(1.05);
   }
 }
 
-.antigravity-voice-orb-container {
+.lux-voice-orb-container {
   position: relative;
   width: 190px;
   height: 190px;
@@ -741,21 +809,23 @@ body.resizing-col #split-sash-handle .split-sash-line {
   margin: 0 auto;
 }
 
-.antigravity-voice-orb-outer {
+.lux-voice-orb-outer {
   position: absolute;
   width: 140px;
   height: 140px;
-  background: radial-gradient(circle at 35% 35%, var(--voice-secondary, #93C5FD) 0%, var(--voice-accent, #3B82F6) 50%, transparent 75%);
-  animation: organicMorph 10s infinite linear, organicGlowPulse 4s infinite ease-in-out;
+  background: radial-gradient(circle at 35% 35%, var(--voice-secondary, #93c5fd) 0%, var(--voice-accent, #3b82f6) 50%, transparent 75%);
+  animation:
+    organicMorph 10s infinite linear,
+    organicGlowPulse 4s infinite ease-in-out;
   border-radius: 50%;
   pointer-events: none;
 }
 
-.antigravity-voice-orb-core {
+.lux-voice-orb-core {
   position: absolute;
   width: 80px;
   height: 80px;
-  background: radial-gradient(circle at 40% 40%, #FFFFFF 0%, var(--voice-secondary, #93C5FD) 40%, var(--voice-accent, #3B82F6) 80%);
+  background: radial-gradient(circle at 40% 40%, #ffffff 0%, var(--voice-secondary, #93c5fd) 40%, var(--voice-accent, #3b82f6) 80%);
   filter: blur(14px);
   border-radius: 50%;
   animation: organicMorph 7s infinite linear reverse;
@@ -768,7 +838,9 @@ body.resizing-col #split-sash-handle .split-sash-line {
   background-color: #121216;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 1.25rem;
-  box-shadow: 0 16px 45px -8px rgba(0, 0, 0, 0.85), 0 0 40px -4px rgba(59, 130, 246, 0.35);
+  box-shadow:
+    0 16px 45px -8px rgba(0, 0, 0, 0.85),
+    0 0 40px -4px rgba(59, 130, 246, 0.35);
   backdrop-filter: blur(16px);
   transition: all 240ms cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -781,14 +853,15 @@ body.resizing-col #split-sash-handle .split-sash-line {
 
 /* Active Voice Button Waveform Pulse in Composer */
 .voice-btn-active {
-  background-color: #3B82F6 !important;
-  color: #FFFFFF !important;
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
   box-shadow: 0 0 20px rgba(59, 130, 246, 0.7);
   animation: voiceButtonPulse 1.8s infinite ease-in-out;
 }
 
 @keyframes voiceButtonPulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
   }
@@ -800,15 +873,26 @@ body.resizing-col #split-sash-handle .split-sash-line {
 
 /* Voice Wave Soundbars Live Reaction */
 @keyframes barBounce {
-  0%, 100% { height: 6px; }
-  50% { height: 18px; }
+  0%,
+  100% {
+    height: 6px;
+  }
+  50% {
+    height: 18px;
+  }
 }
 
-.wavebar-1 { animation: barBounce 0.8s infinite ease-in-out 0.1s; }
-.wavebar-2 { animation: barBounce 0.8s infinite ease-in-out 0.25s; }
-.wavebar-3 { animation: barBounce 0.8s infinite ease-in-out 0.4s; }
+.wavebar-1 {
+  animation: barBounce 0.8s infinite ease-in-out 0.1s;
+}
+.wavebar-2 {
+  animation: barBounce 0.8s infinite ease-in-out 0.25s;
+}
+.wavebar-3 {
+  animation: barBounce 0.8s infinite ease-in-out 0.4s;
+}
 
-/* Antigravity Unlimited Rich Media, Images, Artifacts & Lullaby Player */
+/* Lux Unlimited Rich Media, Images, Artifacts & Lullaby Player */
 .prose img {
   display: block;
   max-width: 100%;
@@ -822,51 +906,96 @@ body.resizing-col #split-sash-handle .split-sash-line {
 }
 
 .prose a {
-  color: #60A5FA;
+  color: #60a5fa;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 .prose a:hover {
-  color: #93C5FD;
+  color: #93c5fd;
 }
 
-.lux-media-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
+/* Ajan görselleri — kompakt chip (örnek tasarım boyutu), × ile sohbetten kaldırılır; tıklayınca lightbox */
+.lux-media-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: 4px;
 }
-
-.lux-media-card {
-  background: rgba(19, 19, 24, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
+.lux-media-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 37px;
+  max-width: 260px;
+  padding: 0 6px 0 4px;
+  border-radius: 10px;
+  background: rgba(19, 19, 24, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
-  transition: border-color 140ms ease, transform 140ms ease;
+  transition: border-color 140ms ease;
 }
-.lux-media-card:hover {
-  border-color: rgba(59, 130, 246, 0.45);
+.lux-media-chip:hover {
+  border-color: rgba(59, 130, 246, 0.5);
 }
-
-.lux-media-card img {
+.lux-media-chip-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  overflow: hidden;
+  border: none;
+  padding: 0;
+  cursor: zoom-in;
+  background: #0a0a0f;
+  flex-shrink: 0;
+}
+.lux-media-chip-thumb img {
   width: 100%;
-  height: 220px;
+  height: 100%;
   object-fit: cover;
   display: block;
-  background: #0a0a0f;
-  cursor: zoom-in;
 }
-
-.lux-media-card-footer {
-  padding: 8px 10px;
+.lux-media-chip-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.15;
+}
+.lux-media-chip-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+.lux-media-chip-meta {
+  font-size: 10px;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: nowrap;
+}
+.lux-media-chip-remove {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  color: #94a3b8;
+  cursor: pointer;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  line-height: 1;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+.lux-media-chip-remove:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
 }
 
 .lux-lullaby-card {
@@ -888,7 +1017,7 @@ body.resizing-col #split-sash-handle .split-sash-line {
   border-radius: 999px;
   font-size: 12px;
   font-weight: 500;
-  color: #E0E7FF;
+  color: #e0e7ff;
   background: rgba(99, 102, 241, 0.25);
   border: 1px solid rgba(129, 140, 248, 0.45);
   cursor: pointer;
@@ -900,7 +1029,7 @@ body.resizing-col #split-sash-handle .split-sash-line {
 .lux-lullaby-btn.is-playing {
   background: rgba(236, 72, 153, 0.25);
   border-color: rgba(244, 114, 182, 0.5);
-  color: #FCE7F3;
+  color: #fce7f3;
 }
 
 .lux-artifact-bar {
@@ -916,7 +1045,7 @@ body.resizing-col #split-sash-handle .split-sash-line {
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 11px;
-  color: #CBD5E1;
+  color: #cbd5e1;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
@@ -925,7 +1054,7 @@ body.resizing-col #split-sash-handle .split-sash-line {
 .lux-artifact-pill:hover {
   background: rgba(59, 130, 246, 0.16);
   border-color: rgba(59, 130, 246, 0.45);
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .lux-lightbox-overlay {
@@ -947,3 +1076,18 @@ body.resizing-col #split-sash-handle .split-sash-line {
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85);
 }
 
+/* Erişilebilirlik: kullanıcı "hareket azalt" seçtiyse animasyonları durdur */
+@media (prefers-reduced-motion: reduce) {
+  .streaming-cursor {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

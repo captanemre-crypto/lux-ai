@@ -1,8 +1,15 @@
-// Main Renderer Orchestrator for Lux AI (Pixel-Perfect Antigravity)
+// Main Renderer Orchestrator for Lux AI
 
 let currentZoomLevel = 1.0;
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  // Kalıcı state (userData/lux_ai_data.json) varsa localStorage kopyasının
+  // üzerine bindir. localStorage kotası dolduğunda veri kaybını önler.
+  try {
+    const hydrated = await window.appStore?.hydrateFromDurable?.();
+    if (hydrated) window.renderApp?.();
+  } catch (_) {}
+
   setupModals();
   window.applyAccentTheme?.(window.appStore?.state?.appearance?.accentColor);
   const wsDir = window.appStore?.state?.application?.workspaceDir;
@@ -10,9 +17,12 @@ document.addEventListener("DOMContentLoaded", () => {
     window.luxAPI.setWorkspaceDir(wsDir).catch(() => {});
   }
   if (window.luxAPI?.getAppInfo) {
-    window.luxAPI.getAppInfo().then((info) => {
-      if (info) window.luxAppInfo = info;
-    }).catch(() => {});
+    window.luxAPI
+      .getAppInfo()
+      .then((info) => {
+        if (info) window.luxAppInfo = info;
+      })
+      .catch(() => {});
   }
   window.renderApp();
 
@@ -33,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }, 650);
 });
 
-window.updateTopbarNavigation = function() {
+window.updateTopbarNavigation = function () {
   const project = window.appStore.getActiveProject();
   const conv = window.appStore.getActiveConversation();
 
@@ -59,7 +69,7 @@ window.updateTopbarNavigation = function() {
   }
 };
 
-window.renderApp = function() {
+window.renderApp = function () {
   const state = window.appStore.state;
 
   // Update Breadcrumb & History Buttons
@@ -87,64 +97,198 @@ window.renderApp = function() {
   updateLayoutVisibility();
 };
 
-function escapeHtml(str) {
-  if (!str) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
 const KNOWN_PROVIDER_SUBMODELS = {
   "9Router": [
-    { id: "oc/flint-40b-free", name: "Flint 40B", tag: "40B Parametre", badge: "Önerilen", desc: "OpenCode yüksek kapasiteli, kararlı ve çok hızlı yanıt veren model" },
+    {
+      id: "oc/flint-40b-free",
+      name: "Flint 40B",
+      tag: "40B Parametre",
+      badge: "Önerilen",
+      desc: "OpenCode yüksek kapasiteli, kararlı ve çok hızlı yanıt veren model"
+    },
     { id: "oc/beam-free", name: "Beam Free", tag: "Hızlı & Kotasız", badge: "Hızlı", desc: "OpenCode kotasız ultra hızlı çalışan model" },
-    { id: "oc/deepseek-v4.1-flash-free", name: "DeepSeek v4.1 Flash", tag: "Flash Free", badge: "Gelişmiş", desc: "DeepSeek yüksek zeka ve akıl yürütme modeli" },
+    {
+      id: "oc/deepseek-v4.1-flash-free",
+      name: "DeepSeek v4.1 Flash",
+      tag: "Flash Free",
+      badge: "Gelişmiş",
+      desc: "DeepSeek yüksek zeka ve akıl yürütme modeli"
+    },
     { id: "bzl/auto:free", name: "BazaarLink Auto", tag: "Auto Free", badge: "Ücretsiz", desc: "BazaarLink otomatik serbest model" }
   ],
   "Ollama (Yerel)": [
-    { id: "qwen2.5:3b", name: "Qwen 2.5 3B", tag: "3B · Hızlı CPU", badge: "Önerilen", desc: "Anlık streaming (~1.1s TTFT) sunan hafif yerel Türkçe CPU modeli" },
-    { id: "qwen3.5:4b", name: "Qwen 3.5 4B", tag: "4B · Seri Tepki", badge: "Hızlı 4B", desc: "Düşük gecikmeli kompakt Türkçe model (~0.45s sıcak TTFT)" },
-    { id: "qwen2.5:7b", name: "Qwen 2.5 7B", tag: "7B · Altın Türkçe", badge: "Dengeli 7B", desc: "Kodlama ve kapsamlı görevler için güçlü yerel model (CPU'da daha yavaş)" },
-    { id: "qwen3:8b", name: "Qwen 3 8B", tag: "8B · Akıl Yürütme", badge: "8B Akıllı", desc: "Gelişmiş muhakeme, araç yürütme ve Türkçe sohbet" },
-    { id: "qwen2.5:14b", name: "Qwen 2.5 14B", tag: "14B · Derin Zeka", badge: "14B Pro", desc: "Yüksek RAM ile derin kodlama ve analiz gücü" }
+    {
+      id: "qwen2.5:3b",
+      name: "Qwen 2.5 3B",
+      tag: "3B · Hızlı CPU",
+      badge: "Önerilen",
+      desc: "Anlık streaming (~1.1s TTFT) sunan hafif yerel Türkçe CPU modeli"
+    },
+    {
+      id: "qwen3.5:4b",
+      name: "Qwen 3.5 4B",
+      tag: "4B · Seri Tepki",
+      badge: "Hızlı 4B",
+      desc: "Düşük gecikmeli kompakt Türkçe model (~0.45s sıcak TTFT)"
+    },
+    {
+      id: "qwen2.5:7b",
+      name: "Qwen 2.5 7B",
+      tag: "7B · Altın Türkçe",
+      badge: "Dengeli 7B",
+      desc: "Kodlama ve kapsamlı görevler için güçlü yerel model (CPU'da daha yavaş)"
+    },
+    {
+      id: "qwen3:8b",
+      name: "Qwen 3 8B",
+      tag: "8B · Akıl Yürütme",
+      badge: "8B Akıllı",
+      desc: "Gelişmiş muhakeme, araç yürütme ve Türkçe sohbet"
+    },
+    {
+      id: "qwen2.5:14b",
+      name: "Qwen 2.5 14B",
+      tag: "14B · Derin Zeka",
+      badge: "14B Pro",
+      desc: "Yüksek RAM ile derin kodlama ve analiz gücü"
+    }
   ],
   "Google Gemini": [
-    { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash-Lite", tag: "Ultra Hızlı · Ücretsiz Katman", badge: "Önerilen", desc: "Google AI Studio aktif ücretsiz katman: en düşük gecikme ve sesli sohbet uyumu" },
-    { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", tag: "1M Bağlam · Ücretsiz Katman", badge: "Hızlı", desc: "Ücretsiz katmanda güçlü ajan araçları ve çok modlu zeka" },
-    { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", tag: "1M Bağlam · Ücretsiz Katman", badge: "Kararlı", desc: "Google AI Studio kararlı Flash modeli (Aralık 2026'da 3.5 Flash-Lite'a yönlenir)" }
+    {
+      id: "gemini-3.5-flash-lite",
+      name: "Gemini 3.5 Flash-Lite",
+      tag: "Ultra Hızlı · Ücretsiz Katman",
+      badge: "Önerilen",
+      desc: "Google AI Studio aktif ücretsiz katman: en düşük gecikme ve sesli sohbet uyumu"
+    },
+    {
+      id: "gemini-3.8-flash",
+      name: "Gemini 3.8 Flash",
+      tag: "1M Bağlam · Ücretsiz Katman",
+      badge: "Hızlı",
+      desc: "Ücretsiz katmanda güçlü ajan araçları ve çok modlu zeka"
+    },
+    {
+      id: "gemini-2.5-flash",
+      name: "Gemini 2.5 Flash",
+      tag: "1M Bağlam · Ücretsiz Katman",
+      badge: "Kararlı",
+      desc: "Google AI Studio kararlı Flash modeli (Aralık 2026'da 3.5 Flash-Lite'a yönlenir)"
+    }
   ],
-  "OpenAI": [
+  OpenAI: [
     { id: "gpt-4o", name: "GPT-4o", tag: "Omni Model", badge: "Önerilen", desc: "Yüksek zeka ve çok modlu" },
     { id: "gpt-4o-mini", name: "GPT-4o Mini", tag: "Ekonomik & Hızlı", badge: "Mini", desc: "Hızlı ve düşük gecikmeli" },
     { id: "o1", name: "OpenAI o1", tag: "Akıl Yürütme", badge: "Muhakeme", desc: "Adım adım derin düşünme" },
     { id: "o3-mini", name: "o3-mini", tag: "Hızlı Akıl Yürütme", badge: "Yeni", desc: "Gelişmiş mantık ve kodlama" }
   ],
-  "Anthropic": [
-    { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet", tag: "Kod ve Mantık", badge: "Önerilen", desc: "Mükemmel kod yazma yeteneği" },
+  Anthropic: [
+    {
+      id: "claude-3-5-sonnet-20241022",
+      name: "Claude 3.5 Sonnet",
+      tag: "Kod ve Mantık",
+      badge: "Önerilen",
+      desc: "Mükemmel kod yazma yeteneği"
+    },
     { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku", tag: "Yüksek Hız", badge: "Hızlı", desc: "Hafif ve çevik model" },
     { id: "claude-3-opus-20240229", name: "Claude 3 Opus", tag: "Derin Analiz", badge: "Opus", desc: "Kapsamlı bağlam ve analiz" }
   ],
-  "DeepSeek": [
+  DeepSeek: [
     { id: "deepseek-chat", name: "DeepSeek V3", tag: "Genel Zeka", badge: "Önerilen", desc: "DeepSeek V3 sohbet motoru" },
     { id: "deepseek-reasoner", name: "DeepSeek R1", tag: "Düşünce Zinciri", badge: "Muhakeme", desc: "R1 derin mantık ve matematik" }
   ],
-  "OpenRouter": [
-    { id: "openrouter/free", name: "Free Models Auto-Router", tag: "200K · Araç + Akıl Yürütme · Otomatik Yedek", badge: "Önerilen", desc: "Çalışan tüm ücretsiz OpenRouter modelleri arasında otomatik geçiş yapar (429 korumalı)" },
-    { id: "nvidia/nemotron-3.5-lightning:free", name: "NVIDIA Nemotron 3.5 Lightning", tag: "1M Bağlam · Hızlı Ajan", badge: "Hızlı", desc: "Düşük gecikmeli ajan iş akışları ve sesli mod ($0)" },
-    { id: "google/gemma-4-26b-a4b-it:free", name: "Google Gemma 4 26B A4B MoE", tag: "256K · Hızlı Çok Modlu", badge: "Hızlı", desc: "Hızlı MoE mimarili Gemma 4 (metin, görsel, video destekli)" },
-    { id: "cohere/north-mini-code:free", name: "Cohere North Mini Code", tag: "256K · Kodlama + Ajan", badge: "Hızlı", desc: "30B toplam / 3B aktif parametreli hızlı ajan ve kod üretimi ($0)" },
-    { id: "liquid/lfm-3-1.7b:free", name: "Liquid LFM3-1.7B", tag: "256K · Ultra Hızlı Araç", badge: "Hızlı", desc: "Çok dilli hızlı sohbet ve araç çağırma için hafif 1.7B model" },
-    { id: "google/gemma-4-31b-it:free", name: "Google Gemma 4 31B", tag: "256K · Metin + Görsel + Video", badge: "Ücretsiz", desc: "Google Gemma 4 yüksek muhakeme ve çok modlu ücretsiz LLM ($0)" },
-    { id: "nvidia/nemotron-3-ultra-550b-a55b:free", name: "NVIDIA Nemotron 3 Ultra 550B", tag: "1M Bağlam · MoE Pro", badge: "Ücretsiz", desc: "550B MoE (55B aktif) 1 milyon bağlamlı dev ücretsiz model (daha ağır yanıt süresi)" },
-    { id: "nvidia/nemotron-3.5-super-vl:free", name: "NVIDIA Nemotron 3.5 Super VL", tag: "1M · GUI + Görsel/Video", badge: "Ücretsiz", desc: "Ekran, belge, GUI analizi ve kodlama için multimodal model" },
-    { id: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free", name: "NVIDIA Nemotron 3 Nano Omni", tag: "256K · Ses + Görsel + Video", badge: "Ücretsiz", desc: "Ses, video, görsel ve metni tek yerde işleyen akıl yürütme modeli" },
-    { id: "thinkingmachines/inkling-2-small:free", name: "Inkling 2 Small", tag: "1M Bağlam · Metin + Görsel", badge: "Ücretsiz", desc: "1M token bağlam penceresi, kodlama ve araç çağırma ($0)" },
-    { id: "dots-studio/dots-3-note-preview:free", name: "Dots3-Note Preview", tag: "512K · Metin + Görsel", badge: "Ücretsiz", desc: "Uzun belge, analiz ve görsel okuma için 512K bağlamlı model" },
-    { id: "recursive/flint-v1.0:free", name: "Recursive Flint v1.0", tag: "256K · Kod + Araştırma", badge: "Ücretsiz", desc: "Derin kodlama, muhakeme ve araştırma için optimize ücretsiz LLM" },
-    { id: "liquid/lfm-2.5-2.6b:free", name: "Liquid LFM2.5-2.6B", tag: "64K · Hafif Özet/RAG", badge: "Ücretsiz", desc: "Hızlı veri çıkarımı, özetleme ve RAG görevleri ($0)" }
+  OpenRouter: [
+    {
+      id: "openrouter/free",
+      name: "Free Models Auto-Router",
+      tag: "200K · Araç + Akıl Yürütme · Otomatik Yedek",
+      badge: "Önerilen",
+      desc: "Çalışan tüm ücretsiz OpenRouter modelleri arasında otomatik geçiş yapar (429 korumalı)"
+    },
+    {
+      id: "nvidia/nemotron-3.5-lightning:free",
+      name: "NVIDIA Nemotron 3.5 Lightning",
+      tag: "1M Bağlam · Hızlı Ajan",
+      badge: "Hızlı",
+      desc: "Düşük gecikmeli ajan iş akışları ve sesli mod ($0)"
+    },
+    {
+      id: "google/gemma-4-26b-a4b-it:free",
+      name: "Google Gemma 4 26B A4B MoE",
+      tag: "256K · Hızlı Çok Modlu",
+      badge: "Hızlı",
+      desc: "Hızlı MoE mimarili Gemma 4 (metin, görsel, video destekli)"
+    },
+    {
+      id: "cohere/north-mini-code:free",
+      name: "Cohere North Mini Code",
+      tag: "256K · Kodlama + Ajan",
+      badge: "Hızlı",
+      desc: "30B toplam / 3B aktif parametreli hızlı ajan ve kod üretimi ($0)"
+    },
+    {
+      id: "liquid/lfm-3-1.7b:free",
+      name: "Liquid LFM3-1.7B",
+      tag: "256K · Ultra Hızlı Araç",
+      badge: "Hızlı",
+      desc: "Çok dilli hızlı sohbet ve araç çağırma için hafif 1.7B model"
+    },
+    {
+      id: "google/gemma-4-31b-it:free",
+      name: "Google Gemma 4 31B",
+      tag: "256K · Metin + Görsel + Video",
+      badge: "Ücretsiz",
+      desc: "Google Gemma 4 yüksek muhakeme ve çok modlu ücretsiz LLM ($0)"
+    },
+    {
+      id: "nvidia/nemotron-3-ultra-550b-a55b:free",
+      name: "NVIDIA Nemotron 3 Ultra 550B",
+      tag: "1M Bağlam · MoE Pro",
+      badge: "Ücretsiz",
+      desc: "550B MoE (55B aktif) 1 milyon bağlamlı dev ücretsiz model (daha ağır yanıt süresi)"
+    },
+    {
+      id: "nvidia/nemotron-3.5-super-vl:free",
+      name: "NVIDIA Nemotron 3.5 Super VL",
+      tag: "1M · GUI + Görsel/Video",
+      badge: "Ücretsiz",
+      desc: "Ekran, belge, GUI analizi ve kodlama için multimodal model"
+    },
+    {
+      id: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+      name: "NVIDIA Nemotron 3 Nano Omni",
+      tag: "256K · Ses + Görsel + Video",
+      badge: "Ücretsiz",
+      desc: "Ses, video, görsel ve metni tek yerde işleyen akıl yürütme modeli"
+    },
+    {
+      id: "thinkingmachines/inkling-2-small:free",
+      name: "Inkling 2 Small",
+      tag: "1M Bağlam · Metin + Görsel",
+      badge: "Ücretsiz",
+      desc: "1M token bağlam penceresi, kodlama ve araç çağırma ($0)"
+    },
+    {
+      id: "dots-studio/dots-3-note-preview:free",
+      name: "Dots3-Note Preview",
+      tag: "512K · Metin + Görsel",
+      badge: "Ücretsiz",
+      desc: "Uzun belge, analiz ve görsel okuma için 512K bağlamlı model"
+    },
+    {
+      id: "recursive/flint-v1.0:free",
+      name: "Recursive Flint v1.0",
+      tag: "256K · Kod + Araştırma",
+      badge: "Ücretsiz",
+      desc: "Derin kodlama, muhakeme ve araştırma için optimize ücretsiz LLM"
+    },
+    {
+      id: "liquid/lfm-2.5-2.6b:free",
+      name: "Liquid LFM2.5-2.6B",
+      tag: "64K · Hafif Özet/RAG",
+      badge: "Ücretsiz",
+      desc: "Hızlı veri çıkarımı, özetleme ve RAG görevleri ($0)"
+    }
   ]
 };
 
@@ -184,7 +328,7 @@ async function probeEndpointWithTimeout(url, timeoutMs = 1500) {
   }
 }
 
-window.discoverLocalAIModels = async function({ silent = true } = {}) {
+window.discoverLocalAIModels = async function ({ silent = true } = {}) {
   const perms = window.appStore?.getPermissions?.() || {};
   if (perms.network_localhost === false) {
     window.luxLocalDiscoveryState = {
@@ -199,12 +343,12 @@ window.discoverLocalAIModels = async function({ silent = true } = {}) {
   const probeOllama = async () => {
     const tags = await probeEndpointWithTimeout("http://127.0.0.1:11434/api/tags", 1500);
     if (tags && Array.isArray(tags.models)) {
-      const ids = tags.models.map(m => m.name || m.model).filter(Boolean);
+      const ids = tags.models.map((m) => m.name || m.model).filter(Boolean);
       return { online: true, ids };
     }
     const v1 = await probeEndpointWithTimeout("http://127.0.0.1:11434/v1/models", 1500);
     if (v1 && Array.isArray(v1.data)) {
-      const ids = v1.data.map(m => m.id).filter(Boolean);
+      const ids = v1.data.map((m) => m.id).filter(Boolean);
       return { online: true, ids };
     }
     return { online: false, ids: [] };
@@ -213,7 +357,7 @@ window.discoverLocalAIModels = async function({ silent = true } = {}) {
   const probeOpenAIV1 = async (port) => {
     const data = await probeEndpointWithTimeout(`http://127.0.0.1:${port}/v1/models`, 1500);
     if (data && Array.isArray(data.data)) {
-      const ids = data.data.map(m => m.id).filter(Boolean);
+      const ids = data.data.map((m) => m.id).filter(Boolean);
       return { online: true, ids };
     }
     return { online: false, ids: [] };
@@ -221,16 +365,19 @@ window.discoverLocalAIModels = async function({ silent = true } = {}) {
 
   const models = window.appStore?.getModels?.() || [];
   const selectedName = window.appStore?.state?.selectedModel || "";
-  const activeCard = models.find(m => m.name === selectedName);
-  const activeIsOllama = Boolean(activeCard && (activeCard.name === "Ollama (Yerel)" || activeCard.provider === "Ollama / Yerel" || activeCard.endpoint?.includes("11434")));
-  const hasOllamaCard = models.some(m => m.name === "Ollama (Yerel)" || m.provider === "Ollama / Yerel" || m.endpoint?.includes("11434"));
-  const hasLmsCard = models.some(m => m.endpoint?.includes("1234") || m.name.includes("LM Studio"));
-  const hasNineRouterCard = models.some(m => m.name === "9Router" || m.endpoint?.includes("20128"));
+  const activeCard = models.find((m) => m.name === selectedName);
+  const activeIsOllama = Boolean(
+    activeCard &&
+    (activeCard.name === "Ollama (Yerel)" || activeCard.provider === "Ollama / Yerel" || activeCard.endpoint?.includes("11434"))
+  );
+  const hasOllamaCard = models.some((m) => m.name === "Ollama (Yerel)" || m.provider === "Ollama / Yerel" || m.endpoint?.includes("11434"));
+  const hasLmsCard = models.some((m) => m.endpoint?.includes("1234") || m.name.includes("LM Studio"));
+  const hasNineRouterCard = models.some((m) => m.name === "9Router" || m.endpoint?.includes("20128"));
 
   let [ollamaRes, lmStudioRes, nineRouterRes] = await Promise.all([
-    (!silent || hasOllamaCard) ? probeOllama() : Promise.resolve({ online: false, ids: [] }),
-    (!silent || hasLmsCard) ? probeOpenAIV1(1234) : Promise.resolve({ online: false, ids: [] }),
-    (!silent || hasNineRouterCard) ? probeOpenAIV1(20128) : Promise.resolve({ online: false, ids: [] })
+    !silent || hasOllamaCard ? probeOllama() : Promise.resolve({ online: false, ids: [] }),
+    !silent || hasLmsCard ? probeOpenAIV1(1234) : Promise.resolve({ online: false, ids: [] }),
+    !silent || hasNineRouterCard ? probeOpenAIV1(20128) : Promise.resolve({ online: false, ids: [] })
   ]);
 
   // Only start Ollama daemon automatically if user actively selected Ollama OR explicitly ran manual discovery
@@ -249,32 +396,42 @@ window.discoverLocalAIModels = async function({ silent = true } = {}) {
   if (ollamaRes.online) {
     const pickPreferredOllamaModel = (ids) => {
       if (!Array.isArray(ids) || ids.length === 0) return "qwen2.5:3b";
-      return ids.find(id => id === "qwen3.5:4b")
-        || ids.find(id => id === "qwen2.5:3b")
-        || ids.find(id => id === "qwen2.5:7b")
-        || ids.find(id => id === "qwen3:8b")
-        || ids.find(id => id === "qwen2.5:14b")
-        || ids.find(id => id.includes("qwen2.5"))
-        || ids.find(id => id.includes("qwen3"))
-        || ids[0];
+      return (
+        ids.find((id) => id === "qwen3.5:4b") ||
+        ids.find((id) => id === "qwen2.5:3b") ||
+        ids.find((id) => id === "qwen2.5:7b") ||
+        ids.find((id) => id === "qwen3:8b") ||
+        ids.find((id) => id === "qwen2.5:14b") ||
+        ids.find((id) => id.includes("qwen2.5")) ||
+        ids.find((id) => id.includes("qwen3")) ||
+        ids[0]
+      );
     };
 
     if (ollamaRes.ids.length > 0) {
       const existingPresets = KNOWN_PROVIDER_SUBMODELS["Ollama (Yerel)"] || [];
-      KNOWN_PROVIDER_SUBMODELS["Ollama (Yerel)"] = ollamaRes.ids.map(id => {
-        const known = existingPresets.find(p => p.id === id);
-        return known ? { ...known, tag: `${known.tag} · Aktif` } : {
-          id,
-          name: id,
-          tag: "Yerel Ollama",
-          badge: id.includes("14b") ? "14B Pro" : (id.includes("7b") || id.includes("8b") ? "Türkçe 7B+" : (id.includes("3b") || id.includes("4b") ? "Hızlı CPU" : "Yüklü")),
-          desc: "Yerel Ollama (D:\\LuxAI_Models) üzerinden algılandı"
-        };
+      KNOWN_PROVIDER_SUBMODELS["Ollama (Yerel)"] = ollamaRes.ids.map((id) => {
+        const known = existingPresets.find((p) => p.id === id);
+        return known
+          ? { ...known, tag: `${known.tag} · Aktif` }
+          : {
+              id,
+              name: id,
+              tag: "Yerel Ollama",
+              badge: id.includes("14b")
+                ? "14B Pro"
+                : id.includes("7b") || id.includes("8b")
+                  ? "Türkçe 7B+"
+                  : id.includes("3b") || id.includes("4b")
+                    ? "Hızlı CPU"
+                    : "Yüklü",
+              desc: "Yerel Ollama (D:\\LuxAI_Models) üzerinden algılandı"
+            };
       });
       KNOWN_PROVIDER_SUBMODELS["Ollama / Yerel"] = KNOWN_PROVIDER_SUBMODELS["Ollama (Yerel)"];
     }
 
-    const ollamaCard = models.find(m => m.name === "Ollama (Yerel)" || m.provider === "Ollama / Yerel" || m.endpoint?.includes("11434"));
+    const ollamaCard = models.find((m) => m.name === "Ollama (Yerel)" || m.provider === "Ollama / Yerel" || m.endpoint?.includes("11434"));
     if (ollamaCard) {
       ollamaCard.status = "success";
       ollamaCard.lastTested = `Çevrimiçi (${ollamaRes.ids.length} model)`;
@@ -288,7 +445,7 @@ window.discoverLocalAIModels = async function({ silent = true } = {}) {
   // 2. Sync existing LM Studio (1234) card if present (never force-recreate a deleted card)
   if (lmStudioRes.online) {
     if (lmStudioRes.ids.length > 0) {
-      KNOWN_PROVIDER_SUBMODELS["LM Studio (Yerel)"] = lmStudioRes.ids.map(id => ({
+      KNOWN_PROVIDER_SUBMODELS["LM Studio (Yerel)"] = lmStudioRes.ids.map((id) => ({
         id,
         name: id,
         tag: "LM Studio (1234)",
@@ -296,7 +453,7 @@ window.discoverLocalAIModels = async function({ silent = true } = {}) {
         desc: "LM Studio üzerinden algılandı"
       }));
     }
-    const lmsCard = models.find(m => m.endpoint?.includes("1234") || m.name.includes("LM Studio"));
+    const lmsCard = models.find((m) => m.endpoint?.includes("1234") || m.name.includes("LM Studio"));
     if (lmsCard) {
       lmsCard.status = "success";
       lmsCard.lastTested = `Çevrimiçi (${lmStudioRes.ids.length} model)`;
@@ -312,8 +469,8 @@ window.discoverLocalAIModels = async function({ silent = true } = {}) {
     if (nineRouterRes.ids.length > 0) {
       const basePresets = KNOWN_PROVIDER_SUBMODELS["9Router"] || [];
       const merged = basePresets.slice();
-      nineRouterRes.ids.forEach(id => {
-        if (!merged.some(item => item.id === id)) {
+      nineRouterRes.ids.forEach((id) => {
+        if (!merged.some((item) => item.id === id)) {
           const isFree = id.includes("free") || id.startsWith("oc/");
           merged.push({
             id,
@@ -325,7 +482,7 @@ window.discoverLocalAIModels = async function({ silent = true } = {}) {
       });
       KNOWN_PROVIDER_SUBMODELS["9Router"] = merged;
     }
-    const routerCard = models.find(m => m.name === "9Router" || m.endpoint?.includes("20128"));
+    const routerCard = models.find((m) => m.name === "9Router" || m.endpoint?.includes("20128"));
     if (routerCard) {
       routerCard.status = "success";
       routerCard.lastTested = `Otomatik keşfedildi (${nineRouterRes.ids.length} model)`;
@@ -339,8 +496,22 @@ window.discoverLocalAIModels = async function({ silent = true } = {}) {
     reason: "",
     runtimes: [
       { id: "ollama", label: "Ollama", port: 11434, online: ollamaRes.online, modelsCount: ollamaRes.ids.length, models: ollamaRes.ids },
-      { id: "lmstudio", label: "LM Studio", port: 1234, online: lmStudioRes.online, modelsCount: lmStudioRes.ids.length, models: lmStudioRes.ids },
-      { id: "9router", label: "9Router", port: 20128, online: nineRouterRes.online, modelsCount: nineRouterRes.ids.length, models: nineRouterRes.ids }
+      {
+        id: "lmstudio",
+        label: "LM Studio",
+        port: 1234,
+        online: lmStudioRes.online,
+        modelsCount: lmStudioRes.ids.length,
+        models: lmStudioRes.ids
+      },
+      {
+        id: "9router",
+        label: "9Router",
+        port: 20128,
+        online: nineRouterRes.online,
+        modelsCount: nineRouterRes.ids.length,
+        models: nineRouterRes.ids
+      }
     ]
   };
 
@@ -377,18 +548,15 @@ function openSubModelFlyout(targetItemEl, providerModel) {
     } else if (providerModel.endpoint?.includes("20128")) {
       submodels = (KNOWN_PROVIDER_SUBMODELS["9Router"] || []).slice();
     } else {
-      submodels = [
-        { id: providerModel.modelId || "default", name: providerModel.name, tag: "Aktif Model", badge: "Varsayılan" }
-      ];
+      submodels = [{ id: providerModel.modelId || "default", name: providerModel.name, tag: "Aktif Model", badge: "Varsayılan" }];
     }
   }
 
-  const hasEffectiveOpenRouterKey = isOpenRouterProvider && Boolean(
-    (providerModel.apiKey || "").trim() || window.appStore?.getOpenRouterApiKey?.()
-  );
+  const hasEffectiveOpenRouterKey =
+    isOpenRouterProvider && Boolean((providerModel.apiKey || "").trim() || window.appStore?.getOpenRouterApiKey?.());
 
   // Ensure current active modelId is in the list
-  if (providerModel.modelId && !submodels.some(sm => sm.id === providerModel.modelId)) {
+  if (providerModel.modelId && !submodels.some((sm) => sm.id === providerModel.modelId)) {
     submodels.unshift({
       id: providerModel.modelId,
       name: providerModel.modelId,
@@ -404,8 +572,10 @@ function openSubModelFlyout(targetItemEl, providerModel) {
   flyout.style.zIndex = "1050";
 
   const renderFlyoutContent = (filterText = "") => {
-    const filtered = filterText 
-      ? submodels.filter(sm => sm.name.toLowerCase().includes(filterText.toLowerCase()) || sm.id.toLowerCase().includes(filterText.toLowerCase()))
+    const filtered = filterText
+      ? submodels.filter(
+          (sm) => sm.name.toLowerCase().includes(filterText.toLowerCase()) || sm.id.toLowerCase().includes(filterText.toLowerCase())
+        )
       : submodels;
 
     return `
@@ -433,38 +603,52 @@ function openSubModelFlyout(targetItemEl, providerModel) {
           <svg class="text-muted-foreground shrink-0" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="text" id="submodel-search-input" value="${escapeHtml(filterText)}" placeholder="Model ara..." class="w-full bg-transparent text-xs text-foreground outline-none font-sans" />
         </div>
-        ${isOpenRouterProvider && !hasEffectiveOpenRouterKey ? `
+        ${
+          isOpenRouterProvider && !hasEffectiveOpenRouterKey
+            ? `
           <button type="button" id="btn-flyout-openrouter-setup" class="mt-1.5 w-full px-2 py-1 rounded-md bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-[10px] text-amber-300 flex items-center justify-between gap-1 cursor-pointer transition-colors">
             <span>🔑 OpenRouter API anahtarı henüz girilmedi</span>
             <span class="font-semibold underline shrink-0">Anahtar Gir →</span>
           </button>
-        ` : ''}
+        `
+            : ""
+        }
       </div>
 
       <!-- Scrollable Submodels List -->
       <div class="flex flex-col gap-1 p-1.5 max-h-56 overflow-y-auto custom-scrollbar" id="submodels-items-list">
-        ${filtered.length === 0 ? `
+        ${
+          filtered.length === 0
+            ? `
           <div class="p-4 text-center text-xs text-muted-foreground">Eşleşen model bulunamadı.</div>
-        ` : filtered.map(sm => {
-          const isSelected = sm.id === providerModel.modelId;
-          return `
-            <div class="submodel-item p-2 rounded-lg cursor-pointer flex items-center justify-between gap-2 ${isSelected ? 'bg-primary/20 text-primary border border-primary/30 font-medium' : 'text-secondary-foreground hover:bg-secondary/60'}" data-submodel-id="${escapeHtml(sm.id)}">
+        `
+            : filtered
+                .map((sm) => {
+                  const isSelected = sm.id === providerModel.modelId;
+                  return `
+            <div class="submodel-item p-2 rounded-lg cursor-pointer flex items-center justify-between gap-2 ${isSelected ? "bg-primary/20 text-primary border border-primary/30 font-medium" : "text-secondary-foreground hover:bg-secondary/60"}" data-submodel-id="${escapeHtml(sm.id)}">
               <div class="flex flex-col min-w-0 pr-1">
                 <div class="flex items-center gap-1.5">
                   <span class="text-xs truncate">${escapeHtml(sm.name)}</span>
-                  ${sm.badge ? `<span class="text-[9px] px-1.5 py-0.2 rounded-full ${sm.badge === 'Önerilen' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-secondary text-muted-foreground border border-border/40'} shrink-0">${escapeHtml(sm.badge)}</span>` : ''}
+                  ${sm.badge ? `<span class="text-[9px] px-1.5 py-0.2 rounded-full ${sm.badge === "Önerilen" ? "bg-emerald-500/20 text-emerald-400" : "bg-secondary text-muted-foreground border border-border/40"} shrink-0">${escapeHtml(sm.badge)}</span>` : ""}
                 </div>
                 <div class="flex items-center gap-1 text-[10px] text-muted-foreground font-mono truncate">
                   <span>${escapeHtml(sm.id)}</span>
-                  ${sm.tag ? `<span class="text-[9px] opacity-70">· ${escapeHtml(sm.tag)}</span>` : ''}
+                  ${sm.tag ? `<span class="text-[9px] opacity-70">· ${escapeHtml(sm.tag)}</span>` : ""}
                 </div>
               </div>
-              ${isSelected ? `
+              ${
+                isSelected
+                  ? `
                 <svg class="text-primary shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              ` : ''}
+              `
+                  : ""
+              }
             </div>
           `;
-        }).join("")}
+                })
+                .join("")
+        }
       </div>
 
       <!-- Custom Model ID Input & Footer -->
@@ -487,12 +671,12 @@ function openSubModelFlyout(targetItemEl, providerModel) {
   const rect = targetItemEl.getBoundingClientRect();
   const flyoutWidth = 310;
   const flyoutHeight = 350;
-  
+
   let left = rect.right + 8;
   if (left + flyoutWidth > window.innerWidth - 10) {
     left = Math.max(10, rect.left - flyoutWidth - 8);
   }
-  
+
   let top = rect.bottom - flyoutHeight;
   if (top < 10) top = 10;
   if (top + flyoutHeight > window.innerHeight - 10) {
@@ -515,31 +699,40 @@ function openSubModelFlyout(targetItemEl, providerModel) {
     searchInput?.addEventListener("input", (e) => {
       const listContainer = flyout.querySelector("#submodels-items-list");
       const val = e.target.value.toLowerCase().trim();
-      const filtered = val ? submodels.filter(sm => sm.name.toLowerCase().includes(val) || sm.id.toLowerCase().includes(val)) : submodels;
-      
+      const filtered = val ? submodels.filter((sm) => sm.name.toLowerCase().includes(val) || sm.id.toLowerCase().includes(val)) : submodels;
+
       if (listContainer) {
-        listContainer.innerHTML = filtered.length === 0 ? `
+        listContainer.innerHTML =
+          filtered.length === 0
+            ? `
           <div class="p-4 text-center text-xs text-muted-foreground">Eşleşen model bulunamadı.</div>
-        ` : filtered.map(sm => {
-          const isSelected = sm.id === providerModel.modelId;
-          return `
-            <div class="submodel-item p-2 rounded-lg cursor-pointer flex items-center justify-between gap-2 ${isSelected ? 'bg-primary/20 text-primary border border-primary/30 font-medium' : 'text-secondary-foreground hover:bg-secondary/60'}" data-submodel-id="${escapeHtml(sm.id)}">
+        `
+            : filtered
+                .map((sm) => {
+                  const isSelected = sm.id === providerModel.modelId;
+                  return `
+            <div class="submodel-item p-2 rounded-lg cursor-pointer flex items-center justify-between gap-2 ${isSelected ? "bg-primary/20 text-primary border border-primary/30 font-medium" : "text-secondary-foreground hover:bg-secondary/60"}" data-submodel-id="${escapeHtml(sm.id)}">
               <div class="flex flex-col min-w-0 pr-1">
                 <div class="flex items-center gap-1.5">
                   <span class="text-xs truncate">${escapeHtml(sm.name)}</span>
-                  ${sm.badge ? `<span class="text-[9px] px-1.5 py-0.2 rounded-full ${sm.badge === 'Önerilen' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-secondary text-muted-foreground border border-border/40'} shrink-0">${escapeHtml(sm.badge)}</span>` : ''}
+                  ${sm.badge ? `<span class="text-[9px] px-1.5 py-0.2 rounded-full ${sm.badge === "Önerilen" ? "bg-emerald-500/20 text-emerald-400" : "bg-secondary text-muted-foreground border border-border/40"} shrink-0">${escapeHtml(sm.badge)}</span>` : ""}
                 </div>
                 <div class="flex items-center gap-1 text-[10px] text-muted-foreground font-mono truncate">
                   <span>${escapeHtml(sm.id)}</span>
-                  ${sm.tag ? `<span class="text-[9px] opacity-70">· ${escapeHtml(sm.tag)}</span>` : ''}
+                  ${sm.tag ? `<span class="text-[9px] opacity-70">· ${escapeHtml(sm.tag)}</span>` : ""}
                 </div>
               </div>
-              ${isSelected ? `
+              ${
+                isSelected
+                  ? `
                 <svg class="text-primary shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              ` : ''}
+              `
+                  : ""
+              }
             </div>
           `;
-        }).join("");
+                })
+                .join("");
 
         attachSubmodelClicks();
       }
@@ -575,7 +768,7 @@ function openSubModelFlyout(targetItemEl, providerModel) {
   };
 
   const attachSubmodelClicks = () => {
-    flyout.querySelectorAll(".submodel-item").forEach(item => {
+    flyout.querySelectorAll(".submodel-item").forEach((item) => {
       item.addEventListener("click", () => {
         const subId = item.getAttribute("data-submodel-id");
         if (subId) selectSubModel(subId);
@@ -589,12 +782,12 @@ function openSubModelFlyout(targetItemEl, providerModel) {
   const perms = window.appStore?.getPermissions?.() || {};
   if (perms.network_localhost !== false && (providerModel.provider.includes("Yerel") || providerModel.endpoint?.includes("11434"))) {
     fetch("http://127.0.0.1:11434/v1/models")
-      .then(r => r.json())
-      .then(data => {
+      .then((r) => r.json())
+      .then((data) => {
         if (data?.data && Array.isArray(data.data)) {
           let added = false;
-          data.data.forEach(m => {
-            if (!submodels.some(sm => sm.id === m.id)) {
+          data.data.forEach((m) => {
+            if (!submodels.some((sm) => sm.id === m.id)) {
               submodels.push({ id: m.id, name: m.id, tag: "Yerel Ollama", badge: "Yüklü" });
               added = true;
             }
@@ -609,12 +802,12 @@ function openSubModelFlyout(targetItemEl, providerModel) {
   } else if (perms.network_localhost !== false && (providerModel.endpoint?.includes("20128") || providerModel.name.includes("9Router"))) {
     // If 9Router, fetch all 150+ live models from local proxy
     fetch("http://127.0.0.1:20128/v1/models")
-      .then(r => r.json())
-      .then(data => {
+      .then((r) => r.json())
+      .then((data) => {
         if (data?.data && Array.isArray(data.data)) {
           let added = false;
-          data.data.forEach(m => {
-            if (!submodels.some(sm => sm.id === m.id)) {
+          data.data.forEach((m) => {
+            if (!submodels.some((sm) => sm.id === m.id)) {
               const isFree = m.id.includes("free") || m.id.startsWith("oc/");
               submodels.push({
                 id: m.id,
@@ -635,12 +828,12 @@ function openSubModelFlyout(targetItemEl, providerModel) {
   } else if (perms.network_internet !== false && isOpenRouterProvider) {
     // OpenRouter: fetch live catalog and merge any active $0 / :free text LLMs dynamically
     fetch("https://openrouter.ai/api/v1/models")
-      .then(r => r.json())
-      .then(data => {
+      .then((r) => r.json())
+      .then((data) => {
         if (data?.data && Array.isArray(data.data)) {
           let added = false;
-          data.data.filter(isOpenRouterFreeChatModel).forEach(m => {
-            if (!submodels.some(sm => sm.id === m.id)) {
+          data.data.filter(isOpenRouterFreeChatModel).forEach((m) => {
+            if (!submodels.some((sm) => sm.id === m.id)) {
               const ctxK = m.context_length ? `${Math.round(m.context_length / 1000)}K` : "Ücretsiz";
               submodels.push({
                 id: m.id,
@@ -672,13 +865,12 @@ function updateComposerModelDropdown() {
 
   const models = window.appStore.getModels();
   const selectedModel = window.appStore.state.selectedModel || models[0]?.name || "";
-  const activeModelObj = models.find(m => m.name === selectedModel);
+  const activeModelObj = models.find((m) => m.name === selectedModel);
 
   let displayLabel = selectedModel || "Model Seç";
   if (activeModelObj && activeModelObj.modelId) {
-    const shortSub = activeModelObj.modelId === "openrouter/free"
-      ? "Auto Free"
-      : activeModelObj.modelId.split('/').pop().replace(':latest', '');
+    const shortSub =
+      activeModelObj.modelId === "openrouter/free" ? "Auto Free" : activeModelObj.modelId.split("/").pop().replace(":latest", "");
     if (shortSub && shortSub !== selectedModel) {
       displayLabel = `${selectedModel} · ${shortSub}`;
     }
@@ -688,22 +880,27 @@ function updateComposerModelDropdown() {
     modelLabel.textContent = displayLabel;
   }
 
-  const modelsListHtml = models.length === 0
-    ? `<div class="px-3 py-2.5 text-xs text-muted-foreground">Kayıtlı LLM modeli yok</div>`
-    : models.map(m => {
-        const shortSub = m.modelId ? (m.modelId === "openrouter/free" ? "auto:free" : m.modelId.split('/').pop().replace(':latest', '')) : '';
-        const isActive = m.name === selectedModel;
-        const isOpenRouterRow = m.provider === "OpenRouter" || /openrouter\.ai/i.test(m.endpoint || "");
-        const hasEffectiveOrKey = isOpenRouterRow && Boolean((m.apiKey || "").trim() || window.appStore?.getOpenRouterApiKey?.());
-        const dotClass = m.status === 'success'
-          ? 'bg-emerald-400'
-          : (isOpenRouterRow && !hasEffectiveOrKey ? 'bg-amber-400' : 'bg-blue-400');
-        return `
-          <div class="lux-dropdown-item font-medium flex items-center justify-between group/mitem py-1.5 ${isActive ? 'active' : ''}" data-model="${escapeHtml(m.name)}" data-model-id="${escapeHtml(m.id)}">
+  const modelsListHtml =
+    models.length === 0
+      ? `<div class="px-3 py-2.5 text-xs text-muted-foreground">Kayıtlı LLM modeli yok</div>`
+      : models
+          .map((m) => {
+            const shortSub = m.modelId
+              ? m.modelId === "openrouter/free"
+                ? "auto:free"
+                : m.modelId.split("/").pop().replace(":latest", "")
+              : "";
+            const isActive = m.name === selectedModel;
+            const isOpenRouterRow = m.provider === "OpenRouter" || /openrouter\.ai/i.test(m.endpoint || "");
+            const hasEffectiveOrKey = isOpenRouterRow && Boolean((m.apiKey || "").trim() || window.appStore?.getOpenRouterApiKey?.());
+            const dotClass =
+              m.status === "success" ? "bg-emerald-400" : isOpenRouterRow && !hasEffectiveOrKey ? "bg-amber-400" : "bg-blue-400";
+            return `
+          <div class="lux-dropdown-item font-medium flex items-center justify-between group/mitem py-1.5 ${isActive ? "active" : ""}" data-model="${escapeHtml(m.name)}" data-model-id="${escapeHtml(m.id)}">
             <div class="flex items-center gap-2 min-w-0 pr-1">
               <span class="w-2 h-2 rounded-full shrink-0 ${dotClass}"></span>
               <span class="truncate">${escapeHtml(m.name)}</span>
-              ${shortSub ? `<span class="text-[10px] px-1.5 py-0.2 rounded bg-secondary/80 text-muted-foreground font-mono truncate max-w-[95px] border border-border/40">${escapeHtml(shortSub)}</span>` : ''}
+              ${shortSub ? `<span class="text-[10px] px-1.5 py-0.2 rounded bg-secondary/80 text-muted-foreground font-mono truncate max-w-[95px] border border-border/40">${escapeHtml(shortSub)}</span>` : ""}
             </div>
             <div class="flex items-center gap-1 shrink-0">
               <button type="button" class="btn-submodel-picker px-1.5 py-0.5 rounded hover:bg-white/10 text-muted-foreground hover:text-foreground cursor-pointer transition-colors flex items-center gap-0.5" data-model="${escapeHtml(m.name)}" title="${escapeHtml(m.name)} modellerini seç">
@@ -713,9 +910,12 @@ function updateComposerModelDropdown() {
             </div>
           </div>
         `;
-      }).join("");
+          })
+          .join("");
 
-  menuModel.innerHTML = modelsListHtml + `
+  menuModel.innerHTML =
+    modelsListHtml +
+    `
     <div class="lux-dropdown-divider"></div>
     <div class="lux-dropdown-item text-xs text-primary flex items-center gap-2 cursor-pointer" id="btn-open-models-settings">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 -960 960 960" fill="currentColor">
@@ -728,7 +928,7 @@ function updateComposerModelDropdown() {
   // Attach event listeners to model items & submodel buttons
   menuModel.querySelectorAll(".lux-dropdown-item[data-model]").forEach((item) => {
     const modelName = item.getAttribute("data-model");
-    const providerModel = models.find(m => m.name === modelName);
+    const providerModel = models.find((m) => m.name === modelName);
 
     // Clicking the "Modeller ›" button opens the submodel flyout
     item.querySelector(".btn-submodel-picker")?.addEventListener("click", (e) => {
@@ -984,7 +1184,7 @@ function setupComposerEvents() {
       const mode = item.getAttribute("data-mode") || item.getAttribute("data-value");
       if (mode) {
         window.appStore.setMode(mode);
-        menuMode.querySelectorAll(".lux-dropdown-item").forEach(i => i.classList.remove("active"));
+        menuMode.querySelectorAll(".lux-dropdown-item").forEach((i) => i.classList.remove("active"));
         item.classList.add("active");
         menuMode.classList.remove("show");
         window.renderApp();
@@ -1005,17 +1205,23 @@ function closeTopmostModalOrOverlay() {
   }
 
   let closedAnyMenu = false;
-  document.querySelectorAll(".lux-dropdown-menu.show").forEach(m => {
+  document.querySelectorAll(".lux-dropdown-menu.show").forEach((m) => {
     m.classList.remove("show");
     closedAnyMenu = true;
   });
   if (closedAnyMenu) return true;
 
   const lightbox = document.getElementById("lux-lightbox-overlay");
-  if (lightbox) { lightbox.remove(); return true; }
+  if (lightbox) {
+    lightbox.remove();
+    return true;
+  }
 
   const picker = document.getElementById("card-model-picker-modal");
-  if (picker) { picker.remove(); return true; }
+  if (picker) {
+    picker.remove();
+    return true;
+  }
 
   const voiceLib = document.getElementById("voice-library-modal");
   if (voiceLib) {
@@ -1031,17 +1237,23 @@ function closeTopmostModalOrOverlay() {
     return true;
   }
 
-  const feedbackModal = document.getElementById("feedback-modal-dialog");
-  if (feedbackModal) { feedbackModal.remove(); return true; }
-
   const aboutModal = document.getElementById("about-modal-dialog");
-  if (aboutModal) { aboutModal.remove(); return true; }
+  if (aboutModal) {
+    aboutModal.remove();
+    return true;
+  }
 
   const palette = document.getElementById("palette-modal");
-  if (palette && palette.classList.contains("show")) { window.closePalette(); return true; }
+  if (palette && palette.classList.contains("show")) {
+    window.closePalette();
+    return true;
+  }
 
   const settings = document.getElementById("settings-modal");
-  if (settings && settings.classList.contains("show")) { window.closeSettingsModal(); return true; }
+  if (settings && settings.classList.contains("show")) {
+    window.closeSettingsModal();
+    return true;
+  }
 
   return false;
 }
@@ -1056,7 +1268,12 @@ function setupKeyboardShortcuts() {
     }
 
     // Enter outside composer while AI audio is speaking cuts speech output cleanly
-    if (e.key === "Enter" && !e.shiftKey && e.target?.id !== "composer-textarea" && (window.currentVoiceAudio || window.isLullabyPlaying?.())) {
+    if (
+      e.key === "Enter" &&
+      !e.shiftKey &&
+      e.target?.id !== "composer-textarea" &&
+      (window.currentVoiceAudio || window.isLullabyPlaying?.())
+    ) {
       window.stopAllAssistantOutput?.(false);
     }
 
@@ -1106,7 +1323,11 @@ function setupKeyboardShortcuts() {
     }
     // Ctrl+S -> Save active file when IDE editor is active
     else if (keyLower === "s") {
-      if (window.appStore?.state?.ideSplitActive && window.getAuxViewMode?.() === "editor" && typeof window.saveCurrentEditorFile === "function") {
+      if (
+        window.appStore?.state?.ideSplitActive &&
+        window.getAuxViewMode?.() === "editor" &&
+        typeof window.saveCurrentEditorFile === "function"
+      ) {
         e.preventDefault();
         window.saveCurrentEditorFile();
       }
@@ -1130,21 +1351,21 @@ function setupKeyboardShortcuts() {
 }
 
 // Global Zoom Controls
-window.zoomIn = function() {
+window.zoomIn = function () {
   currentZoomLevel = Math.min(currentZoomLevel + 0.1, 1.6);
   document.body.style.zoom = currentZoomLevel;
 };
-window.zoomOut = function() {
+window.zoomOut = function () {
   currentZoomLevel = Math.max(currentZoomLevel - 0.1, 0.7);
   document.body.style.zoom = currentZoomLevel;
 };
-window.resetZoom = function() {
+window.resetZoom = function () {
   currentZoomLevel = 1.0;
   document.body.style.zoom = 1.0;
 };
 
 // Global Context Attach Actions
-window.pickFileContext = async function() {
+window.pickFileContext = async function () {
   const textarea = document.getElementById("composer-textarea");
   if (!textarea) return;
   if (window.luxAPI?.pickFile) {
@@ -1158,7 +1379,7 @@ window.pickFileContext = async function() {
   textarea.value += " @file:src/index.html ";
   textarea.focus();
 };
-window.pickFolderContext = async function() {
+window.pickFolderContext = async function () {
   const textarea = document.getElementById("composer-textarea");
   if (!textarea) return;
   if (window.luxAPI?.pickFolder) {
@@ -1172,14 +1393,14 @@ window.pickFolderContext = async function() {
   textarea.value += " @folder:src/ ";
   textarea.focus();
 };
-window.captureScreenshotContext = function() {
+window.captureScreenshotContext = function () {
   const textarea = document.getElementById("composer-textarea");
   if (textarea) {
     textarea.value += " @screen:captured_window ";
     textarea.focus();
   }
 };
-window.addTerminalContext = function() {
+window.addTerminalContext = function () {
   const textarea = document.getElementById("composer-textarea");
   if (textarea) {
     textarea.value += " @terminal:last_output ";
@@ -1187,7 +1408,7 @@ window.addTerminalContext = function() {
   }
 };
 
-window.clearActiveChat = function() {
+window.clearActiveChat = function () {
   const conv = window.appStore.getActiveConversation();
   if (conv) {
     conv.messages = [];
@@ -1196,33 +1417,37 @@ window.clearActiveChat = function() {
   }
 };
 
-window.exportChatMarkdown = function() {
+window.exportChatMarkdown = function () {
   const conv = window.appStore.getActiveConversation();
   if (!conv) return;
-  const md = conv.messages.map(m => `### ${m.role === 'user' ? 'Kullanıcı' : 'Lux AI'}\n\n${m.content}\n`).join('\n---\n\n');
+  const md = conv.messages.map((m) => `### ${m.role === "user" ? "Kullanıcı" : "Lux AI"}\n\n${m.content}\n`).join("\n---\n\n");
   const blob = new Blob([md], { type: "text/markdown" });
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
+  a.href = url;
   a.download = `${conv.title || "lux_ai_chat"}.md`;
   a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
 };
 
-window.exportChatJson = function() {
+window.exportChatJson = function () {
   const conv = window.appStore.getActiveConversation();
   if (!conv) return;
   const jsonStr = JSON.stringify(conv, null, 2);
   const blob = new Blob([jsonStr], { type: "application/json" });
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
+  a.href = url;
   a.download = `${conv.title || "lux_ai_chat"}.json`;
   a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
 };
 
-window.openModelParamsModal = function() {
+window.openModelParamsModal = function () {
   window.openSettingsModal("models");
 };
 
-window.openAboutModal = async function() {
+window.openAboutModal = async function () {
   document.getElementById("about-modal-dialog")?.remove();
   let appInfo = null;
   try {
@@ -1234,7 +1459,8 @@ window.openAboutModal = async function() {
   const modal = document.createElement("div");
   modal.id = "about-modal-dialog";
   modal.className = "lux-modal-backdrop show flex items-center justify-center";
-  modal.style.cssText = "position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px); z-index: 2600; display: flex; align-items: center; justify-content: center;";
+  modal.style.cssText =
+    "position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px); z-index: 2600; display: flex; align-items: center; justify-content: center;";
   modal.innerHTML = `
     <div class="lux-modal max-w-sm w-full bg-[#121216] border border-border/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden relative select-none p-6 text-center">
       <div class="w-14 h-14 rounded-2xl bg-primary/15 border border-primary/25 flex items-center justify-center text-primary mx-auto mb-3 shadow-lg">
@@ -1243,9 +1469,9 @@ window.openAboutModal = async function() {
         </svg>
       </div>
       <h3 class="text-base font-semibold text-foreground m-0">Lux AI Desktop</h3>
-      <span class="text-xs text-primary font-mono mt-0.5 mb-2 inline-block">v${versionStr} · Antigravity Native Engine</span>
+      <span class="text-xs text-primary font-mono mt-0.5 mb-2 inline-block">v${versionStr} · Lux Native Engine</span>
       <p class="text-xs text-muted-foreground leading-relaxed m-0 mb-5">
-        Google Antigravity IDE mimarisini temel alan, yerel yapay zeka ajanları, çift modlu IDE ve stüdyo nöral ses motoru ile güçlendirilmiş masaüstü çalışma alanı.
+        Google Lux IDE mimarisini temel alan, yerel yapay zeka ajanları, çift modlu IDE ve stüdyo nöral ses motoru ile güçlendirilmiş masaüstü çalışma alanı.
       </p>
       <div class="flex flex-col gap-1.5 text-xs text-muted-foreground bg-card/40 p-3 rounded-xl border border-border/50 text-left mb-5 font-mono text-[11px]">
         <div class="flex justify-between"><span>Ortam:</span><span class="text-foreground">Electron (${platformStr}) + Node.js</span></div>
@@ -1302,7 +1528,7 @@ function setupSidebarResize() {
 }
 
 // ----------------------------------------------------
-// Antigravity Pixel-Perfect Custom Dropdown Component
+// Lux Pixel-Perfect Custom Dropdown Component
 // Eliminates Windows OS light popup white backgrounds
 // ----------------------------------------------------
 let luxActiveCustomSelect = null;
@@ -1323,13 +1549,17 @@ window.addEventListener("click", (e) => {
   }
 });
 
-window.addEventListener("scroll", (e) => {
-  if (luxActiveCustomSelect && !luxActiveCustomSelect.menu?.contains(e.target)) {
-    closeLuxActiveCustomSelect();
-  }
-}, true);
+window.addEventListener(
+  "scroll",
+  (e) => {
+    if (luxActiveCustomSelect && !luxActiveCustomSelect.menu?.contains(e.target)) {
+      closeLuxActiveCustomSelect();
+    }
+  },
+  true
+);
 
-window.makeAntigravityCustomSelect = function(selectEl, customClasses = {}) {
+window.makeLuxCustomSelect = function (selectEl, customClasses = {}) {
   if (!selectEl) return null;
   if (selectEl.dataset.customized === "true" && selectEl._customWrapper) {
     if (selectEl._customSelectRefresh) selectEl._customSelectRefresh();
@@ -1421,13 +1651,13 @@ window.makeAntigravityCustomSelect = function(selectEl, customClasses = {}) {
     Array.from(selectEl.options).forEach((opt, idx) => {
       const optEl = document.createElement("div");
       optEl.className = "lux-custom-select-option";
-      const isSelected = (opt.selected || idx === selectEl.selectedIndex);
+      const isSelected = opt.selected || idx === selectEl.selectedIndex;
       if (isSelected) optEl.classList.add("is-selected");
       if (opt.value === "__custom__") optEl.classList.add("is-custom-action");
 
       optEl.innerHTML = `
         <span class="truncate">${escapeHtml(opt.text)}</span>
-        ${isSelected ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="shrink-0 text-primary"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
+        ${isSelected ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="shrink-0 text-primary"><polyline points="20 6 9 17 4 12"/></svg>` : ""}
       `;
 
       optEl.addEventListener("click", (e) => {

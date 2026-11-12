@@ -9,7 +9,9 @@ contextBridge.exposeInMainWorld('luxAPI', {
     devtools: () => ipcRenderer.invoke('window-devtools'),
     isMaximized: () => ipcRenderer.invoke('window-is-maximized'),
     onWindowStateChanged: (callback) => {
-      ipcRenderer.on('window-state-changed', (event, data) => callback(data));
+      const listener = (event, data) => callback(data);
+      ipcRenderer.on('window-state-changed', listener);
+      return () => ipcRenderer.removeListener('window-state-changed', listener);
     }
   },
 
@@ -26,6 +28,22 @@ contextBridge.exposeInMainWorld('luxAPI', {
     load: () => ipcRenderer.invoke('storage-load'),
     save: (data) => ipcRenderer.invoke('storage-save', data),
     wipe: () => ipcRenderer.invoke('storage-wipe')
+  },
+
+  // Durable state (main process JSON + atomik yazma; localStorage'a ek güvence)
+  state: {
+    loadDurable: () => ipcRenderer.invoke('state-load-durable'),
+    saveDurable: (payload) => ipcRenderer.invoke('state-save-durable', payload)
+  },
+
+  // Güvenli anahtar kasası (safeStorage / AES-256-GCM). Anahtarlar renderer'a
+  // yalnızca gerektiğinde (istek anında) döner, diske düz metin yazılmaz.
+  secrets: {
+    set: (id, plainKey) => ipcRenderer.invoke('secrets-set', id, plainKey),
+    get: (id) => ipcRenderer.invoke('secrets-get', id),
+    status: () => ipcRenderer.invoke('secrets-status'),
+    rotate: () => ipcRenderer.invoke('secrets-rotate'),
+    clear: () => ipcRenderer.invoke('secrets-clear')
   },
 
   // Filesystem (supports workspace, Desktop/Masaüstü, ~, project aliases)
@@ -59,17 +77,37 @@ contextBridge.exposeInMainWorld('luxAPI', {
   // Terminal
   terminal: {
     execute: (command, cwd, timeoutMs) => ipcRenderer.invoke('terminal-execute', command, cwd, timeoutMs),
+    /**
+     * Canlı çıktı dinleyicisi. Geriye abonelikten çıkma fonksiyonu döner —
+     * panel her açıldığında yeni dinleyici birikmesini (bellek sızıntısı)
+     * engellemek için mutlaka çağırın:
+     *   const off = luxAPI.terminal.onData(({runId, stream, text}) => {...});
+     *   // panel kapanırken
+     *   off();
+     */
     onData: (callback) => {
-      ipcRenderer.on('terminal-data', (event, data) => callback(data));
+      const listener = (event, payload) => callback(payload);
+      ipcRenderer.on('terminal-data', listener);
+      return () => ipcRenderer.removeListener('terminal-data', listener);
     }
   },
 
-  // Antigravity Neural Voice & Transcription API (Online + Offline Neural + Local D: Suites)
+  // Eklenti bağımlılıkları (plugin_system.js)
+  plugins: {
+    checkDependency: (packageName) => ipcRenderer.invoke('plugins-check-dependency', packageName),
+    installDependency: (packageName) => ipcRenderer.invoke('plugins-install-dependency', packageName)
+  },
+
+  // Lux Neural Voice & Transcription API (Online + Offline Neural + Local D: Suites)
   voice: {
-    transcribe: (audioBase64, language, mode, sttModel) => ipcRenderer.invoke('voice-transcribe', audioBase64, language, mode, sttModel),
-    synthesize: (text, voice, speed, mode, cloneRefPath, options) => ipcRenderer.invoke('voice-synthesize', text, voice, speed, mode, cloneRefPath, options),
+    transcribe: (audioBase64, language, mode, sttModel) =>
+      ipcRenderer.invoke('voice-transcribe', audioBase64, language, mode, sttModel),
+    cancel: (requestId) => ipcRenderer.invoke('voice-cancel', requestId),
+    synthesize: (text, voice, speed, mode, cloneRefPath, options) =>
+      ipcRenderer.invoke('voice-synthesize', text, voice, speed, mode, cloneRefPath, options),
     pickCloneAudio: () => ipcRenderer.invoke('dialog-open-audio'),
     getStatus: () => ipcRenderer.invoke('voice-status'),
+    modelStatus: () => ipcRenderer.invoke('voice-model-status'),
     warmup: (options) => ipcRenderer.invoke('voice-warmup', options)
   }
 });
