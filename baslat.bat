@@ -17,5 +17,10 @@ if not exist "node_modules\electron\package.json" (
   )
 )
 
+if not exist "src\vendor\monaco\vs\loader.js" (
+  echo [Lux AI] Monaco IDE dosyalari hazirlaniyor...
+  call npm run vendor:monaco
+)
+
 call npm start
 if errorlevel 1 pause
