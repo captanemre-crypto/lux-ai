@@ -666,6 +666,7 @@ function recordToolStepUI(assistantMsg, name, args, execRes, opts = {}) {
   assistantMsg.stepLabel = `✓ ${name}: ${execRes.summary || argPreview}`;
   if (!opts.deferRender) {
     renderChat();
+    window.scrollToBottom?.();
   }
 }
 

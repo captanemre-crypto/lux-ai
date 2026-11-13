@@ -106,6 +106,8 @@ window.submitUserMessage = async function (content, options = {}) {
   if (typeof window.renderSidebar === "function") {
     window.renderSidebar();
   }
+  renderChat();
+  window.scrollToBottom?.();
 
   const activeModel = getActiveModel();
   if (!activeModel) {
@@ -352,14 +354,16 @@ window.submitUserMessage = async function (content, options = {}) {
   renderChat();
 
   // 5. Complete Stream-to-Speech Pipeline OR Non-Streamed Voice Playback
+  let speechText = "";
   if (streamSpeech) {
+    speechText = cleanTextForSpeech(fullResponseText);
     try {
       await streamSpeech.complete(fullResponseText);
     } catch (voiceErr) {
       console.warn("Stream speech completion error:", voiceErr);
     }
   } else if (isVoiceTurn && !voiceSettings.isSpeakerMuted && window.luxAPI?.voice?.synthesize) {
-    const speechText = cleanTextForSpeech(fullResponseText);
+    speechText = cleanTextForSpeech(fullResponseText);
     window.__luxLastSpokenText = speechText;
     window.__luxLastSpokenAt = Date.now();
     const speechChunks =
@@ -635,7 +639,11 @@ window.submitUserMessage = async function (content, options = {}) {
 
   const transcriptEl = document.getElementById("voice-hud-transcript");
   if (transcriptEl && window.voiceSessionActive && wasStillGenerating) {
-    transcriptEl.textContent = "Dinliyor. Herhangi bir şey sorun.";
+    const preview = (speechText || fullResponseText || "").trim();
+    const shortPreview = preview.length > 80 ? preview.slice(0, 77) + "..." : preview;
+    transcriptEl.innerHTML = shortPreview
+      ? `<span class="text-foreground/90 font-medium">${escapeHtml(shortPreview)}</span>`
+      : "Dinliyor. Herhangi bir şey sorun.";
     window.setVoiceHudVisualState?.("listening");
   }
 
@@ -659,6 +667,7 @@ window.submitUserMessage = async function (content, options = {}) {
   }
   window.appStore.saveState();
   renderChat();
+  window.scrollToBottom?.();
 };
 
 function submitUserMessage(content, options) {

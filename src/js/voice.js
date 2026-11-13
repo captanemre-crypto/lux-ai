@@ -22,6 +22,81 @@ window.currentVoiceAudio = window.currentVoiceAudio || null;
 window.lastAiAudioEndedAt = window.lastAiAudioEndedAt || 0;
 window.resetVoiceCaptureBuffers = window.resetVoiceCaptureBuffers || null;
 
+// Canlı dikte & konuşma akışı (Chromium interim speech recognition köprüsü)
+let liveRecognizer = null;
+let liveInterimTranscript = "";
+let liveFinalTranscript = "";
+
+function startLiveVoiceRecognizer() {
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) return null;
+  try {
+    const rec = new SpeechRec();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = "tr-TR";
+    rec.maxAlternatives = 1;
+
+    rec.onresult = (event) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        const item = event.results[i];
+        if (item.isFinal) {
+          liveFinalTranscript += (liveFinalTranscript ? " " : "") + item[0].transcript;
+        } else {
+          interim += item[0].transcript;
+        }
+      }
+      const fullText = (liveFinalTranscript ? liveFinalTranscript + " " : "") + interim;
+      liveInterimTranscript = fullText.trim();
+
+      if (liveInterimTranscript) {
+        const transcriptEl = document.getElementById("voice-hud-transcript");
+        if (transcriptEl && voiceSessionActive && isSpeaking) {
+          transcriptEl.innerHTML = `<span class="text-foreground font-medium flex items-center gap-2">
+            <span class="inline-block w-2 h-2 rounded-full bg-primary animate-ping"></span>
+            "${escapeHtml(liveInterimTranscript)}"
+          </span>`;
+        }
+        const composerInput = document.getElementById("composer-textarea");
+        if (composerInput && isSpeaking) {
+          composerInput.value = liveInterimTranscript;
+          composerInput.style.height = "auto";
+          composerInput.style.height = Math.min(composerInput.scrollHeight, 220) + "px";
+        }
+      }
+    };
+
+    rec.onerror = (e) => {
+      window.luxDebug?.("voice_live_recognition_err", e?.error);
+    };
+
+    rec.onend = () => {
+      if (voiceSessionActive && isSpeaking && !isTranscribing) {
+        try {
+          rec.start();
+        } catch (_) {}
+      }
+    };
+
+    try {
+      rec.start();
+    } catch (_) {}
+    return rec;
+  } catch (err) {
+    return null;
+  }
+}
+
+function stopLiveVoiceRecognizer() {
+  if (liveRecognizer) {
+    try {
+      liveRecognizer.abort();
+    } catch (_) {}
+    liveRecognizer = null;
+  }
+}
+
 // Vocal-band DSP analyzer (260Hz-3400Hz cascaded bandpass + waveform shape metrics)
 // Distinguishes sustained human speech from mechanical mic bumps, sub-bass thumps, sharp clicks & cable rubs
 function createVoiceFrameAnalyzer(sampleRate = 16000) {
@@ -1143,6 +1218,10 @@ async function startAudioCapture() {
           // Prepend pre-roll buffer so initial Turkish consonants & soft words aren't clipped
           recordedSamples = [...preRollBuffer.map((chunk) => new Float32Array(chunk))];
           preRollBuffer.length = 0;
+          liveFinalTranscript = "";
+          liveInterimTranscript = "";
+          stopLiveVoiceRecognizer();
+          liveRecognizer = startLiveVoiceRecognizer();
           const transcriptEl = document.getElementById("voice-hud-transcript");
           if (transcriptEl) {
             transcriptEl.innerHTML = `<span class="text-primary font-medium flex items-center gap-2">
@@ -1242,6 +1321,9 @@ async function startAudioCapture() {
 }
 
 function stopAudioCapture() {
+  stopLiveVoiceRecognizer();
+  liveInterimTranscript = "";
+  liveFinalTranscript = "";
   if (silenceTimer) {
     clearTimeout(silenceTimer);
     silenceTimer = null;
@@ -1303,6 +1385,8 @@ async function processRecordedAudio() {
     return;
   }
   const candidate = bargeInCandidate;
+  const capturedLiveText = (liveInterimTranscript || "").trim();
+  stopLiveVoiceRecognizer();
   isSpeaking = false;
   isTranscribing = true;
   if (silenceTimer) {
@@ -1364,6 +1448,9 @@ async function processRecordedAudio() {
       if (alnumLen >= 2) {
         recognizedText = rawText;
         engineLabel = res.engine || "";
+      } else if (capturedLiveText && capturedLiveText.length >= 2) {
+        recognizedText = capturedLiveText;
+        engineLabel = "chromium-live";
       }
       window.__luxPerfLastTurn = {
         vadEndedAt,
@@ -1373,6 +1460,10 @@ async function processRecordedAudio() {
     }
   } catch (err) {
     console.warn("Transcription check:", err.message);
+    if (!recognizedText && capturedLiveText && capturedLiveText.length >= 2) {
+      recognizedText = capturedLiveText;
+      engineLabel = "chromium-live";
+    }
   } finally {
     // Release STT lock BEFORE generating/speaking so voice barge-in stays responsive!
     isTranscribing = false;
@@ -2088,10 +2179,18 @@ let dictationStream = null;
 let dictationProcessor = null;
 let dictationChunks = [];
 let dictationAutoStopTimer = null;
+let composerLiveRec = null;
+let composerInitialText = "";
 
 async function stopAndTranscribeComposerDictation() {
   if (!composerDictationActive) return;
   composerDictationActive = false;
+  if (composerLiveRec) {
+    try {
+      composerLiveRec.abort();
+    } catch (_) {}
+    composerLiveRec = null;
+  }
   if (dictationAutoStopTimer) {
     clearTimeout(dictationAutoStopTimer);
     dictationAutoStopTimer = null;
@@ -2148,8 +2247,7 @@ async function stopAndTranscribeComposerDictation() {
     if (res?.success && res.text && res.text.trim()) {
       const textarea = document.getElementById("composer-textarea");
       if (textarea) {
-        const prefix = textarea.value && !textarea.value.endsWith(" ") ? " " : "";
-        textarea.value += prefix + res.text.trim();
+        textarea.value = (composerInitialText ? composerInitialText + " " : "") + res.text.trim();
         textarea.style.height = "auto";
         textarea.style.height = Math.min(textarea.scrollHeight, 220) + "px";
         textarea.focus();
@@ -2194,6 +2292,33 @@ window.toggleComposerDictation = async function () {
 
     dictationChunks = [];
     composerDictationActive = true;
+    composerInitialText = (document.getElementById("composer-textarea")?.value || "").trim();
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRec) {
+      try {
+        composerLiveRec = new SpeechRec();
+        composerLiveRec.continuous = true;
+        composerLiveRec.interimResults = true;
+        composerLiveRec.lang = "tr-TR";
+        let localAccum = "";
+        composerLiveRec.onresult = (ev) => {
+          let interim = "";
+          for (let i = ev.resultIndex; i < ev.results.length; ++i) {
+            if (ev.results[i].isFinal) localAccum += (localAccum ? " " : "") + ev.results[i][0].transcript;
+            else interim += ev.results[i][0].transcript;
+          }
+          const spoken = (localAccum ? localAccum + " " : "") + interim;
+          const textarea = document.getElementById("composer-textarea");
+          if (textarea && spoken.trim()) {
+            textarea.value = (composerInitialText ? composerInitialText + " " : "") + spoken.trim();
+            textarea.style.height = "auto";
+            textarea.style.height = Math.min(textarea.scrollHeight, 220) + "px";
+          }
+        };
+        composerLiveRec.onerror = () => {};
+        composerLiveRec.start();
+      } catch (_) {}
+    }
     warmupVoiceEngine({
       sttModel: settings.sttEngine || "auto",
       voice: settings.voice || "Fola",
