@@ -1330,7 +1330,7 @@ ipcMain.handle(
         const tempMp3 = isXtts ? path.join(app.getPath('temp'), `lux_tts_${Date.now()}_${reqId}.mp3`) : null;
         const derivedWav = tempMp3 ? tempMp3.replace(/\.mp3$/i, '.wav') : null;
         const derivedOgg = tempMp3 ? tempMp3.replace(/\.mp3$/i, '.ogg') : null;
-        const timeoutMs = isXtts ? 200000 : 60000;
+        const timeoutMs = isXtts ? 200000 : isOpenRouterVoice ? 20000 : 35000;
 
         let resolvedApiKey = String(
           options?.openrouterApiKey || options?.apiKey || process.env.OPENROUTER_API_KEY || ''

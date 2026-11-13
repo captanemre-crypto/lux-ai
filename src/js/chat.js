@@ -329,18 +329,25 @@ window.submitUserMessage = async function (content, options = {}) {
     return;
   }
 
-  // Ensure live streamed markdown reflects normalized final text immediately before/during speech
-  if (assistantMsg.__didStreamTokens) {
-    assistantMsg.content = fullResponseText;
-    scheduleStreamingRender(assistantMsg);
+  // Yanıt tamamlandığında ekranı bekletmeden anında güncelle ve render et;
+  // sesli sentez / oynatma (TTS) sürerken ekran "düşünüyor..." olarak kilitli kalmasın.
+  assistantMsg.content = fullResponseText;
+  assistantMsg.isStreaming = false;
+  if (!assistantMsg.__apiError) {
+    if (
+      !assistantMsg.stepLabel?.includes("durduruldu") &&
+      !assistantMsg.stepLabel?.includes("söz kesti") &&
+      !assistantMsg.stepLabel?.includes("Auto-Free")
+    ) {
+      assistantMsg.stepLabel = `${assistantMsg.modelName || activeModel.name} yanıtı tamamladı`;
+    }
+  } else {
+    assistantMsg.stepLabel = `⚠ ${activeModel.name} hatası`;
   }
+  renderChat();
 
   // 5. Complete Stream-to-Speech Pipeline OR Non-Streamed Voice Playback
   if (streamSpeech) {
-    if (!assistantMsg.__didStreamTokens) {
-      assistantMsg.content = fullResponseText;
-      scheduleStreamingRender(assistantMsg);
-    }
     try {
       await streamSpeech.complete(fullResponseText);
     } catch (voiceErr) {
