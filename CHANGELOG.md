@@ -6,6 +6,10 @@ All notable changes are documented here. Format: [Keep a Changelog](https://keep
 
 (Henüz yayınlanmamış değişiklik yok.)
 
+## [1.5.0] — 2026-11-12
+
+(Henüz yayınlanmamış değişiklik yok.)
+
 ## [Unreleased]
 
 ### Added

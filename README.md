@@ -4,7 +4,7 @@ Electron tabanlı masaüstü yapay zeka ajanı ve gömülü IDE. Koyu tema (`#07
 çift çerçeveli yüzen mesaj kutusu, araç adımları, gömülü terminal, Monaco tabanlı
 editör ve çok motorlu ses (STT/TTS) altyapısı içerir.
 
-**Sürüm:** 1.4.1 · **Node:** ≥ 22.12 · **Python (ses için):** 3.12 önerilir
+**Sürüm:** 1.5.0 · **Node:** ≥ 22.12 · **Python (ses için):** 3.12 önerilir
 
 ---
 
@@ -234,6 +234,17 @@ window.luxPlugins.register({
 **Güvenlik**
 
 - `npm audit` → **0 vulnerability** (öncesi: 1 critical dompurify vía monaco-editor, 6 moderate minimatch vía electron-builder). Çözüm `overrides` (dompurify ^3.4.17, minimatch ^11.0.8); `npm audit fix --force` ile gelen downgrade bilinçli olarak KULLANILMADI.
+
+---
+
+## 🧾 Sürüm Notları — v1.5.0 (öneriler ve eksikler turu — 2026-11-12)
+
+- **Uygulama içi otomatik güncelleme**: `electron-updater` ile üretim paketinde açılışta sessiz denetim + sağ-alt bildirim bandı ("Yeniden Başlat ve Yükle"); `Ayarlar → Uygulama → Güncelleme → Güncellemeleri Denetle`; `release.yml` `latest*.yml` manifestlerini artık Release'e ekliyor.
+- **Eklenti (plugin) sandbox'ı**: plugin HTML'i `sandbox="allow-scripts"` iframe'inde — üst pencereye `luxAPI`'ye erişemez.
+- **Veri & Yedek**: sohbetler/ayarlar/harita `.luxbackup` dosyasına (opsiyonel parola → AES-256-GCM); anahtarlar DAHİL DEĞİL; içe aktarmada otomatik `.bak`.
+- **Günlükler**: `Ayarlar → Uygulama → Günlükler` — canlı log, Kopyala/Klasörü Aç/Temizle.
+- **Görsel regresyon kapısı**: `npm run test:visual` (5 taban karesi, piksel karşılaştırma).
+- **i18n kapsam testi** + **ekran görüntüleri** README'de; `chat.js` ayrıştırması başladı (`agent_workspace.js`).
 
 ---
 

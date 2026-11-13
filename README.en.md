@@ -23,6 +23,15 @@ Lux AI is an agentic desktop assistant (Electron) that can actually act on your 
 - **Model freedom**: Google Gemini, OpenAI-compatible (incl. local LM Studio / Ollama / 9Router), Anthropic, OpenRouter — with automatic fallback to a local model when cloud is unreachable (never in voice turns, never on 401/403/429).
 - **Hardened**: SSRF guard for agent network access, PowerShell injection sanitization, IPC parity tests, encrypted vault, single-instance lock, fs-destructive-target shield, zero npm audit vulnerabilities, strict Content-Security-Policy (`script-src 'self'`) with all inline handlers moved to delegated click actions, app-sender guard on the terminal IPC, crash/rejection logging in the main process.
 
+## What's new in v1.5.0
+
+- **In-app auto-update**: `electron-updater` checks the GitHub Releases feed at startup (production builds only) and shows a small update banner; manual check via Settings → Application → Update; `release.yml` now attaches `latest*.yml` updater manifests to the release.
+- **Plugin sandbox**: plugin HTML renders inside `sandbox="allow-scripts"` (no `allow-same-origin`) — cannot reach the host window or `luxAPI`.
+- **Data & Backup**: chats/settings/workspace map export to a `.luxbackup` file (optional password → AES-256-GCM); API keys are never included; import writes an automatic `.bak` first.
+- **Live log viewer**: Settings → Application → Logs — last 64 KB, copy/open folder/clear.
+- **Visual regression gate**: `npm run test:visual` (5 baseline captures, pixelmatch-vs-baseline).
+- **i18n key coverage test**, screenshots in README, `chat.js` modularization started (`agent_workspace.js`).
+
 ## What's new in v1.4.1
 
 - **Content-Security-Policy** embedded in the page (`script-src 'self'`, `object-src 'none'`, `base-uri 'none'`, `form-action 'none'`; images/frames allowed for agent web results + Aux Browser).
