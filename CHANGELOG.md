@@ -19,7 +19,7 @@ All notable changes are documented here. Format: [Keep a Changelog](https://keep
 
 ### Fixed
 
-- **Electron deprecation uyarıları**: test betiklerinde (`e2e_runtime`, `i18n_runtime_probe`, `settings_audit_e2e`, `smoke_harness`, `visual_regression`) `console-message` imzası yeni `Event<WebContentsConsoleMessageEventParams>` biçimine taşındı (`level >= 3` → `level === 'error'`); `safeStorage.isEncryptionAvailable()` (deprecated sync) `isAsyncEncryptionAvailable()`'a taşındı — `src/main/secrets_vault.js` async memoize edildi (secrets-set/get/status/rotate) ve `voice-synthesize` kasa anahtarını `new Promise` executor'ı senkron olduğundan handler girişinde önceden çözüyor.
+- **Electron deprecation uyarıları**: test betiklerinde (`e2e_runtime`, `i18n_runtime_probe`, `settings_audit_e2e`, `smoke_harness`, `visual_regression`) `console-message` imzası yeni `Event<WebContentsConsoleMessageEventParams>` biçimine taşındı (`level >= 3` → `level === 'error'`); `safeStorage` tamamen async API'ye taşındı — `src/main/secrets_vault.js` `isAsyncEncryptionAvailable()` (memoize) + `encryptStringAsync` / `decryptStringAsync` kullanıyor (Electron 45 `decryptStringAsync` `{ result, shouldReEncrypt }` döndürür); kasa yazma yolu yedek garantili (async encrypt patlarsa AES-256-GCM'ye düşer). `voice-synthesize` kasa anahtarını `new Promise` executor'ı senkron olduğundan handler girişinde önceden çözüyor. E2E kanıt: `scheme: safeStorage`, roundTrip true, rotate true.
 - Bilinmeyen ayarlar sekmesi yer tutucusu (“Bu bölümün ayarları ayrı olarak tasarlanacaktır”) nötr bir mesaja çevrildi (“Bu bölüm şu anda kullanılamıyor”).
 - i18n exact haritasına “Görev yok” / “Çalışan görev” eklendi (`residualTurkish` boş kalır).
 

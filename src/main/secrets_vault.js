@@ -100,7 +100,14 @@ function createSecretsVault({ userDataDir, safeStorage, ipcMain }) {
     const text = String(plain || '');
     if (!text) return '';
     if (await encryptionAvailable()) {
-      return { scheme: 'safeStorage', data: safeStorage.encryptString(text).toString('base64') };
+      try {
+        const enc = await safeStorage.encryptStringAsync(text);
+        return { scheme: 'safeStorage', data: Buffer.from(enc).toString('base64') };
+      } catch (err) {
+        // Sondaki güvence: async API çalışsa bile yaz erişilebilirliği değişebilir
+        // (ör. geçici dbus hatası) — kasayı kırmadan AES-256-GCM'ye düş.
+        logger.debug('safeStorage async encrypt başarısız, AES-256-GCM yedeğine düşüldü', undefined, 'secrets');
+      }
     }
     const iv = crypto.randomBytes(12);
     const cipher = crypto.createCipheriv('aes-256-gcm', getSecretsFallbackKey(), iv);
@@ -116,7 +123,13 @@ function createSecretsVault({ userDataDir, safeStorage, ipcMain }) {
     try {
       if (record.scheme === 'safeStorage') {
         if (!(await encryptionAvailable())) return '';
-        return safeStorage.decryptString(Buffer.from(record.data, 'base64'));
+        const res = await safeStorage.decryptStringAsync(Buffer.from(record.data, 'base64'));
+        // Electron 45: decryptStringAsync { result, shouldReEncrypt } döndürür
+        const plain = res && typeof res === 'object' ? res.result : res;
+        if (res && typeof res === 'object' && res.shouldReEncrypt) {
+          logger.debug('kasa kaydının yeniden şifrelenmesi öneriliyor (shouldReEncrypt)', undefined, 'secrets');
+        }
+        return plain || '';
       }
       if (record.scheme === 'aes-256-gcm') {
         const [ivB64, dataB64, tagB64] = String(record.data).split('.');
