@@ -23,6 +23,12 @@ Lux AI is an agentic desktop assistant (Electron) that can actually act on your 
 - **Model freedom**: Google Gemini, OpenAI-compatible (incl. local LM Studio / Ollama / 9Router), Anthropic, OpenRouter — with automatic fallback to a local model when cloud is unreachable (never in voice turns, never on 401/403/429).
 - **Hardened**: SSRF guard for agent network access, PowerShell injection sanitization, IPC parity tests, encrypted vault, single-instance lock, fs-destructive-target shield, zero npm audit vulnerabilities, strict Content-Security-Policy (`script-src 'self'`) with all inline handlers moved to delegated click actions, app-sender guard on the terminal IPC, crash/rejection logging in the main process.
 
+## What's new in v1.6.0
+
+- **Settings audit** (`npm run test:settings`): all 12 settings tabs verified end-to-end with 76 checks — toggle→store round-trips, permission keys, accent/slider, automation add/toggle/delete, `lux_ai_data.json`/localStorage/reload persistence, vault status IPC, model cards. The audit **caught the dead Notifications setting** and it was fixed (main-process permission whitelist now includes `notifications`).
+- **i18n TR/EN completed**: 0 Turkish remnants in Settings under the EN locale (runtime probe); locale-aware system prompts (persona, tone rules, error cards, offline reply engine, tool selection) — English users no longer get Turkish instructions or replies.
+- **`chat.js` split into modules** (717 lines; render/tools/voice/shared) and **main-process silent catch triage** (~40 sites now log via `logger.debug`, gated by `LUX_DEBUG=1`).
+
 ## What's new in v1.5.0
 
 - **In-app auto-update**: `electron-updater` checks the GitHub Releases feed at startup (production builds only) and shows a small update banner; manual check via Settings → Application → Update; `release.yml` now attaches `latest*.yml` updater manifests to the release.

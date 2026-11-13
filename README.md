@@ -4,7 +4,7 @@ Electron tabanlı masaüstü yapay zeka ajanı ve gömülü IDE. Koyu tema (`#07
 çift çerçeveli yüzen mesaj kutusu, araç adımları, gömülü terminal, Monaco tabanlı
 editör ve çok motorlu ses (STT/TTS) altyapısı içerir.
 
-**Sürüm:** 1.5.0 · **Node:** ≥ 22.12 · **Python (ses için):** 3.12 önerilir
+**Sürüm:** 1.6.0 · **Node:** ≥ 22.12 · **Python (ses için):** 3.12 önerilir
 
 ---
 
@@ -236,6 +236,12 @@ window.luxPlugins.register({
 - `npm audit` → **0 vulnerability** (öncesi: 1 critical dompurify vía monaco-editor, 6 moderate minimatch vía electron-builder). Çözüm `overrides` (dompurify ^3.4.17, minimatch ^11.0.8); `npm audit fix --force` ile gelen downgrade bilinçli olarak KULLANILMADI.
 
 ---
+
+## 🧾 Sürüm Notları — v1.6.0 (denetim turu + locale-aware — 2026-11-13)
+
+- **Ayarlar denetimi** (`npm run test:settings`): 12 sekmenin tamamı 76 kontrolle gerçek akışta doğrulanır — toggle→store roundtrip, izin anahtarları, accent/slider, otomasyon ekle-kapa-sil, `lux_ai_data.json`/localStorage/reload kalıcılığı, vault status IPC, modeller kartları. Denetim **Bildirimler ayarının ölü olduğunu yakaladı** ve düzeltti (beyaz liste artık `notifications` içeriyor).
+- **i18n TR/EN tamamlandı**: Ayarlar'da EN yerelinde 0 Türkçe artık (runtime probe, `npm run test:i18n:runtime`); locale-aware sistem promptları (persona, stil uyarıları, hata kartları, offline doğal yanıt motoru, araç seçimi) — EN kullanıcı artık Türkçe yanıt görmüyor.
+- **`chat.js` modüler ayrıştırma** (717 satıra indi; render/tools/voice/shared ayrıldı) ve **ana süreç sessiz catch triajı** (~40 site, `LUX_DEBUG=1` kapılı `logger.debug` ile).
 
 ## 🧾 Sürüm Notları — v1.5.0 (öneriler ve eksikler turu — 2026-11-12)
 

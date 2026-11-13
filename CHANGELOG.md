@@ -6,11 +6,30 @@ All notable changes are documented here. Format: [Keep a Changelog](https://keep
 
 (Henüz yayınlanmamış değişiklik yok.)
 
+## [1.6.0] — 2026-11-13
+
+### Added
+
+- **Ayarlar denetimi (`npm run test:settings`)**: `scripts/settings_audit_e2e.js` — 12 çekirdek sekmenin gerçek render'u doğrulanır; tüm toggle'lar (Auto-Heal, donanım ivmesi, DevTools, bildirimler), izin anahtarları (pc_control dahil), accent swatch'lar ve ses slider'ının store'a yansıması roundtrip ile test edilir; "Tümünü Etkinleştir / Varsayılana Sıfırla"; otomasyon ekle → aç/kapa → sil döngüsü; `lux_ai_data.json` (atomik yazma, 400 ms debounce) + localStorage + reload sonrası kalıcılık; vault status IPC; modeller kartı render'ı; kritik buton varlığı. **76/76 kontrol geçiyor.**
+- **i18n TR/EN — çalışma zamanı artık taraması**: Ayarların tüm sekmeleri EN yerelinde gezilip 2500 ms settle sonrası **0 Türkçe artık** olduğu kanıtlandı (`scripts/i18n_runtime_probe.js`; `npm run test:i18n:runtime`). Harita exact 577 / substr 161 (parts 1–9).
+- **Locale-aware sistem promptları**: EN yerelinde model persona'sı, stil uyarıları, hafıza/çalışma-alanı bağlam satırları, araç-seçimi ve token-bütçesi regex'leri EN varyantlara kavuştu; model istemcisi hata kartları, adım etiketleri, post-tool yönlendirmeleri, tone-calibration çifti ve offline doğal-yanıt motoru EN'de doğal İngilizce üretiyor; başlangıç sitesi iskelesi (prompt_intents) EN şablon basıyor. EN kullanıcı artık Türkçe sistem talimatı/yanıt görmüyor.
+
+### Changed
+
+- **`chat.js` modüler ayrıştırma**: 2359 → 717 satır; `chat_shared.js` (35), `chat_render.js` (714), `chat_tools.js` (1252), `chat_voice.js` (374). Davranış bire bir korundu; e2e 21/21.
+- **Ana süreç sessiz `catch {}` triajı**: ~40 boş yakalama bloğuna `logger.debug` (LUX_DEBUG=1 kapılı) eklendi; `src/logger.js`'e debug seviyesi eklendi; akış ve dönüş değerleri değişmedi.
+- `selectToolsForPrompt` İngilizce anahtar kelimeleri de tanıyor (EN istemlerde yerel CPU'da araçsız kalma hatası giderildi); `shouldAttachToolsForPrompt` EN küçük-sohbet istisnası aldı.
+
+### Fixed
+
+- **Bildirimler ayarı ölüydü**: ana süreç izin beyaz listesi `notifications` iznini reddediyordu → renderer `new Notification()` hiç izne kavuşamıyor, `Notification.permission` kalıcı `denied` kalıyor ve "Bildirimler" anahtarı sessizce hiçbir şey yapmıyordu. Beyaz listeye `notifications` eklendi; denetim artık `Notification.permission !== 'denied'` olduğunu doğruluyor.
+
+### Verified
+
+- `npm run verify` **6/6 yeşil** (test, lint, prettier, CSS drift, smoke, e2e). Görsel regresyon TR baseline'larında yeşil; i18n runtime probe 0 artık; settings audit 76/76.
+- IPC paritesi (preload ↔ main): 54/54 invoke kanalı handler'lı; ayarlar `getElementById` referansları statik taramada temiz.
+
 ## [1.5.0] — 2026-11-12
-
-(Henüz yayınlanmamış değişiklik yok.)
-
-## [Unreleased]
 
 ### Added
 
