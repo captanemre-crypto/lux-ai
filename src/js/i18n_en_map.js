@@ -3,6 +3,8 @@
 window.LUX_TR_TO_EN = {
   exact: {
     "(ayrıntı yok)": "(no details)",
+    "Görev yok": "No tasks",
+    "Çalışan görev": "Running task",
     "(boş)": "(empty)",
     "** modeline yönlendirildi.": "** routed to model.",
     "-- Seçin --": "-- Choose --",
