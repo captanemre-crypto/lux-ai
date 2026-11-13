@@ -343,6 +343,11 @@ window.submitUserMessage = async function (content, options = {}) {
     }
   } else {
     assistantMsg.stepLabel = `⚠ ${activeModel.name} hatası`;
+    window.setVoiceHudVisualState?.("listening");
+    const transcriptEl = document.getElementById("voice-hud-transcript");
+    if (transcriptEl && window.voiceSessionActive) {
+      transcriptEl.innerHTML = `<span class="text-rose-400 font-medium">${escapeHtml(assistantMsg.stepLabel)}</span>`;
+    }
   }
   renderChat();
 
@@ -631,6 +636,7 @@ window.submitUserMessage = async function (content, options = {}) {
   const transcriptEl = document.getElementById("voice-hud-transcript");
   if (transcriptEl && window.voiceSessionActive && wasStillGenerating) {
     transcriptEl.textContent = "Dinliyor. Herhangi bir şey sorun.";
+    window.setVoiceHudVisualState?.("listening");
   }
 
   console.info("[LUX_PERF]", {

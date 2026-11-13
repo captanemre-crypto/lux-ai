@@ -115,7 +115,11 @@ function classifyModelApiError(err, activeModel) {
   const isPermissionBlocked = /izni\s*\([^)]+\)\s*kapatılmış|permission\s*\([^)]+\)\s*(is\s*)?(disabled|blocked|denied)/i.test(msg);
   const isDailyOrCreditQuota = /free-models-per-day|daily\s*limit|credits|insufficient|quota.*exhausted/i.test(msg);
   const isRateLimit = status === 429 || /rate.?limit/i.test(msg);
-  const isAuthOrBilling = status === 401 || status === 402 || status === 403 || /invalid.*api.?key|unauthorized|authentication/i.test(msg);
+  const isAuthOrBilling =
+    status === 401 ||
+    status === 402 ||
+    status === 403 ||
+    /invalid.*api.?key|api.?key.*(?:not\s+valid|invalid)|unauthorized|authentication/i.test(msg);
   const isRetiredOrMissingModel = status === 404 || /no endpoints found|not found|does not exist|deprecated|shut down|retired/i.test(msg);
   const isTimeout = /zaman aşımı|timeout/i.test(msg);
 
