@@ -270,9 +270,18 @@ function createWindow() {
   mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
 
   // İzinler artık BEYAZ LİSTE ile veriliyor: yalnızca sesli mod için gereken
-  // mikrofon/kamera (media), tam ekran ve pano okuma. Geri kalan her şey (USB,
-  // HID, seri port, geolocation, bildirim, MIDI, açık harici protokol, ...) RED.
-  const ALLOWED_PERMISSIONS = new Set(['media', 'audioCapture', 'videoCapture', 'fullscreen', 'clipboard-read']);
+  // mikrofon/kamera (media), tam ekran, pano okuma ve masaüstü bildirimleri.
+  // 'notifications' olmadan store.js'deki new Notification(...) asla izni
+  // alamıyor ve "Bildirimler" ayarı sessizce ölü kalıyordu (2026-11-13 denetimi).
+  // Geri kalan her şey (USB, HID, seri port, geolocation, MIDI, ...) RED.
+  const ALLOWED_PERMISSIONS = new Set([
+    'media',
+    'audioCapture',
+    'videoCapture',
+    'fullscreen',
+    'clipboard-read',
+    'notifications'
+  ]);
   session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
     const granted = ALLOWED_PERMISSIONS.has(permission);
     if (!granted) console.warn(`[permission] reddedildi: ${permission}`);
