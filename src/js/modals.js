@@ -2878,80 +2878,35 @@ function attachModelViewEvents(container) {
 
   // Sunucudan Canlı Modelleri Çek Butonu
   btnFetchLive?.addEventListener("click", async () => {
-    let ep = endpointInput.value.trim() || "";
-    if (!ep) {
-      if (providerSelect.value.includes("Yerel")) ep = "http://127.0.0.1:11434/v1";
-      else ep = "http://127.0.0.1:20128/v1";
-    }
-    const perms = window.appStore?.getPermissions?.() || {};
-    const isLocalHost = /\/\/(127\.0\.0\.1|localhost)(:|\/|$)/i.test(ep);
-    if (isLocalHost && perms.network_localhost === false) {
-      btnFetchLive.innerHTML = `<span class="text-rose-400">Yerel ağ izni kapalı</span>`;
-      setTimeout(() => {
-        btnFetchLive.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg><span>⚡ Modelleri Getir</span>`;
-      }, 2500);
-      return;
-    }
-    if (!isLocalHost && perms.network_internet === false) {
-      btnFetchLive.innerHTML = `<span class="text-rose-400">İnternet izni kapalı</span>`;
-      setTimeout(() => {
-        btnFetchLive.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg><span>⚡ Modelleri Getir</span>`;
-      }, 2500);
-      return;
-    }
-    const base = ep.replace(/\/+$/, "");
-    const url = base.endsWith("/models") ? base : `${base}/models`;
+    const provVal = providerSelect?.value || "";
+    let ep = endpointInput?.value?.trim() || "";
+    const rawKey = apiKeyInput?.value?.trim() || "";
     btnFetchLive.innerHTML = "<span>⏳ Çekiliyor...</span>";
     try {
-      const headers = {};
-      const isOpenRouterReq = providerSelect.value === "OpenRouter" || /openrouter\.ai/i.test(ep);
-      const effKey = apiKeyInput.value.trim() || (isOpenRouterReq ? window.appStore?.getOpenRouterApiKey?.() || "" : "");
-      if (effKey) headers["Authorization"] = `Bearer ${effKey}`;
-      if (isOpenRouterReq) {
-        headers["X-Title"] = "Lux AI";
-      }
-      const res = await fetch(url, {
-        headers,
-        signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined
-      });
-      const data = await res.json();
-      if (data?.data && Array.isArray(data.data)) {
-        let list = data.data.slice();
-        let freeCount = 0;
-        if (isOpenRouterReq) {
-          const freeSet = new Set(list.filter((m) => window.isOpenRouterFreeChatModel?.(m)).map((m) => m.id));
-          freeCount = freeSet.size;
-          list = list
-            .filter((m) => !/^(?:google\/lyria-|fish-audio\/|heygen\/)/i.test(m.id || ""))
-            .sort((a, b) => {
-              if (a.id === "openrouter/free") return -1;
-              if (b.id === "openrouter/free") return 1;
-              const aFree = freeSet.has(a.id) ? 0 : 1;
-              const bFree = freeSet.has(b.id) ? 0 : 1;
-              return aFree - bFree;
-            });
-          presetSelect.innerHTML = `
-            <option value="">-- Canlı OpenRouter (${freeCount} Ücretsiz · ${list.length} Toplam) --</option>
-            ${list.map((m) => `<option value="${escapeHtml(m.id)}">${freeSet.has(m.id) ? "★ [Ücretsiz] " : ""}${escapeHtml(m.id)}</option>`).join("")}
-          `;
-          btnFetchLive.innerHTML = `<span class="text-emerald-400">✓ ${freeCount} Ücretsiz / ${list.length}</span>`;
-        } else {
-          presetSelect.innerHTML = `
-            <option value="">-- Canlı Modeller (${list.length} adet) --</option>
-            ${list.map((m) => `<option value="${escapeHtml(m.id)}">${escapeHtml(m.id)}</option>`).join("")}
-          `;
-          btnFetchLive.innerHTML = `<span class="text-emerald-400">✓ ${list.length} Model Geldi</span>`;
-        }
+      const list = await window.fetchLiveModelsForProvider(provVal, rawKey, ep);
+      if (list && list.length > 0) {
+        presetSelect.innerHTML = `
+          <option value="" class="bg-[#16161b] text-[#f3f4f6]" style="background-color: #16161b; color: #f3f4f6;">-- Canlı Modeller (${list.length} adet bulundu) --</option>
+          ${list
+            .map(
+              (m) => `
+            <option value="${escapeHtml(m.id)}" class="bg-[#16161b] text-[#f3f4f6]" style="background-color: #16161b; color: #f3f4f6;">${escapeHtml(m.name || m.id)} (${escapeHtml(m.id)}) ${m.badge ? `[${escapeHtml(m.badge)}]` : ""}</option>
+          `
+            )
+            .join("")}
+          <option value="__custom__" class="bg-[#16161b] text-primary" style="background-color: #16161b; color: #3B82F6;">+ Özel Model ID Gir</option>
+        `;
         presetSelect._customSelectRefresh?.();
+        btnFetchLive.innerHTML = `<span class="text-emerald-400">✓ ${list.length} Model Geldi</span>`;
       } else {
-        btnFetchLive.innerHTML = `<span class="text-rose-400">Model listesi alınamadı</span>`;
+        btnFetchLive.innerHTML = `<span class="text-rose-400">Model bulunamadı</span>`;
       }
     } catch (e) {
-      btnFetchLive.innerHTML = `<span class="text-rose-400">Erişim hatası</span>`;
+      btnFetchLive.innerHTML = `<span class="text-rose-400" title="${escapeHtml(e.message)}">✗ ${escapeHtml(e.message?.slice(0, 20) || "Hata")}</span>`;
     }
     setTimeout(() => {
       btnFetchLive.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg><span>⚡ Modelleri Getir</span>`;
-    }, 2500);
+    }, 3000);
   });
 
   // Provider changed -> Auto-suggest endpoint & model id if user hasn't typed custom
@@ -3050,9 +3005,9 @@ function attachModelViewEvents(container) {
         const timeoutSig = AbortSignal.timeout ? AbortSignal.timeout(isLocal ? 12000 : 12000) : undefined;
         let res;
         if (providerSelect.value === "Google Gemini") {
-          let mId = modelIdInput.value.trim() || "gemini-3.5-flash-lite";
-          if (mId === "gemini/auto-router") mId = "gemini-2.5-flash";
-          res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mId}:generateContent?key=${rawKey}`, {
+          let mId = modelIdInput.value.trim() || "gemini-2.0-flash";
+          if (mId === "gemini/auto-router" || mId === "gemini-3.5-flash-lite") mId = "gemini-2.0-flash";
+          res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mId}:generateContent?key=${encodeURIComponent(rawKey)}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ contents: [{ parts: [{ text: "hi" }] }] }),
@@ -3450,97 +3405,57 @@ function openCardModelSelectionModal(model, parentContainer) {
     window.renderApp();
   };
 
-  const fetchLiveModels = async () => {
+  const fetchLiveModels = async (silent = false) => {
     const fetchBtn = modalEl.querySelector("#btn-card-picker-fetch-live");
-    if (fetchBtn) fetchBtn.innerHTML = "<span>⏳ Çekiliyor...</span>";
+    if (fetchBtn && !silent) fetchBtn.innerHTML = "<span>⏳ Çekiliyor...</span>";
 
-    let endpoint = model.endpoint || "";
-    if (!endpoint) {
-      if (model.name.includes("9Router")) endpoint = "http://127.0.0.1:20128/v1";
-      else if (model.name.includes("Ollama")) endpoint = "http://127.0.0.1:11434/v1";
-    }
-
-    const perms = window.appStore?.getPermissions?.() || {};
-    const isLocalHost = /\/\/(127\.0\.0\.1|localhost)(:|\/|$)/i.test(endpoint);
-    if (endpoint && ((isLocalHost && perms.network_localhost === false) || (!isLocalHost && perms.network_internet === false))) {
-      if (fetchBtn) fetchBtn.innerHTML = `<span class="text-rose-400">İzin Kapalı</span>`;
-      return;
-    }
-
-    if (endpoint) {
-      const base = endpoint.replace(/\/+$/, "");
-      const url = base.endsWith("/models") ? base : `${base}/models`;
-      try {
-        const isOr = model.provider === "OpenRouter" || /openrouter\.ai/i.test(endpoint);
-        const effKey = (model.apiKey || "").trim() || (isOr ? window.appStore?.getOpenRouterApiKey?.() || "" : "");
-        const headers = {};
-        if (effKey) headers["Authorization"] = `Bearer ${effKey}`;
-        if (isOr) headers["X-Title"] = "Lux AI";
-        const res = await fetch(url, {
-          headers,
-          signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined
-        });
-        const data = await res.json();
-        if (data?.data && Array.isArray(data.data)) {
-          let list = data.data.slice();
-          if (isOr) {
-            const freeSet = new Set(list.filter((m) => window.isOpenRouterFreeChatModel?.(m)).map((m) => m.id));
-            list = list
-              .filter((m) => !/^(?:google\/lyria-|fish-audio\/|heygen\/)/i.test(m.id || ""))
-              .sort((a, b) => {
-                if (a.id === "openrouter/free") return -1;
-                if (b.id === "openrouter/free") return 1;
-                return (freeSet.has(a.id) ? 0 : 1) - (freeSet.has(b.id) ? 0 : 1);
-              });
-            list.forEach((m) => {
-              if (!submodels.some((sm) => sm.id === m.id)) {
-                const isFree = freeSet.has(m.id);
-                const ctxK = m.context_length ? `${Math.round(m.context_length / 1000)}K` : "";
-                submodels.push({
-                  id: m.id,
-                  name: m.name || m.id,
-                  tag: isFree ? `${ctxK ? ctxK + " · " : ""}Canlı OpenRouter ($0)` : `${ctxK ? ctxK + " · " : ""}OpenRouter Ücretli`,
-                  badge: isFree ? "Ücretsiz" : "OpenRouter"
-                });
-              }
-            });
-          } else {
-            list.forEach((m) => {
-              if (!submodels.some((sm) => sm.id === m.id)) {
-                submodels.push({
-                  id: m.id,
-                  name: m.id,
-                  tag: "Sunucu Modeli",
-                  badge: m.id.includes("free") || m.id.startsWith("oc/") ? "Ücretsiz" : "Canlı"
-                });
-              }
-            });
-          }
-          modalEl.innerHTML = renderModalContent(modalEl.querySelector("#card-picker-search-input")?.value || "");
-          attachPickerEvents();
+    try {
+      const list = await window.fetchLiveModelsForProvider(model);
+      if (list && list.length > 0) {
+        submodels = list.slice();
+        if (model.modelId && !submodels.some((sm) => sm.id === model.modelId)) {
+          submodels.unshift({
+            id: model.modelId,
+            name: model.modelId,
+            tag: "Özel Model",
+            badge: "Kullanıcı"
+          });
         }
-      } catch (e) {
-        console.warn("Live models fetch error:", e);
+        if (window.KNOWN_PROVIDER_SUBMODELS) {
+          window.KNOWN_PROVIDER_SUBMODELS[model.provider] = submodels.slice();
+          window.KNOWN_PROVIDER_SUBMODELS[model.name] = submodels.slice();
+        }
+        const currentSearchVal = modalEl.querySelector("#card-picker-search-input")?.value || "";
+        modalEl.innerHTML = renderModalContent(currentSearchVal);
+        attachPickerEvents();
+        const newBtn = modalEl.querySelector("#btn-card-picker-fetch-live");
+        if (newBtn) {
+          newBtn.innerHTML = `<span class="text-emerald-400">✓ ${list.length} Model</span>`;
+          setTimeout(() => {
+            const b = modalEl.querySelector("#btn-card-picker-fetch-live");
+            if (b) b.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg><span>Canlı Çek</span>`;
+          }, 2500);
+        }
+        return;
+      }
+    } catch (e) {
+      console.warn("Live models fetch error:", e);
+      if (fetchBtn && !silent) {
+        fetchBtn.innerHTML = `<span class="text-rose-400" title="${escapeHtml(e.message)}">✗ Hata</span>`;
+        setTimeout(() => {
+          const b = modalEl.querySelector("#btn-card-picker-fetch-live");
+          if (b) b.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg><span>Canlı Çek</span>`;
+        }, 2500);
       }
     }
-    if (fetchBtn) fetchBtn.innerHTML = `<span>✓ Güncellendi</span>`;
   };
 
   document.body.appendChild(modalEl);
   modalEl.innerHTML = renderModalContent();
   attachPickerEvents();
 
-  // Auto-fetch in background if 9Router, Ollama or OpenRouter to get complete live models list
-  if (
-    model.endpoint?.includes("20128") ||
-    model.endpoint?.includes("11434") ||
-    model.endpoint?.includes("openrouter.ai") ||
-    model.provider === "OpenRouter" ||
-    model.name.includes("9Router") ||
-    model.name.includes("Ollama")
-  ) {
-    fetchLiveModels();
-  }
+  // Auto-fetch in background for any configured model/provider to get complete live models list
+  fetchLiveModels(true);
 }
 
 window.openSettingsModal = function (tab = "general") {

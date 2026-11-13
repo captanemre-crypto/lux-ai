@@ -282,6 +282,44 @@ function makeFetchMock(handler) {
     );
   });
 
+  await test('M7. Canlı model keşfi (Google Gemini ve OpenAI uyumlu)', async () => {
+    let capturedUrl = '';
+    const { sandbox } = makeSandbox(async (url) => {
+      capturedUrl = String(url);
+      if (capturedUrl.includes('generativelanguage.googleapis.com')) {
+        return {
+          ok: true,
+          json: async () => ({
+            models: [
+              { name: 'models/gemini-2.0-flash', displayName: 'Gemini 2.0 Flash', supportedGenerationMethods: ['generateContent'] },
+              { name: 'models/gemini-1.5-pro', displayName: 'Gemini 1.5 Pro', supportedGenerationMethods: ['generateContent'] },
+              { name: 'models/text-embedding-004', displayName: 'Embedding', supportedGenerationMethods: ['embedContent'] }
+            ]
+          })
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          data: [
+            { id: 'custom-model-1', name: 'Custom 1' },
+            { id: 'custom-model-2', name: 'Custom 2' }
+          ]
+        })
+      };
+    });
+
+    const geminiModels = await sandbox.fetchLiveModelsForProvider('Google Gemini', 'test-gemini-key');
+    assert(capturedUrl.includes('key=test-gemini-key'), 'Gemini API anahtarı sorgu parametresinde gitmeli');
+    assert(geminiModels.length === 2, 'generateContent desteklemeyen modeller elenmeli (2 kalmalı)');
+    assert(geminiModels[0].id === 'gemini-2.0-flash', 'Gemini model ID models/ ön eki olmadan çözülmeli');
+    assert(geminiModels[1].id === 'gemini-1.5-pro', 'İkinci Gemini modeli doğru gelmeli');
+
+    const openaiModels = await sandbox.fetchLiveModelsForProvider('Özel / OpenAI Uyumlu', 'test-key', 'https://my-api.com/v1');
+    assert(openaiModels.length === 2, 'OpenAI modelleri listelenmeli');
+    assert(openaiModels[0].id === 'custom-model-1', 'OpenAI model id çözülmeli');
+  });
+
   console.log('\n========================================================');
   console.log(`MODEL CLIENT TESTS FINISHED: ${results.passed}/${results.total} PASSED (${results.failed} FAILED)`);
   console.log('========================================================');

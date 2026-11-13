@@ -264,11 +264,188 @@ async function callModelWithFallback(activeModel, text, messages, assistantMsg) 
 // -----------------------------------------------------------------------------
 function resolveGeminiModelCode(rawCode) {
   const code = String(rawCode || "").trim();
-  if (!code || /^gemini-(?:1\.[05]|2\.0)-(?:flash|pro)/i.test(code)) {
+  if (code === "gemini-1.5-flash") {
     return "gemini-3.5-flash-lite";
+  }
+  if (!code) {
+    return "gemini-2.0-flash";
   }
   return code;
 }
+
+async function fetchLiveModelsForProvider(providerOrModel, explicitKey = "", explicitEndpoint = "") {
+  let provider = typeof providerOrModel === "string" ? providerOrModel : (providerOrModel?.provider || providerOrModel?.name || "");
+  let endpoint = explicitEndpoint || (typeof providerOrModel === "object" ? providerOrModel?.endpoint : "") || "";
+  let apiKey = explicitKey;
+  if (!apiKey && typeof providerOrModel === "object" && providerOrModel) {
+    const isLocal = isLocalModelEndpoint(providerOrModel);
+    const vaultKey = isLocal ? "" : await (window.appStore?.resolveModelApiKey?.(providerOrModel) ?? Promise.resolve(""));
+    apiKey =
+      vaultKey ||
+      ((providerOrModel.apiKey || "").trim() && !String(providerOrModel.apiKey).includes("••••") ? String(providerOrModel.apiKey).trim() : "") ||
+      (providerOrModel.provider === "OpenRouter" || /openrouter\.ai/i.test(providerOrModel.endpoint || "")
+        ? await (window.appStore?.resolveOpenRouterApiKey?.() ?? Promise.resolve(""))
+        : "");
+  }
+
+  const perms = window.appStore?.getPermissions?.() || {};
+  const isLocalHost = /\/\/(127\.0\.0\.1|localhost)(:|\/|$)/i.test(endpoint);
+  if (isLocalHost && perms.network_localhost === false) {
+    throw new Error(luxEn() ? "Local network permission is disabled" : "Yerel ağ izni kapalı");
+  }
+  if (!isLocalHost && perms.network_internet === false) {
+    throw new Error(luxEn() ? "Internet access permission is disabled" : "İnternet erişim izni kapalı");
+  }
+
+  // 1. Google Gemini Live Discovery
+  if (provider === "Google Gemini" || /gemini/i.test(provider) || /generativelanguage\.googleapis\.com/i.test(endpoint)) {
+    if (!apiKey) {
+      throw new Error(luxEn() ? "Gemini API key is required" : "Modelleri listelemek için Google Gemini API anahtarı gerekli");
+    }
+    const cleanKey = String(apiKey).trim();
+    const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(cleanKey)}&pageSize=100`;
+    const res = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData?.error?.message || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    const rawList = Array.isArray(data?.models) ? data.models : [];
+    const chatModels = rawList.filter((m) => {
+      const methods = m.supportedGenerationMethods || [];
+      return methods.length === 0 || methods.includes("generateContent");
+    });
+    return chatModels.map((m) => {
+      const cleanId = (m.name || "").replace(/^models\//, "");
+      const isFlash = /flash/i.test(cleanId);
+      const isPro = /pro/i.test(cleanId);
+      const isLite = /lite/i.test(cleanId);
+      const badge = cleanId === "gemini-2.0-flash" ? "Önerilen" : isLite ? "Hafif" : isFlash ? "Hızlı" : isPro ? "Pro" : "Canlı";
+      return {
+        id: cleanId,
+        name: m.displayName || cleanId,
+        desc: m.description ? m.description.slice(0, 140) : "Google Gemini modeli",
+        tag: "Google AI Studio",
+        badge
+      };
+    });
+  }
+
+  // 2. Anthropic Live Discovery
+  if (provider === "Anthropic" || /anthropic/i.test(provider) || /api\.anthropic\.com/i.test(endpoint)) {
+    if (!apiKey) {
+      throw new Error(luxEn() ? "Anthropic API key is required" : "Anthropic API anahtarı gerekli");
+    }
+    const url = "https://api.anthropic.com/v1/models";
+    const res = await fetch(url, {
+      headers: {
+        "x-api-key": apiKey.trim(),
+        "anthropic-version": "2023-06-01"
+      },
+      signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData?.error?.message || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    const rawList = Array.isArray(data?.data) ? data.data : [];
+    return rawList.map((m) => ({
+      id: m.id,
+      name: m.display_name || m.id,
+      desc: "Anthropic Claude modeli",
+      tag: "Anthropic",
+      badge: m.id.includes("sonnet") ? "Önerilen" : m.id.includes("haiku") ? "Hızlı" : "Canlı"
+    }));
+  }
+
+  // 3. Ollama Native Discovery (/api/tags)
+  const isOllamaNative = /11434/.test(endpoint) || provider.includes("Ollama");
+  if (isOllamaNative) {
+    const root = (endpoint || "http://127.0.0.1:11434").replace(/\/(?:v1(?:\/chat\/completions)?|api\/chat)?$/i, "").replace(/\/+$/, "");
+    try {
+      const res = await fetch(`${root}/api/tags`, {
+        signal: AbortSignal.timeout ? AbortSignal.timeout(6000) : undefined
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const models = Array.isArray(data?.models) ? data.models : [];
+        if (models.length > 0) {
+          return models.map((m) => {
+            const paramSize = m.details?.parameter_size ? `${m.details.parameter_size} ` : "";
+            const fam = m.details?.family ? `(${m.details.family})` : "";
+            return {
+              id: m.name,
+              name: m.name,
+              desc: `${paramSize}${fam} Yerel Ollama modeli`.trim(),
+              tag: "Yerel Ollama",
+              badge: "Yerel"
+            };
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  // 4. OpenAI / OpenRouter / 9Router / LM Studio / Generic OpenAI-Compatible
+  let base = (endpoint || "").replace(/\/+$/, "");
+  if (!base) {
+    if (provider === "OpenRouter" || /openrouter/i.test(provider)) base = "https://openrouter.ai/api/v1";
+    else if (provider === "9Router" || /9router/i.test(provider)) base = "http://127.0.0.1:20128/v1";
+    else if (/lm studio/i.test(provider)) base = "http://127.0.0.1:1234/v1";
+    else if (isOllamaNative) base = "http://127.0.0.1:11434/v1";
+    else if (provider === "DeepSeek") base = "https://api.deepseek.com/v1";
+    else base = "https://api.openai.com/v1";
+  }
+  const url = base.endsWith("/models") ? base : `${base}/models`;
+  const isOr = provider === "OpenRouter" || /openrouter\.ai/i.test(base);
+  const headers = {};
+  if (apiKey) headers["Authorization"] = `Bearer ${apiKey.trim()}`;
+  if (isOr) headers["X-Title"] = "Lux AI";
+
+  const res = await fetch(url, {
+    headers,
+    signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData?.error?.message || errData?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  const rawList = Array.isArray(data?.data) ? data.data : Array.isArray(data?.models) ? data.models : [];
+  if (isOr) {
+    const freeSet = new Set(rawList.filter((m) => window.isOpenRouterFreeChatModel?.(m)).map((m) => m.id));
+    return rawList
+      .filter((m) => !/^(?:google\/lyria-|fish-audio\/|heygen\/)/i.test(m.id || ""))
+      .sort((a, b) => {
+        if (a.id === "openrouter/free") return -1;
+        if (b.id === "openrouter/free") return 1;
+        return (freeSet.has(a.id) ? 0 : 1) - (freeSet.has(b.id) ? 0 : 1);
+      })
+      .map((m) => {
+        const isFree = freeSet.has(m.id);
+        const ctxK = m.context_length ? `${Math.round(m.context_length / 1000)}K` : "";
+        return {
+          id: m.id,
+          name: m.name || m.id,
+          desc: m.description ? m.description.slice(0, 140) : `${ctxK ? ctxK + " · " : ""}${isFree ? "Ücretsiz model" : "OpenRouter modeli"}`,
+          tag: isFree ? `${ctxK ? ctxK + " · " : ""}Canlı OpenRouter ($0)` : `${ctxK ? ctxK + " · " : ""}OpenRouter`,
+          badge: isFree ? "Ücretsiz" : "Canlı"
+        };
+      });
+  }
+  return rawList.map((m) => {
+    const id = m.id || m.name;
+    return {
+      id,
+      name: m.name || id,
+      desc: m.description || "Sağlayıcı modeli",
+      tag: "Canlı Model",
+      badge: id.includes("free") || id.startsWith("oc/") ? "Ücretsiz" : "Canlı"
+    };
+  });
+}
+window.fetchLiveModelsForProvider = fetchLiveModelsForProvider;
 
 function buildGeminiGenerationConfig(modelCode, disableThinking = true) {
   const cfg = { temperature: 0.55 };

@@ -157,25 +157,32 @@ const KNOWN_PROVIDER_SUBMODELS = {
   ],
   "Google Gemini": [
     {
-      id: "gemini-3.5-flash-lite",
-      name: "Gemini 3.5 Flash-Lite",
-      tag: "Ultra Hızlı · Ücretsiz Katman",
+      id: "gemini-2.0-flash",
+      name: "Gemini 2.0 Flash",
+      tag: "2.0 Flash · Çok Modlu",
       badge: "Önerilen",
-      desc: "Google AI Studio aktif ücretsiz katman: en düşük gecikme ve sesli sohbet uyumu"
+      desc: "Google AI Studio yeni nesil en hızlı ve dengeli Flash modeli"
     },
     {
-      id: "gemini-3.8-flash",
-      name: "Gemini 3.8 Flash",
-      tag: "1M Bağlam · Ücretsiz Katman",
+      id: "gemini-1.5-flash",
+      name: "Gemini 1.5 Flash",
+      tag: "1M Bağlam · Seri",
       badge: "Hızlı",
-      desc: "Ücretsiz katmanda güçlü ajan araçları ve çok modlu zeka"
+      desc: "Geniş bağlamlı kararlı ve hızlı multimodal model"
+    },
+    {
+      id: "gemini-1.5-pro",
+      name: "Gemini 1.5 Pro",
+      tag: "2M Bağlam · Derin Zeka",
+      badge: "Pro",
+      desc: "Karmaşık görevler, kodlama ve derin akıl yürütme"
     },
     {
       id: "gemini-2.5-flash",
       name: "Gemini 2.5 Flash",
-      tag: "1M Bağlam · Ücretsiz Katman",
-      badge: "Kararlı",
-      desc: "Google AI Studio kararlı Flash modeli (Aralık 2026'da 3.5 Flash-Lite'a yönlenir)"
+      tag: "Düşünce Zinciri",
+      badge: "Yeni",
+      desc: "Gelişmiş muhakeme yeteneğine sahip güncel Flash modeli"
     }
   ],
   OpenAI: [
@@ -782,80 +789,33 @@ function openSubModelFlyout(targetItemEl, providerModel) {
 
   attachEvents();
 
-  // If Ollama, try to dynamically fetch local models to supplement the list
-  const perms = window.appStore?.getPermissions?.() || {};
-  if (perms.network_localhost !== false && (providerModel.provider.includes("Yerel") || providerModel.endpoint?.includes("11434"))) {
-    fetch("http://127.0.0.1:11434/v1/models")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.data && Array.isArray(data.data)) {
-          let added = false;
-          data.data.forEach((m) => {
-            if (!submodels.some((sm) => sm.id === m.id)) {
-              submodels.push({ id: m.id, name: m.id, tag: "Yerel Ollama", badge: "Yüklü" });
-              added = true;
-            }
-          });
-          if (added && document.getElementById("lux-submodel-flyout")) {
+  // Auto-fetch complete live models list from provider using API key
+  if (typeof window.fetchLiveModelsForProvider === "function") {
+    window.fetchLiveModelsForProvider(providerModel)
+      .then((liveList) => {
+        if (liveList && liveList.length > 0) {
+          submodels = liveList.slice();
+          if (providerModel.modelId && !submodels.some((sm) => sm.id === providerModel.modelId)) {
+            submodels.unshift({
+              id: providerModel.modelId,
+              name: providerModel.modelId,
+              tag: "Özel Model",
+              badge: "Kullanıcı"
+            });
+          }
+          if (window.KNOWN_PROVIDER_SUBMODELS) {
+            window.KNOWN_PROVIDER_SUBMODELS[providerModel.provider] = submodels.slice();
+            window.KNOWN_PROVIDER_SUBMODELS[providerModel.name] = submodels.slice();
+          }
+          if (document.getElementById("lux-submodel-flyout")) {
             flyout.innerHTML = renderFlyoutContent(flyout.querySelector("#submodel-search-input")?.value || "");
             attachEvents();
           }
         }
       })
-      .catch(() => {});
-  } else if (perms.network_localhost !== false && (providerModel.endpoint?.includes("20128") || providerModel.name.includes("9Router"))) {
-    // If 9Router, fetch all 150+ live models from local proxy
-    fetch("http://127.0.0.1:20128/v1/models")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.data && Array.isArray(data.data)) {
-          let added = false;
-          data.data.forEach((m) => {
-            if (!submodels.some((sm) => sm.id === m.id)) {
-              const isFree = m.id.includes("free") || m.id.startsWith("oc/");
-              submodels.push({
-                id: m.id,
-                name: m.id,
-                tag: "9Router Havuzu",
-                badge: isFree ? "Ücretsiz" : "9Router"
-              });
-              added = true;
-            }
-          });
-          if (added && document.getElementById("lux-submodel-flyout")) {
-            flyout.innerHTML = renderFlyoutContent(flyout.querySelector("#submodel-search-input")?.value || "");
-            attachEvents();
-          }
-        }
-      })
-      .catch(() => {});
-  } else if (perms.network_internet !== false && isOpenRouterProvider) {
-    // OpenRouter: fetch live catalog and merge any active $0 / :free text LLMs dynamically
-    fetch("https://openrouter.ai/api/v1/models")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.data && Array.isArray(data.data)) {
-          let added = false;
-          data.data.filter(isOpenRouterFreeChatModel).forEach((m) => {
-            if (!submodels.some((sm) => sm.id === m.id)) {
-              const ctxK = m.context_length ? `${Math.round(m.context_length / 1000)}K` : "Ücretsiz";
-              submodels.push({
-                id: m.id,
-                name: (m.name || m.id).replace(/\s*\(free\)\s*$/i, ""),
-                tag: `${ctxK} · Canlı OpenRouter ($0)`,
-                badge: "Ücretsiz"
-              });
-              added = true;
-            }
-          });
-          if (added && document.getElementById("lux-submodel-flyout")) {
-            KNOWN_PROVIDER_SUBMODELS["OpenRouter"] = submodels.slice();
-            flyout.innerHTML = renderFlyoutContent(flyout.querySelector("#submodel-search-input")?.value || "");
-            attachEvents();
-          }
-        }
-      })
-      .catch(() => {});
+      .catch((err) => {
+        console.debug("Live flyout model discovery note:", err?.message);
+      });
   }
 }
 
