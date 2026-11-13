@@ -521,17 +521,21 @@ function renderAuxHome() {
       <div class="flex flex-col gap-1.5 pt-2 pl-1">
         <div class="flex items-center gap-2 px-3">
           <span class="text-xs font-semibold text-secondary-foreground select-none">Arka Plan Görevleri</span>
-          <span class="bg-secondary px-1.5 py-0.5 rounded-full text-[10px] text-muted-foreground font-medium">${state.backgroundTasksCount || 1}</span>
+          ${state.backgroundTasksCount > 0 ? `<span class="bg-secondary px-1.5 py-0.5 rounded-full text-[10px] text-muted-foreground font-medium">${state.backgroundTasksCount}</span>` : ""}
         </div>
 
         <div id="aux-task-row" class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-secondary-foreground hover:bg-secondary/70 hover:text-foreground cursor-pointer transition-colors">
           <span class="text-primary font-mono font-bold">&gt;_</span>
-          <span class="truncate flex-1 font-medium">${escapeHtml(state.backgroundTaskName || "Lux AI ajan ve servis görevleri")}</span>
+          <span class="truncate flex-1 font-medium ${state.backgroundTasksCount > 0 ? "" : "text-muted-foreground"}">${escapeHtml(state.backgroundTasksCount > 0 ? state.backgroundTaskName || "Çalışan görev" : "Görev yok")}</span>
         </div>
 
-        <button id="aux-see-all-tasks" class="text-xs text-muted-foreground hover:text-secondary-foreground px-3 pt-0.5 text-left cursor-pointer transition-colors">
+        ${
+          state.backgroundTasksCount > 0
+            ? `<button id="aux-see-all-tasks" class="text-xs text-muted-foreground hover:text-secondary-foreground px-3 pt-0.5 text-left cursor-pointer transition-colors">
           Tümünü gör
-        </button>
+        </button>`
+            : ""
+        }
       </div>
 
     </div>

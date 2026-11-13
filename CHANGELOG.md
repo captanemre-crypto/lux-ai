@@ -4,7 +4,18 @@ All notable changes are documented here. Format: [Keep a Changelog](https://keep
 
 ## [Unreleased]
 
-(Henüz yayınlanmamış değişiklik yok.)
+### Added
+
+- **Otomasyon zamanlayıcısı (`src/js/automation_scheduler.js`)**: Ayarlar → Otomasyonlar'da kaydedilen görevler artık gerçekten çalışıyor. 30 saniyede bir denetleyen aralık `Her Saat` / `Her N dakika|saat|gün` / `Her Gün SS:DD` (TR/EN, büyük/küçük harf duyarsız) kalıplarını ayrıştırır; zamanı gelen etkin otomasyonun `desc`i (yoksa adı) sohbete kullanıcı mesajı olarak gönderilir — böylece model, araçlar ve izinler/onay akışı aynen geçerli kalır. `runNow` (yeni “Şimdi çalıştır” butonu) son çalışma damgasına dokunmaz; yeni kayıtlar `createdAt` ile damgalanır (geçmişe dönük ateşleme yok); uygulama kapalıyken kaçırılan tetiklemeler açılışta bir kez çalışır; çalışınca mevcut `triggerSystemNotification` (kullanıcının bildirim ayarına saygılı) tetiklenir ve açık ayarlar sekmesi damgaları tazeler. Anlaşılamayan zamanlama metinleri manuel sayılır ve satırda uyarılır.
+
+### Changed
+
+- **Arka plan görevleri paneli dürüstleştirildi**: görev yokken `|| 1` kalıntısı rozeti, iptal butonu, “Tümünü gör” ve “Görev yok” yerine duran sahte görev adı gösterilmiyor (rightPanel.js + ideMode.js).
+- **Özelleştirmeler sekmesi sahte değerleri temizlendi**: “.rules” durumu çalışma alanında `.rules` gerçekten var mı diye okunarak “Aktif (.rules bulundu) / .rules yok” rozeti gösterir; “7 Beceri Yüklü” → “Yerleşik”; “Eklenti Pazarı” çekmecesi hardcoded 4 “Aktif” modül yerine gerçek `luxPlugins.list()` kaydını (yoksa “Yüklü eklenti bulunmuyor”) gösterir.
+
+### Fixed
+
+- Bilinmeyen ayarlar sekmesi yer tutucusu (“Bu bölümün ayarları ayrı olarak tasarlanacaktır”) nötr bir mesaja çevrildi (“Bu bölüm şu anda kullanılamıyor”).
 
 ## [1.6.0] — 2026-11-13
 

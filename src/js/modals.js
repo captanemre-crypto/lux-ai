@@ -481,7 +481,7 @@ function switchSettingsTab(tabId) {
   if (!config) {
     config = {
       title: tabId,
-      desc: "Bu bölümün ayarları ayrı olarak tasarlanacaktır.",
+      desc: "Bu bölüm şu anda kullanılamıyor.",
       icon: ICONS.gear
     };
   }
@@ -1939,9 +1939,20 @@ function renderAutomationsSettingsView(container) {
         <div id="new-automation-form" class="hidden p-4 rounded-2xl border border-primary/40 bg-card/60 flex flex-col gap-3">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <input type="text" id="new-auto-title" placeholder="Otomasyon adı (örn. Test Koşusu)" class="model-input-field text-xs" />
-            <input type="text" id="new-auto-schedule" placeholder="Zamanlama (örn. Her Saat / 18:00)" class="model-input-field text-xs font-mono" />
+            <input type="text" id="new-auto-schedule" list="auto-schedule-suggestions" placeholder="Zamanlama (örn. Her Saat / Her 30 dakika / Her Gün 09:00)" class="model-input-field text-xs font-mono" />
+            <datalist id="auto-schedule-suggestions">
+              <option value="Her Saat"></option>
+              <option value="Her 15 dakika"></option>
+              <option value="Her 30 dakika"></option>
+              <option value="Her 2 saat"></option>
+              <option value="Her Gün 09:00"></option>
+              <option value="Manuel"></option>
+            </datalist>
           </div>
-          <input type="text" id="new-auto-desc" placeholder="Kısa açıklama veya görev komutu..." class="model-input-field text-xs" />
+          <input type="text" id="new-auto-desc" placeholder="Görev komutu (sohbete kullanıcı mesajı olarak gönderilir)..." class="model-input-field text-xs" />
+          <p class="text-[10px] text-muted-foreground leading-relaxed m-0">
+            Desteklenen kalıplar: “Her Saat”, “Her 30 dakika”, “Her 2 saat”, “Her 3 gün”, “Her Gün 09:00”. Zamanı gelen etkin otomasyonlar görevi sohbete gönderir (araç onayları yine sizden ister). “Manuel” veya anlaşılmayan metinler yalnızca “Şimdi çalıştır” ile çalışır.
+          </p>
           <div class="flex items-center justify-end gap-2">
             <button type="button" id="btn-cancel-new-automation" class="agy-button px-3 py-1 rounded-lg border border-border/60 text-xs text-muted-foreground hover:text-foreground cursor-pointer">İptal</button>
             <button type="button" id="btn-save-new-automation" class="agy-button px-3.5 py-1 rounded-lg bg-primary text-primary-foreground text-xs font-medium cursor-pointer">Kaydet</button>
@@ -1968,9 +1979,11 @@ function renderAutomationsSettingsView(container) {
                     <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono">${escapeHtml(item.schedule)}</span>
                   </div>
                   <p class="text-xs text-muted-foreground m-0 truncate">${escapeHtml(item.desc)}</p>
+                  <div class="auto-lastrun text-[10px] text-muted-foreground/80 font-mono mt-0.5">${escapeHtml(window.luxAutomations?.metaLine ? window.luxAutomations.metaLine(item) : "")}</div>
                 </div>
               </div>
               <div class="flex items-center gap-2 shrink-0">
+                <button type="button" class="btn-run-automation p-1 rounded text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors cursor-pointer" data-auto-id="${escapeHtml(item.id)}" title="Şimdi çalıştır" aria-label="Otomasyonu şimdi çalıştır"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
                 <button type="button" class="btn-delete-automation p-1 rounded text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer" data-auto-id="${escapeHtml(item.id)}" title="Sil">✕</button>
                 <label class="lux-toggle shrink-0">
                   <input type="checkbox" class="automation-enabled-toggle" data-auto-id="${escapeHtml(item.id)}" ${item.enabled ? "checked" : ""} />
@@ -2009,10 +2022,19 @@ function renderAutomationsSettingsView(container) {
       schedule,
       desc,
       enabled: true,
-      color: "blue"
+      color: "blue",
+      createdAt: Date.now()
     });
     window.appStore.saveState();
     renderAutomationsSettingsView(container);
+  });
+
+  container.querySelectorAll(".btn-run-automation").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-auto-id");
+      window.luxAutomations?.runNow(id);
+      renderAutomationsSettingsView(container);
+    });
   });
 
   container.querySelectorAll(".automation-enabled-toggle").forEach((chk) => {
@@ -2034,6 +2056,17 @@ function renderAutomationsSettingsView(container) {
       renderAutomationsSettingsView(container);
     });
   });
+
+  // Zamanlayıcı tetiklediğinde açık sekmenin damgalarını tazele
+  if (container.__luxAutomationRanHandler) {
+    window.removeEventListener("lux-automation-ran", container.__luxAutomationRanHandler);
+  }
+  container.__luxAutomationRanHandler = () => {
+    if (document.getElementById("settings-modal")?.classList.contains("show")) {
+      renderAutomationsSettingsView(container);
+    }
+  };
+  window.addEventListener("lux-automation-ran", container.__luxAutomationRanHandler);
 }
 
 function renderCustomizationsSettingsView(container) {
@@ -2043,49 +2076,46 @@ function renderCustomizationsSettingsView(container) {
         <h3 class="text-sm font-medium text-foreground tracking-normal m-0">Ajan Kuralları & Beceriler</h3>
         <div class="bg-card/40 border border-border/80 rounded-2xl flex flex-col overflow-hidden hover:border-border transition-colors divide-y divide-border/60">
           
-          <div class="p-5 flex items-center justify-between">
+            <div class="p-5 flex items-center justify-between">
             <div class="flex flex-col gap-1 pr-6 flex-1 min-w-0">
               <span class="text-sm font-medium text-foreground tracking-tight">Lux Kuralları (.rules)</span>
               <p class="text-xs text-muted-foreground leading-relaxed m-0">
-                Çalışma alanındaki kod standartlarını ve ajan davranış yönergelerini otomatik uygular.
+                Çalışma alanında .rules dosyası varsa ajan yönergelerine otomatik uygulanır.
               </p>
             </div>
-            <span class="text-xs text-emerald-400 font-mono bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
-              Aktif (8 Kural)
+            <span id="rules-status-pill" class="text-xs text-muted-foreground font-mono bg-secondary px-2.5 py-1 rounded border border-border/60 shrink-0">
+              Denetleniyor…
             </span>
           </div>
 
-          <div class="p-5 flex items-center justify-between">
+            <div class="p-5 flex items-center justify-between">
             <div class="flex flex-col gap-1 pr-6 flex-1 min-w-0">
               <span class="text-sm font-medium text-foreground tracking-tight">Yerleşik Beceriler (Skills)</span>
               <p class="text-xs text-muted-foreground leading-relaxed m-0">
-                automation, plugin, generative_ui, agy-customizations ve ses motoru becerileri.
+                Araç döngüsü, ses motoru ve eklenti altyapısı uygulamayla birlikte gelir; ayrı kurulum gerektirmez.
               </p>
             </div>
-            <span class="text-xs text-primary font-mono bg-primary/10 px-2.5 py-1 rounded border border-primary/20">
-              7 Beceri Yüklü
+            <span class="text-xs text-emerald-400 font-mono bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
+              Yerleşik
             </span>
           </div>
 
-          <div class="p-5 flex items-center justify-between">
+            <div class="p-5 flex items-center justify-between">
             <div class="flex flex-col gap-1 pr-6 flex-1 min-w-0">
               <span class="text-sm font-medium text-foreground tracking-tight">MCP Sunucuları & Eklentiler</span>
               <p class="text-xs text-muted-foreground leading-relaxed m-0">
-                Model Context Protocol araçları, dahili araç döngüsü ve eklenti durumu.
+                Model Context Protocol araçları, dahili araç döngüsü ve kurulu eklenti durumu.
               </p>
             </div>
             <button type="button" id="btn-open-plugin-drawer" class="agy-button bg-secondary/80 hover:bg-secondary text-foreground text-xs font-medium px-3.5 py-1.5 rounded-full border border-border/60 cursor-pointer transition-colors">
-              Eklenti Pazarı
+              Yüklü Eklentiler
             </button>
           </div>
 
           <div id="plugin-marketplace-drawer" class="hidden p-4 bg-background/60 flex flex-col gap-2">
-            <div class="text-xs font-semibold text-foreground">Yüklü Yerel Araç Modülleri</div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              <div class="p-2.5 rounded-lg border border-border/60 bg-card/50 flex items-center justify-between"><span>FS & Kod Analiz Motoru</span><span class="text-emerald-400 font-mono text-[10px]">Aktif</span></div>
-              <div class="p-2.5 rounded-lg border border-border/60 bg-card/50 flex items-center justify-between"><span>PowerShell Terminal MCP</span><span class="text-emerald-400 font-mono text-[10px]">Aktif</span></div>
-              <div class="p-2.5 rounded-lg border border-border/60 bg-card/50 flex items-center justify-between"><span>Whisper & Piper Nöral Ses</span><span class="text-emerald-400 font-mono text-[10px]">Aktif</span></div>
-              <div class="p-2.5 rounded-lg border border-border/60 bg-card/50 flex items-center justify-between"><span>Monaco IDE Diff Motoru</span><span class="text-emerald-400 font-mono text-[10px]">Aktif</span></div>
+            <div class="text-xs font-semibold text-foreground">Yüklü Eklentiler</div>
+            <div id="installed-plugins-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <div class="p-2.5 rounded-lg border border-border/60 bg-card/50 text-muted-foreground">Yükleniyor…</div>
             </div>
           </div>
 
@@ -2097,6 +2127,45 @@ function renderCustomizationsSettingsView(container) {
   container.querySelector("#btn-open-plugin-drawer")?.addEventListener("click", () => {
     container.querySelector("#plugin-marketplace-drawer")?.classList.toggle("hidden");
   });
+
+  // Gerçek durum denetimleri: .rules dosyası çalışma alanında var mı?
+  (async () => {
+    const pill = container.querySelector("#rules-status-pill");
+    if (!pill) return;
+    const baseOk = "text-xs font-mono px-2.5 py-1 rounded border shrink-0 ";
+    try {
+      const ws = (window.appStore?.state?.application?.workspaceDir || "").trim();
+      const res = await window.luxAPI?.fs?.readFile?.(".rules", ws ? { workspaceDir: ws } : undefined);
+      if (res?.success && String(res.content || "").trim().length > 0) {
+        pill.textContent = "Aktif (.rules bulundu)";
+        pill.className = baseOk + "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
+      } else {
+        pill.textContent = ".rules yok";
+        pill.className = baseOk + "text-muted-foreground bg-secondary border-border/60";
+      }
+    } catch (_) {
+      pill.textContent = ".rules okunamadı";
+      pill.className = baseOk + "text-amber-400 bg-amber-500/10 border-amber-500/20";
+    }
+  })();
+
+  // Kurulu eklentileri gerçek kayıt defterinden (luxPlugins) listele
+  (() => {
+    const listEl = container.querySelector("#installed-plugins-list");
+    if (!listEl) return;
+    const plugins = window.luxPlugins?.list?.() || [];
+    if (plugins.length === 0) {
+      listEl.innerHTML =
+        '<div class="p-2.5 rounded-lg border border-border/60 bg-card/50 text-muted-foreground sm:col-span-2">Yüklü eklenti bulunmuyor.</div>';
+      return;
+    }
+    listEl.innerHTML = plugins
+      .map(
+        (p) => `
+      <div class="p-2.5 rounded-lg border border-border/60 bg-card/50 flex items-center justify-between gap-2"><span class="truncate">${escapeHtml(p.name || p.id || "Eklenti")}</span><span class="text-emerald-400 font-mono text-[10px] shrink-0">Aktif</span></div>`
+      )
+      .join("");
+  })();
 }
 
 function renderShortcutsSettingsView(container) {

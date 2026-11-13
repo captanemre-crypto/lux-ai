@@ -308,7 +308,7 @@ function renderRightPanel() {
             <!-- Arka Plan Görevleri Başlığı -->
             <button type="button" class="flex w-full items-center gap-1.5 rounded-lg border-none text-left outline-none bg-transparent h-6 pl-2 pr-1.5 group cursor-pointer hover:bg-secondary transition-colors">
               <span class="agy-hover-label text-xs opacity-50 font-medium select-none group-hover:opacity-100 transition-opacity">Arka Plan Görevleri</span>
-              <span class="text-[10px] font-medium opacity-50 bg-border rounded-full px-1.5 py-0.5 leading-none group-hover:opacity-100 transition-opacity">${state.backgroundTasksCount || 1}</span>
+              ${state.backgroundTasksCount > 0 ? `<span class="text-[10px] font-medium opacity-50 bg-border rounded-full px-1.5 py-0.5 leading-none group-hover:opacity-100 transition-opacity">${state.backgroundTasksCount}</span>` : ""}
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 -960 960 960" fill="currentColor" class="text-muted-foreground group-hover:text-secondary-foreground transition-all duration-150 opacity-0 group-hover:opacity-100 rotate-90 ml-auto">
                 <path d="M517.85-480l-184-184L376-706.15L602.15-480L376-253.85L333.85-296l184-184Z"/>
               </svg>
@@ -321,19 +321,27 @@ function renderRightPanel() {
                   <path d="M3.7 5.2L6.7 8L3.7 10.8"></path>
                   <path data-agent-state-caret="" d="M8.3 10.8H12.3" style="animation: 2s ease-in-out infinite alternate running pulse;"></path>
                 </svg>
-                <span class="agy-hover-label min-w-0 truncate flex-1 text-xs">${escapeHtml(state.backgroundTaskName || "Lux AI uygulamasını DevTools ile çalıştır")}</span>
-                <div class="can-hover:opacity-0 group-hover:opacity-100 flex items-center pr-1">
+                <span class="agy-hover-label min-w-0 truncate flex-1 text-xs ${state.backgroundTasksCount > 0 ? "" : "text-muted-foreground"}">${escapeHtml(state.backgroundTasksCount > 0 ? state.backgroundTaskName || "Çalışan görev" : "Görev yok")}</span>
+                ${
+                  state.backgroundTasksCount > 0
+                    ? `<div class="can-hover:opacity-0 group-hover:opacity-100 flex items-center pr-1">
                   <button type="button" aria-label="Görevi İptal Et" class="p-1 rounded text-muted-foreground hover:text-red-400 hover:bg-border/50 transition-colors" title="Görevi İptal Et" data-action="cancelBackgroundTask">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 -960 960 960" fill="currentColor">
                       <path d="M330-330H630V-630H330v300ZM480.07-100q-78.84,0-148.2-29.92T211.18-211.13T129.93-331.76T100-479.93t29.92-148.2t81.21-120.68t120.63-81.25T479.93-860t148.2,29.92t120.68,81.21t81.25,120.63T860-480.07t-29.92,148.2T748.87-211.18T628.24-129.93T480.07-100ZM480-160q134,0 227-93t93-227T707-707T480-800T253-707T160-480t93,227t227,93Zm0-320Z"/>
                     </svg>
                   </button>
-                </div>
+                </div>`
+                    : ""
+                }
               </div>
             </div>
 
-            <!-- Tümünü Gör Bağlantısı -->
-            <button class="text-xs text-muted-foreground hover:text-secondary-foreground cursor-pointer select-none pl-2 pt-1 text-left transition-colors" data-action="openAllTasksModal">Tümünü gör</button>
+            <!-- Tümünü Gör Bağlantısı (görev yokken gizli) -->
+            ${
+              state.backgroundTasksCount > 0
+                ? `<button class="text-xs text-muted-foreground hover:text-secondary-foreground cursor-pointer select-none pl-2 pt-1 text-left transition-colors" data-action="openAllTasksModal">Tümünü gör</button>`
+                : ""
+            }
           </div>
         </div>
       </div>
