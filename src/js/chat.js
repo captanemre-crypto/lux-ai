@@ -526,9 +526,10 @@ window.submitUserMessage = async function (content, options = {}) {
               }
 
               if (transcriptEl && window.voiceSessionActive) {
-                const startHudChar = Math.floor(speechText.length * startRatio);
-                const hudChar = startHudChar + Math.floor((speechEndChar - startHudChar) * progress);
-                transcriptEl.innerHTML = `${engineBadge}<span class="text-foreground leading-relaxed font-normal">${escapeHtml(speechText.slice(0, hudChar))}</span>${chunkIdx < speechChunks.length - 1 || progress < 1.0 ? '<span class="inline-block w-1.5 h-3.5 bg-primary animate-pulse ml-1 align-middle"></span>' : ""}`;
+                const karaokeHtml = typeof window.renderKaraokeTextHtml === "function"
+                  ? window.renderKaraokeTextHtml(speechText, progress)
+                  : `<span class="text-foreground leading-relaxed font-normal">${escapeHtml(speechText)}</span>`;
+                transcriptEl.innerHTML = `${engineBadge}${karaokeHtml}${chunkIdx < speechChunks.length - 1 || progress < 1.0 ? '<span class="inline-block w-1.5 h-3.5 bg-primary animate-pulse ml-1 align-middle"></span>' : ""}`;
               }
 
               if (progress >= 1.0) {

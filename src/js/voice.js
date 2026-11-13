@@ -473,6 +473,14 @@ function initVoiceMode() {
     }
   });
 
+  function setVoiceHudVisualState(state) {
+    const panel = document.querySelector(".voice-hud-panel");
+    if (panel) {
+      panel.setAttribute("data-state", state || "listening");
+    }
+  }
+  window.setVoiceHudVisualState = setVoiceHudVisualState;
+
   // Mic Toggle
   const btnMic = document.getElementById("btn-voice-mic-toggle");
   const iconMicActive = document.getElementById("icon-mic-active");
@@ -642,6 +650,7 @@ async function startVoiceSession() {
 
   if (timerEl) timerEl.textContent = "0:00";
   if (transcriptEl) transcriptEl.textContent = "Dinliyor. Herhangi bir şey sorun.";
+  setVoiceHudVisualState("listening");
 
   const curVoice = window.appStore.getVoiceSettings().voice || "Fola";
   const hudVoiceName = document.getElementById("hud-voice-current-name");
@@ -1459,6 +1468,7 @@ async function processRecordedAudio() {
 async function handleUserSpokenInput(spokenText) {
   const myTurnId = ++activeSpokenTurnId;
   window.isAIResponding = true;
+  setVoiceHudVisualState("thinking");
   const transcriptEl = document.getElementById("voice-hud-transcript");
   if (transcriptEl) {
     transcriptEl.innerHTML = `<span class="text-primary italic flex items-center gap-2"><span class="inline-block w-2 h-2 rounded-full bg-primary animate-ping"></span>Lux düşünüyor...</span>`;
@@ -1476,6 +1486,7 @@ async function handleUserSpokenInput(spokenText) {
   } finally {
     if (myTurnId === activeSpokenTurnId) {
       window.isAIResponding = false;
+      setVoiceHudVisualState("listening");
     }
   }
 }

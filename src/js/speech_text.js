@@ -82,3 +82,23 @@ function stripMarkupForLiveStream(rawText) {
     .replace(/<lux_tool>[\s\S]*?<\/lux_tool>/gi, "")
     .replace(/<lux_tool[\s\S]*$/i, "");
 }
+
+// Sesli okuma sırasında kelime kelime parlayan karaoke render motoru:
+// Okunmuş kısımlar parlak beyaz, henüz okunmamış kısımlar silik gri görünür.
+function renderKaraokeTextHtml(text, progress) {
+  const clean = String(text || "").trim();
+  if (!clean) return "";
+  const escapeFn = typeof escapeHtml === "function" ? escapeHtml : (s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  if (progress >= 1.0) {
+    return `<span class="text-foreground leading-relaxed font-normal">${escapeFn(clean)}</span>`;
+  }
+  const splitIdx = Math.max(0, Math.min(clean.length, Math.floor(clean.length * progress)));
+  let wordEnd = splitIdx;
+  while (wordEnd < clean.length && !/\s/.test(clean[wordEnd])) {
+    wordEnd++;
+  }
+  const spoken = clean.slice(0, wordEnd);
+  const remaining = clean.slice(wordEnd);
+  return `<span class="text-foreground leading-relaxed font-semibold transition-colors duration-150">${escapeFn(spoken)}</span><span class="text-muted-foreground/35 leading-relaxed font-normal transition-colors duration-150">${escapeFn(remaining)}</span>`;
+}
+window.renderKaraokeTextHtml = renderKaraokeTextHtml;

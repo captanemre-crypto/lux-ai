@@ -130,6 +130,7 @@ function createStreamSpeechPipeline(assistantMsg, voiceSettings, turnPerf, myTur
             }
             window.isAIResponding = false;
             window.lastAiAudioEndedAt = Date.now();
+            window.setVoiceHudVisualState?.("listening");
             window.resetVoiceCaptureBuffers?.();
             if (!settled) {
               settled = true;
@@ -150,6 +151,7 @@ function createStreamSpeechPipeline(assistantMsg, voiceSettings, turnPerf, myTur
 
           try {
             await audio.play();
+            window.setVoiceHudVisualState?.("speaking");
             if (!turnPerf.firstAudioPlayAt) {
               turnPerf.firstAudioPlayAt = performance.now();
               if (turnPerf.vadEndedAt) {
@@ -170,8 +172,10 @@ function createStreamSpeechPipeline(assistantMsg, voiceSettings, turnPerf, myTur
               const elapsed = audio.duration > 0 && audio.currentTime > 0 ? audio.currentTime * 1000 : Date.now() - streamStart;
               const progress = Math.min(1.0, elapsed / liveDurationMs);
               if (transcriptEl && window.voiceSessionActive) {
-                const chars = Math.max(1, Math.floor(item.text.length * progress));
-                transcriptEl.innerHTML = `${engineBadge}<span class="text-foreground leading-relaxed font-normal">${escapeHtml(item.text.slice(0, chars))}</span>${!noMoreChunks || idx < queue.length || progress < 1.0 ? '<span class="inline-block w-1.5 h-3.5 bg-primary animate-pulse ml-1 align-middle"></span>' : ""}`;
+                const karaokeHtml = typeof window.renderKaraokeTextHtml === "function"
+                  ? window.renderKaraokeTextHtml(item.text, progress)
+                  : `<span class="text-foreground leading-relaxed font-normal">${escapeHtml(item.text)}</span>`;
+                transcriptEl.innerHTML = `${engineBadge}${karaokeHtml}${!noMoreChunks || idx < queue.length || progress < 1.0 ? '<span class="inline-block w-1.5 h-3.5 bg-primary animate-pulse ml-1 align-middle"></span>' : ""}`;
               }
               if (progress >= 1.0) {
                 stopTimer();
