@@ -3011,7 +3011,16 @@ function attachModelViewEvents(container) {
       providerSelect.value.includes("Yerel") ||
       (endpointInput.value && (endpointInput.value.includes("localhost") || endpointInput.value.includes("127.0.0.1")));
     const isOrProvider = providerSelect.value === "OpenRouter" || /openrouter\.ai/i.test(endpointInput.value || "");
-    const rawKey = apiKeyInput.value.trim() || (isOrProvider ? window.appStore?.getOpenRouterApiKey?.() || "" : "");
+    let rawKey = apiKeyInput.value.trim();
+    if (rawKey.includes("••••") && editingModelId) {
+      const existing = window.appStore.getModels().find((m) => m.id === editingModelId);
+      if (existing) {
+        rawKey = await window.appStore.resolveModelApiKey(existing);
+      }
+    }
+    if (!rawKey && isOrProvider) {
+      rawKey = await window.appStore.resolveOpenRouterApiKey();
+    }
     if (!rawKey && !isLocal) {
       testStatusEl.innerHTML = '<span class="text-rose-400 font-medium">⚠ API Anahtarı eksik!</span>';
     } else if (isOrProvider && rawKey) {
@@ -3041,7 +3050,8 @@ function attachModelViewEvents(container) {
         const timeoutSig = AbortSignal.timeout ? AbortSignal.timeout(isLocal ? 12000 : 12000) : undefined;
         let res;
         if (providerSelect.value === "Google Gemini") {
-          const mId = modelIdInput.value.trim() || "gemini-3.5-flash-lite";
+          let mId = modelIdInput.value.trim() || "gemini-3.5-flash-lite";
+          if (mId === "gemini/auto-router") mId = "gemini-2.5-flash";
           res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mId}:generateContent?key=${rawKey}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -3123,12 +3133,16 @@ function attachModelViewEvents(container) {
       return;
     }
 
+    const inputKey = apiKeyInput.value.trim();
+    const existingModel = editingModelId ? window.appStore.getModels().find((m) => m.id === editingModelId) : null;
+    const finalKey = (inputKey.includes("••••") && existingModel) ? existingModel.apiKey : inputKey;
+
     const modelData = {
       name: name,
       provider: providerSelect.value,
       modelId: modelId,
       endpoint: endpointInput.value.trim(),
-      apiKey: apiKeyInput.value.trim(),
+      apiKey: finalKey,
       isDefault: isDefaultCheck.checked
     };
 

@@ -1031,7 +1031,11 @@ class AppStore {
     try {
       const isLocal = model.provider?.includes("Yerel") || model.endpoint?.includes("localhost") || model.endpoint?.includes("127.0.0.1");
       const isOpenRouter = model.provider === "OpenRouter" || /openrouter\.ai/i.test(model.endpoint || "");
-      const effectiveApiKey = (model.apiKey || "").trim() || (isOpenRouter ? this.getOpenRouterApiKey() : "");
+      let effectiveApiKey = await this.resolveModelApiKey(model);
+      if (!effectiveApiKey && isOpenRouter) {
+        effectiveApiKey = await this.resolveOpenRouterApiKey();
+      }
+      effectiveApiKey = (effectiveApiKey || "").trim();
       if (!effectiveApiKey && !isLocal) {
         model.status = "error";
         model.lastTested = isOpenRouter ? "OpenRouter API Anahtarı eksik" : "API Anahtarı eksik";
@@ -1048,7 +1052,7 @@ class AppStore {
           model.modelId = "gemini-3.5-flash-lite";
           this.saveState();
         }
-        const safeGeminiId = model.modelId || "gemini-3.5-flash-lite";
+        const safeGeminiId = (!model.modelId || model.modelId === "gemini/auto-router") ? "gemini-2.5-flash" : model.modelId;
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${safeGeminiId}:generateContent?key=${effectiveApiKey}`;
         res = await fetch(url, {
           method: "POST",
