@@ -1012,16 +1012,22 @@ async function startAudioCapture() {
     const bargeInPreBuffer = []; // Keep ~640ms rolling audio to capture first word of barge-in interruption
     let bargeInFrames = 0;
     let bargeGapGrace = 0;
+    let lastInterimAt = 0;
+    let isInterimTranscribing = false;
+    let lastInterimSpokenText = "";
 
     onBargeInReset = () => {
       bargeInFrames = 0;
       bargeGapGrace = 0;
       bargeInPreBuffer.length = 0;
+      lastInterimSpokenText = "";
     };
 
     window.resetVoiceCaptureBuffers = () => {
       bargeInFrames = 0;
       bargeGapGrace = 0;
+      lastInterimSpokenText = "";
+      lastInterimAt = 0;
       bargeInPreBuffer.length = 0;
       preRollBuffer.length = 0;
       if (!bargeInCandidate) {
@@ -1183,6 +1189,58 @@ async function startAudioCapture() {
           );
         }
       }
+
+      // Canlı STT (Interim Transcript): Kullanıcı konuşurken kelimeleri anında ekrana ve metin kutusuna döker
+      const nowTs = Date.now();
+      if (
+        isSpeaking &&
+        !isInterimTranscribing &&
+        nowTs - lastInterimAt > 550 &&
+        recordedSamples.length >= 10 &&
+        !window.isAIResponding &&
+        !window.isGenerating
+      ) {
+        lastInterimAt = nowTs;
+        isInterimTranscribing = true;
+        const snapshot = recordedSamples.slice();
+        (async () => {
+          try {
+            const totalLen = snapshot.reduce((acc, c) => acc + c.length, 0);
+            if (totalLen < actualRate * 0.3) return;
+            const merged = new Float32Array(totalLen);
+            let off = 0;
+            for (const ch of snapshot) {
+              merged.set(ch, off);
+              off += ch.length;
+            }
+            const b64 = encodeWAVBase64(merged, actualRate);
+            const curSettings = window.appStore.getVoiceSettings();
+            const res = await window.luxAPI?.voice?.transcribe?.(
+              b64,
+              "tr-TR",
+              curSettings.engineMode || "auto",
+              curSettings.sttEngine || "auto"
+            );
+            if (res?.success && res.text && isSpeaking && !window.isAIResponding) {
+              const cleanInterim = res.text.trim();
+              if (cleanInterim.length >= 2) {
+                lastInterimSpokenText = cleanInterim;
+                const transcriptEl = document.getElementById("voice-hud-transcript");
+                if (transcriptEl && voiceSessionActive && !window.isAIResponding) {
+                  transcriptEl.innerHTML = `<span class="text-foreground leading-relaxed font-medium">"${escapeHtml(cleanInterim)}"</span><span class="inline-block w-1.5 h-3.5 bg-primary animate-pulse ml-1 align-middle"></span>`;
+                }
+                const composerInput = document.getElementById("composer-textarea");
+                if (composerInput && !window.isAIResponding) {
+                  composerInput.value = cleanInterim;
+                }
+              }
+            }
+          } catch (_) {
+          } finally {
+            isInterimTranscribing = false;
+          }
+        })();
+      }
     };
 
     if (usingWorklet) {
@@ -1341,7 +1399,11 @@ async function processRecordedAudio() {
 
   const transcriptEl = document.getElementById("voice-hud-transcript");
   if (transcriptEl && !candidate) {
-    transcriptEl.innerHTML = `<span class="text-primary italic animate-pulse">Algılanıyor...</span>`;
+    if (lastInterimSpokenText) {
+      transcriptEl.innerHTML = `<span class="text-foreground leading-relaxed font-medium">"${escapeHtml(lastInterimSpokenText)}"</span><span class="inline-block w-1.5 h-3.5 bg-primary animate-pulse ml-1 align-middle"></span>`;
+    } else {
+      transcriptEl.innerHTML = `<span class="text-primary italic animate-pulse">Algılanıyor...</span>`;
+    }
   }
 
   let recognizedText = "";
