@@ -39,7 +39,9 @@ function disposeMonacoEditor() {
   if (monacoResizeObserver) {
     try {
       monacoResizeObserver.disconnect();
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("ideMode.js:42", e);
+    }
     monacoResizeObserver = null;
   }
   if (monacoEditorInstance) {
@@ -49,7 +51,9 @@ function disposeMonacoEditor() {
       if (model && !model.isDisposed?.()) {
         model.dispose();
       }
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("ideMode.js:52", e);
+    }
     monacoEditorInstance = null;
   }
 }
@@ -254,7 +258,9 @@ function ensureMonaco() {
                       "scrollbarSlider.hoverBackground": "#3f3f46aa"
                     }
                   });
-                } catch (_) {}
+                } catch (e) {
+                  window.luxDebug?.("ideMode.js:257", e);
+                }
                 resolve(window.monaco);
               } else {
                 reject(new Error("Monaco çekirdeği yüklenemedi"));
@@ -427,7 +433,9 @@ function setupSplitResize(container) {
       if (monacoEditorInstance) {
         try {
           monacoEditorInstance.layout();
-        } catch (_) {}
+        } catch (e) {
+          window.luxDebug?.("ideMode.js:430", e);
+        }
       }
     };
 
@@ -439,7 +447,9 @@ function setupSplitResize(container) {
       if (monacoEditorInstance) {
         try {
           monacoEditorInstance.layout();
-        } catch (_) {}
+        } catch (e) {
+          window.luxDebug?.("ideMode.js:442", e);
+        }
       }
     };
 
@@ -677,7 +687,9 @@ async function mountMonacoEditor() {
       if (monacoEditorInstance) {
         try {
           monacoEditorInstance.layout();
-        } catch (_) {}
+        } catch (e) {
+          window.luxDebug?.("ideMode.js:680", e);
+        }
       }
     });
     monacoResizeObserver.observe(mountEl);
@@ -686,7 +698,9 @@ async function mountMonacoEditor() {
       if (monacoEditorInstance) {
         try {
           monacoEditorInstance.layout();
-        } catch (_) {}
+        } catch (e) {
+          window.luxDebug?.("ideMode.js:689", e);
+        }
       }
     });
   } catch (err) {
@@ -745,7 +759,9 @@ async function populateEditorFileSelector() {
         window.loadEditorFile(chosen);
       }
     };
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("ideMode.js:748", e);
+  }
 }
 
 async function openWorkspaceEditor() {

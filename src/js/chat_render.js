@@ -33,7 +33,9 @@ function mediaItemName(m, index) {
   let base = src.split(/[\\/]/).filter(Boolean).pop() || "";
   try {
     base = decodeURIComponent(base);
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("chat_render.js:36", e);
+  }
   return base || `Görsel ${index + 1}`;
 }
 

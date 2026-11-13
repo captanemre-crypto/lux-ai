@@ -23,13 +23,19 @@ function isTurnCanceled(assistantMsg = null) {
 window.stopAllAssistantOutput = function (interrupted = false) {
   try {
     window.stopSpeaking?.();
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("chat_shared.js:26", e);
+  }
   try {
     window.stopLullabyAudio?.();
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("chat_shared.js:29", e);
+  }
   try {
     window.abortGeneration?.(Boolean(interrupted));
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("chat_shared.js:32", e);
+  }
 };
 
 // djb2 tabanlı, hızlı ve çakışması ihmal edilebilir satır imzası

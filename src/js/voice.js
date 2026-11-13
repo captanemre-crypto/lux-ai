@@ -157,7 +157,9 @@ function playLuxSound(soundName) {
   const vol = notifs ? (notifs.soundVolume ?? 100) / 100 : 1.0;
   try {
     window.luxAudioCache?.play(`assets/sounds/${soundName}.mp3`, { volume: Math.max(0, Math.min(1, vol)) });
-  } catch (e) {}
+  } catch (e) {
+    window.luxDebug?.("voice.js:160", e);
+  }
 }
 
 window.playLuxSound = playLuxSound;
@@ -193,13 +195,17 @@ window.stopLullabyAudio = function () {
     const a = lullabyState.audios.pop();
     try {
       a.stop ? a.stop() : a.pause?.();
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("voice.js:196", e);
+    }
   }
   if (lullabyState.voiceAudio) {
     lullabyState.voiceAudio.__luxTentativePause = false;
     try {
       lullabyState.voiceAudio.pause();
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("voice.js:202", e);
+    }
     if (window.currentVoiceAudio === lullabyState.voiceAudio) {
       window.currentVoiceAudio = null;
     }
@@ -250,7 +256,9 @@ window.playLullabyNotes = function (options = {}) {
   // Notaları belleğe önceden yükle — ilk çevrimde decode gecikmesi olmasın
   try {
     window.luxAudioCache?.preload(pattern.map(([note]) => `assets/sounds/${note}.mp3`));
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("voice.js:253", e);
+  }
 
   lullabyState.active = true;
   updateLullabyUiButtons(true);
@@ -272,7 +280,9 @@ window.playLullabyNotes = function (options = {}) {
               lullabyState.audios = lullabyState.audios.filter((x) => x !== handle);
             };
           });
-        } catch (_) {}
+        } catch (e) {
+          window.luxDebug?.("voice.js:275", e);
+        }
       }, baseOffset + offsetMs);
       lullabyState.timers.push(t);
     }
@@ -345,7 +355,9 @@ window.playLullabyExperience = async function (lyricsText, options = {}) {
           audio.onerror = finishVoice;
           await audio.play().catch(() => finishVoice());
         }
-      } catch (_) {}
+      } catch (e) {
+        window.luxDebug?.("voice.js:348", e);
+      }
     }
   }
   return true;
@@ -561,7 +573,9 @@ function showSttConsentBanner(onAccept) {
     if (choice === "accepted" && typeof onAccept === "function") {
       try {
         onAccept();
-      } catch (_) {}
+      } catch (e) {
+        window.luxDebug?.("voice.js:564", e);
+      }
     }
   };
   no.addEventListener("click", () => close("declined"));
@@ -572,7 +586,9 @@ function showSttConsentBanner(onAccept) {
   document.body.appendChild(bar);
   try {
     no.focus();
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("voice.js:575", e);
+  }
   setTimeout(() => close("declined"), 45000); // sessizlikte onay verilmemiş say: indirme başlamaz
 }
 
@@ -580,7 +596,9 @@ function warmupVoiceEngine(opts) {
   const run = () => {
     try {
       return window.luxAPI?.voice?.warmup?.(opts)?.catch?.(() => {});
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("voice.js:583", e);
+    }
   };
   (async () => {
     try {
@@ -667,7 +685,9 @@ function clearCandidateBargeIn(status = "cancelled") {
   for (const w of waiters) {
     try {
       w(status);
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("voice.js:670", e);
+    }
   }
 }
 
@@ -692,7 +712,9 @@ function stopVoiceSession() {
     window.currentVoiceAudio.__luxTentativePause = false;
     try {
       window.currentVoiceAudio.pause();
-    } catch (e) {}
+    } catch (e) {
+      window.luxDebug?.("voice.js:695", e);
+    }
     window.currentVoiceAudio = null;
   }
   window.stopLullabyAudio?.();
@@ -712,13 +734,17 @@ window.stopSpeaking = function () {
       window.luxAPI?.voice?.cancel?.(pending).catch(() => {});
       window.__luxPendingVoiceRequestId = null;
     }
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("voice.js:715", e);
+  }
   clearCandidateBargeIn("cancelled");
   if (window.currentVoiceAudio) {
     window.currentVoiceAudio.__luxTentativePause = false;
     try {
       window.currentVoiceAudio.pause();
-    } catch (e) {}
+    } catch (e) {
+      window.luxDebug?.("voice.js:721", e);
+    }
     window.currentVoiceAudio = null;
   }
   window.stopLullabyAudio?.();
@@ -743,7 +769,9 @@ window.triggerVoiceBargeIn = function (preChunks = []) {
   if (typeof onBargeInReset === "function") {
     try {
       onBargeInReset();
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("voice.js:746", e);
+    }
   }
   window.isAIResponding = false;
   window.lastAiAudioEndedAt = 0;
@@ -786,7 +814,9 @@ function beginTentativeBargeIn(preChunks = []) {
     pausedAudio.__luxTentativePause = true;
     try {
       pausedAudio.pause();
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("voice.js:789", e);
+    }
   }
 
   bargeInCandidate = {
@@ -805,7 +835,9 @@ function beginTentativeBargeIn(preChunks = []) {
   if (typeof onBargeInReset === "function") {
     try {
       onBargeInReset();
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("voice.js:808", e);
+    }
   }
 
   recordedSamples = Array.isArray(preChunks) ? preChunks.map((c) => new Float32Array(c)) : [];
@@ -832,7 +864,9 @@ function restoreFalseBargeIn(candidate) {
   for (const w of waiters) {
     try {
       w("resumed");
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("voice.js:835", e);
+    }
   }
 
   const transcriptEl = document.getElementById("voice-hud-transcript");
@@ -898,7 +932,9 @@ async function startAudioCapture() {
     if (!voiceMicStream || !voiceSessionActive) {
       try {
         voiceMicStream?.getTracks?.().forEach((t) => t.stop());
-      } catch (_) {}
+      } catch (e) {
+        window.luxDebug?.("voice.js:901", e);
+      }
       return;
     }
 
@@ -1204,28 +1240,38 @@ function stopAudioCapture() {
   if (voiceProcessorNode) {
     try {
       voiceProcessorNode.port?.postMessage?.("stop");
-    } catch (e) {}
+    } catch (e) {
+      window.luxDebug?.("voice.js:1207", e);
+    }
     try {
       voiceProcessorNode.disconnect();
-    } catch (e) {}
+    } catch (e) {
+      window.luxDebug?.("voice.js:1210", e);
+    }
     voiceProcessorNode = null;
   }
   if (voiceAnalyser) {
     try {
       voiceAnalyser.disconnect();
-    } catch (e) {}
+    } catch (e) {
+      window.luxDebug?.("voice.js:1216", e);
+    }
     voiceAnalyser = null;
   }
   if (voiceMicStream) {
     try {
       voiceMicStream.getTracks().forEach((t) => t.stop());
-    } catch (e) {}
+    } catch (e) {
+      window.luxDebug?.("voice.js:1222", e);
+    }
     voiceMicStream = null;
   }
   if (voiceAudioContext) {
     try {
       voiceAudioContext.close();
-    } catch (e) {}
+    } catch (e) {
+      window.luxDebug?.("voice.js:1228", e);
+    }
     voiceAudioContext = null;
   }
   if (voiceAnimFrame) {
@@ -1348,7 +1394,9 @@ async function processRecordedAudio() {
       for (const w of waiters) {
         try {
           w("committed");
-        } catch (_) {}
+        } catch (e) {
+          window.luxDebug?.("voice.js:1351", e);
+        }
       }
       activeSpokenTurnId++;
       window.stopAllAssistantOutput?.(true);
@@ -1440,7 +1488,9 @@ async function speakAssistantResponse(text) {
     window.currentVoiceAudio.__luxTentativePause = false;
     try {
       window.currentVoiceAudio.pause();
-    } catch (e) {}
+    } catch (e) {
+      window.luxDebug?.("voice.js:1443", e);
+    }
     window.currentVoiceAudio = null;
   }
 
@@ -2043,16 +2093,24 @@ async function stopAndTranscribeComposerDictation() {
   const sampleRate = dictationContext?.sampleRate || 16000;
   try {
     dictationProcessor?.port?.postMessage?.("stop");
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("voice.js:2046", e);
+  }
   try {
     dictationProcessor?.disconnect();
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("voice.js:2049", e);
+  }
   try {
     dictationStream?.getTracks().forEach((t) => t.stop());
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("voice.js:2052", e);
+  }
   try {
     dictationContext?.close();
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("voice.js:2055", e);
+  }
   dictationProcessor = null;
   dictationStream = null;
   dictationContext = null;
@@ -2172,7 +2230,9 @@ window.toggleComposerDictation = async function () {
           }
         };
         dictationWorklet = true;
-      } catch (_) {}
+      } catch (e) {
+        window.luxDebug?.("voice.js:2175", e);
+      }
     }
     if (!dictationWorklet) {
       dictationProcessor = dictationContext.createScriptProcessor(2048, 1, 1);

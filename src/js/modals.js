@@ -1766,7 +1766,9 @@ function renderApplicationSettingsView(container) {
       setTimeout(() => {
         copyBtn.textContent = T("logs.copy");
       }, 1200);
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("modals.js:1769", e);
+    }
   });
   container.querySelector("#btn-logs-open-folder")?.addEventListener("click", () => {
     window.luxAPI?.logs?.openFolder?.();

@@ -8,7 +8,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     const hydrated = await window.appStore?.hydrateFromDurable?.();
     if (hydrated) window.renderApp?.();
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("app.js:11", e);
+  }
 
   setupModals();
   window.applyAccentTheme?.(window.appStore?.state?.appearance?.accentColor);
@@ -387,7 +389,9 @@ window.discoverLocalAIModels = async function ({ silent = true } = {}) {
       if (started?.running) {
         ollamaRes = await probeOllama();
       }
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("app.js:390", e);
+    }
   }
 
   let changed = false;
@@ -1452,7 +1456,9 @@ window.openAboutModal = async function () {
   let appInfo = null;
   try {
     appInfo = await window.luxAPI?.getAppInfo?.();
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("app.js:1455", e);
+  }
   const versionStr = escapeHtml(appInfo?.version || "1.0.0");
   const platformStr = escapeHtml(appInfo?.platform || "win32");
 

@@ -27,12 +27,12 @@ const consoleErrors = [];
 const seenTabErrors = {};
 let currentTab = 'boot';
 app.on('web-contents-created', (event, contents) => {
-  contents.on('console-message', (e, level, message, line, sourceId) => {
-    if (level < 3) return;
+  contents.on('console-message', (details) => {
+    if (details.level !== 'error') return;
     // DevTools frontend'inin kendi protokol gürültüsü (app-kodu değil):
     // "Autofill.enable wasn't found" gibi zararsız Electron-iç hatalar.
-    if (String(sourceId || '').startsWith('devtools://')) return;
-    consoleErrors.push(`[${currentTab}] ${sourceId}:${line} ${message}`);
+    if (String(details.sourceId || '').startsWith('devtools://')) return;
+    consoleErrors.push(`[${currentTab}] ${details.sourceId}:${details.lineNumber} ${details.message}`);
   });
   contents.on('render-process-gone', (e, details) => {
     consoleErrors.push(`RENDER-PROCESS-GONE ${JSON.stringify(details)}`);

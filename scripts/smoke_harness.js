@@ -11,10 +11,10 @@ const consoleErrors = [];
 const consoleWarns = [];
 
 app.on('web-contents-created', (event, contents) => {
-  contents.on('console-message', (e, level, message, line, sourceId) => {
-    const entry = `${sourceId}:${line} ${message}`;
-    if (level >= 3) consoleErrors.push(entry);
-    else if (level === 2) consoleWarns.push(entry);
+  contents.on('console-message', (details) => {
+    const entry = `${details.sourceId}:${details.lineNumber} ${details.message}`;
+    if (details.level === 'error') consoleErrors.push(entry);
+    else if (details.level === 'warning') consoleWarns.push(entry);
   });
   contents.on('render-process-gone', (e, details) => {
     consoleErrors.push(`RENDER-PROCESS-GONE ${JSON.stringify(details)}`);

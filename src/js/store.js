@@ -167,7 +167,9 @@ function resolveDefaultWorkspaceDir() {
     if (info.documentsPath) return info.documentsPath;
     if (info.desktopPath) return info.desktopPath;
     if (info.homePath) return info.homePath;
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("store.js:170", e);
+  }
   return "";
 }
 
@@ -217,7 +219,9 @@ class AppStore {
     try {
       const res = await window.luxAPI?.state?.loadDurable?.();
       if (res && res.data && res.data.state) return res.data.state;
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("store.js:220", e);
+    }
     return null;
   }
 
@@ -252,7 +256,9 @@ class AppStore {
       }
       const lsVoice = String(localShadow?.voiceMode?.openrouterApiKey || "");
       if (merged.voiceMode && lsVoice.includes("••••")) merged.voiceMode.openrouterApiKey = lsVoice;
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("store.js:255", e);
+    }
     this.state = merged;
     this.notify();
     return true;
@@ -417,7 +423,9 @@ class AppStore {
         if (isLegacyMigration) {
           try {
             localStorage.setItem("lux_ai_state_v2", JSON.stringify(state));
-          } catch (_) {}
+          } catch (e) {
+            window.luxDebug?.("store.js:420", e);
+          }
         }
         return state;
       }
@@ -495,7 +503,9 @@ class AppStore {
     }
     try {
       window.luxAPI?.state?.saveDurable?.({ state: this.state, savedAt: Date.now() });
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("store.js:498", e);
+    }
     // API anahtarlarını OS anahtar zinciriyle şifreli kasaya taşı; bellekteki
     // (ve localStorage'a giden) kopyayı maskele ki düz metin yayılmasın.
     this.syncSecretsToVault();
@@ -1094,7 +1104,9 @@ class AppStore {
               if (freeQuota && typeof freeQuota.remaining === "number" && typeof freeQuota.limit === "number") {
                 quotaText = ` · Kalan: ${freeQuota.remaining}/${freeQuota.limit}`;
               }
-            } catch (_) {}
+            } catch (e) {
+              window.luxDebug?.("store.js:1097", e);
+            }
           }
         } else {
           const url = base.endsWith("/chat/completions") || /\/api\/chat$/i.test(base) ? base : `${base}/chat/completions`;
@@ -1132,7 +1144,9 @@ class AppStore {
         try {
           const errData = await res.json();
           if (errData?.error?.message) errDetail = errData.error.message;
-        } catch (_) {}
+        } catch (e) {
+          window.luxDebug?.("store.js:1135", e);
+        }
         model.status = "error";
         model.lastTested = `Hata (${res ? res.status : "400"}): ${errDetail.slice(0, 50)}`;
         this.saveState();
@@ -1238,7 +1252,9 @@ class AppStore {
     if (vol <= 0) return;
     try {
       window.luxAudioCache?.play(`assets/sounds/${soundName}.mp3`, { volume: Math.max(0, Math.min(1, vol / 100)) });
-    } catch (e) {}
+    } catch (e) {
+      window.luxDebug?.("store.js:1241", e);
+    }
   }
 
   playNotificationSound() {
@@ -1630,7 +1646,9 @@ class AppStore {
     if (this._sampleAudioPlayer) {
       try {
         this._sampleAudioPlayer.pause();
-      } catch (_) {}
+      } catch (e) {
+        window.luxDebug?.("store.js:1633", e);
+      }
       this._sampleAudioPlayer = null;
     }
 
@@ -1672,6 +1690,8 @@ window.playLuxSound = function (soundName) {
   } else {
     try {
       window.luxAudioCache?.play(`assets/sounds/${soundName}.mp3`);
-    } catch (e) {}
+    } catch (e) {
+      window.luxDebug?.("store.js:1675", e);
+    }
   }
 };

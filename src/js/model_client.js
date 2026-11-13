@@ -351,7 +351,9 @@ async function callGeminiAPIOnce(model, contents, systemPrompt, streamOpts = {})
               fullText += deltaText;
               streamOpts.onToken?.(deltaText, fullText);
             }
-          } catch (_) {}
+          } catch (e) {
+            window.luxDebug?.("model_client.js:354", e);
+          }
         }
       }
 
@@ -367,7 +369,9 @@ async function callGeminiAPIOnce(model, contents, systemPrompt, streamOpts = {})
                 streamOpts.onToken?.(p.text, fullText);
               }
             }
-          } catch (_) {}
+          } catch (e) {
+            window.luxDebug?.("model_client.js:370", e);
+          }
         }
       }
 
@@ -554,7 +558,9 @@ async function fetchOllamaNativeChat(ollamaBaseUrl, payload, timeoutMs = 150000,
         if (Array.isArray(msg.tool_calls) && msg.tool_calls.length > 0) {
           collectedToolCalls.push(...msg.tool_calls);
         }
-      } catch (_) {}
+      } catch (e) {
+        window.luxDebug?.("model_client.js:557", e);
+      }
     }
 
     return {
@@ -1077,7 +1083,9 @@ async function callAnthropicAPIOnce(model, messages, systemPartsOrText, streamOp
             fullText += parsed.delta.text;
             streamOpts.onToken?.(parsed.delta.text, fullText);
           }
-        } catch (_) {}
+        } catch (e) {
+          window.luxDebug?.("model_client.js:1080", e);
+        }
       }
     }
 

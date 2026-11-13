@@ -21,7 +21,7 @@ npm start              # xvfb-run -a npm start on headless Linux
 ## Before you open a PR
 
 - [ ] `npm test` green (21 architecture + 6 model-client + 10 IPC-validator + 9 context-rollup tests)
-- [ ] `npm run verify` green before any release (full local gate: + xvfb smoke/e2e, prettier, CSS drift)
+- [ ] `npm run verify` green before any release (full local gate: tests, lint, prettier, CSS drift, xvfb smoke/e2e, settings audit, i18n runtime probe, visual regression TR+EN)
 - [ ] `npm run test:e2e` green (isolated `userData`; attaches nothing to your real profile)
 - [ ] `npm run lint` clean
 - [ ] `npx prettier --check .` clean (or `npm run format` applied)

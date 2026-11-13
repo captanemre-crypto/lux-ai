@@ -16,8 +16,9 @@ app.setPath('userData', tmpUserData);
 
 const consoleErrors = [];
 app.on('web-contents-created', (event, contents) => {
-  contents.on('console-message', (e, level, message, line, sourceId) => {
-    if (level >= 3) consoleErrors.push(`${sourceId}:${line} ${message}`);
+  contents.on('console-message', (details) => {
+    if (details.level !== 'error') return;
+    consoleErrors.push(`${details.sourceId}:${details.lineNumber} ${details.message}`);
   });
   contents.on('render-process-gone', (e, details) => {
     consoleErrors.push(`RENDER-PROCESS-GONE ${JSON.stringify(details)}`);

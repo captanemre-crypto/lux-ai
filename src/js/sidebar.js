@@ -244,7 +244,9 @@ function setupSidebarEvents() {
         restored.focus();
         try {
           restored.setSelectionRange(selStart, selStart);
-        } catch (_) {}
+        } catch (e) {
+          window.luxDebug?.("sidebar.js:247", e);
+        }
       }
     });
     filterInput.addEventListener("keydown", (e) => {

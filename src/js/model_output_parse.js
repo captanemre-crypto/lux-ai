@@ -11,20 +11,26 @@ function safeParseToolJson(raw) {
   // 1. Direct standard JSON
   try {
     return JSON.parse(trimmed);
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("model_output_parse.js:14", e);
+  }
 
   // 2. Fix unescaped Windows backslashes in paths (e.g. C:\Users -> C:\\Users)
   // In JSON strings, valid escapes are \", \\, \/, \b, \f, \n, \r, \t, and \uXXXX.
   try {
     const fixedBackslashes = trimmed.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
     return JSON.parse(fixedBackslashes);
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("model_output_parse.js:21", e);
+  }
 
   // 3. Relax trailing commas + fix backslashes
   try {
     const relaxed = trimmed.replace(/,\s*([}\]])/g, "$1").replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
     return JSON.parse(relaxed);
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("model_output_parse.js:27", e);
+  }
 
   // 4. Single quotes to double quotes + trailing comma + backslashes
   try {
@@ -33,7 +39,9 @@ function safeParseToolJson(raw) {
       .replace(/\\(?!["'\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\")
       .replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, '"$1"');
     return JSON.parse(singleToDouble);
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("model_output_parse.js:36", e);
+  }
 
   // 5. Unescaped raw newlines inside string values
   try {
@@ -42,7 +50,9 @@ function safeParseToolJson(raw) {
       .replace(/,\s*([}\]])/g, "$1")
       .replace(/[\r\n]+/g, "\\n");
     return JSON.parse(fixedNewlines);
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("model_output_parse.js:45", e);
+  }
 
   // 6. Regex fallback for {"name":"run_command","args":{...}}
   try {
@@ -56,7 +66,9 @@ function safeParseToolJson(raw) {
       }
       return { name: toolName, args };
     }
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("model_output_parse.js:59", e);
+  }
 
   return null;
 }
@@ -75,7 +87,9 @@ function parseXmlToolCalls(text) {
           calls.push({ name: cleanName, args: parsed.args || parsed.arguments || {} });
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("model_output_parse.js:78", e);
+    }
   }
   if (calls.length === 0) {
     const jsonBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/gi;
@@ -92,7 +106,9 @@ function parseXmlToolCalls(text) {
             }
           }
         }
-      } catch (_) {}
+      } catch (e) {
+        window.luxDebug?.("model_output_parse.js:95", e);
+      }
     }
   }
   // Tolerant fallback for unclosed <lux_tool> tag

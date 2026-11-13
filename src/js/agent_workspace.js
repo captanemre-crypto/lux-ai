@@ -29,7 +29,9 @@ function refreshDesktopProjectsCache(force = false) {
           window.luxAppInfo.desktopPath = res.desktopPath;
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("agent_workspace.js:32", e);
+    }
     return window.luxDesktopProjectsCache;
   })().finally(() => {
     if (window.__luxProjectsCachePromise === p) {

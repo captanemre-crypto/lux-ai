@@ -6,16 +6,22 @@ All notable changes are documented here. Format: [Keep a Changelog](https://keep
 
 ### Added
 
-- **Otomasyon zamanlayıcısı (`src/js/automation_scheduler.js`)**: Ayarlar → Otomasyonlar'da kaydedilen görevler artık gerçekten çalışıyor. 30 saniyede bir denetleyen aralık `Her Saat` / `Her N dakika|saat|gün` / `Her Gün SS:DD` (TR/EN, büyük/küçük harf duyarsız) kalıplarını ayrıştırır; zamanı gelen etkin otomasyonun `desc`i (yoksa adı) sohbete kullanıcı mesajı olarak gönderilir — böylece model, araçlar ve izinler/onay akışı aynen geçerli kalır. `runNow` (yeni “Şimdi çalıştır” butonu) son çalışma damgasına dokunmaz; yeni kayıtlar `createdAt` ile damgalanır (geçmişe dönük ateşleme yok); uygulama kapalıyken kaçırılan tetiklemeler açılışta bir kez çalışır; çalışınca mevcut `triggerSystemNotification` (kullanıcının bildirim ayarına saygılı) tetiklenir ve açık ayarlar sekmesi damgaları tazeler. Anlaşılamayan zamanlama metinleri manuel sayılır ve satırda uyarılır.
+- **Renderer sessiz `catch {}` triajı**: `src/js/debug_log.js` (ilk yüklenen script) — `window.luxDebug(scope, err)` LUX_DEBUG=1 veya `localStorage lux-debug=1` kapısından geçen tek günlük kanalı. Renderer'daki 98 bilinçli-sessiz yakalama bloğu artık bu kapıdan geçiyor (kapalıyken maliyeti bir boolean); vendored dosyalar (marked, worklet, i18n map) kapsam dışında.
+- **`npm run verify` 6/6 → 9/9**: `scripts/verify_release.js` artık 7) settings audit (76 kontrol), 8) i18n runtime probe ve 9) visual regression (`--all`: TR + EN) adımlarını da koşuyor; `test:visual:en` / `test:visual:all` betikleri eklendi.
+- **EN görsel regresyon baseline'ları** (`tests/visual/baselines/en/`): `visual_regression.js` artık `--en` / `--all`; EN pasosu `localStorage.clear()` + `luxAPI.storage.wipe()` (çift katmanlı, debounce artıklarını da temizler) ardından native `webContents.reload()` ile önyükleme yolunu EN locale ile derler — `tests/visual/baselines/en/` 5 kare (main-empty, chat-media-chips, settings-application, settings-data-logs, tool-approval-dialog).
+- **Açılışta `document.documentElement.lang` locale'e göre ayarlanıyor** (i18n.js; önceden yalnızca `setLocale()` yazıyordu).
 
 ### Changed
 
+- **Otomasyon zamanlayıcısı (`src/js/automation_scheduler.js`)**: Ayarlar → Otomasyonlar'da kaydedilen görevler artık gerçekten çalışıyor. 30 saniyede bir denetleyen aralık `Her Saat` / `Her N dakika|saat|gün` / `Her Gün SS:DD` (TR/EN, büyük/küçük harf duyarsız) kalıplarını ayrıştırır; zamanı gelen etkin otomasyonun `desc`i (yoksa adı) sohbete kullanıcı mesajı olarak gönderilir — böylece model, araçlar ve izinler/onay akışı aynen geçerli kalır. `runNow` (yeni “Şimdi çalıştır” butonu) son çalışma damgasına dokunmaz; yeni kayıtlar `createdAt` ile damgalanır (geçmişe dönük ateşleme yok); uygulama kapalıyken kaçırılan tetiklemeler açılışta bir kez çalışır; çalışınca mevcut `triggerSystemNotification` (kullanıcının bildirim ayarına saygılı) tetiklenir ve açık ayarlar sekmesi damgaları tazeler. Anlaşılamayan zamanlama metinleri manuel sayılır ve satırda uyarılır.
 - **Arka plan görevleri paneli dürüstleştirildi**: görev yokken `|| 1` kalıntısı rozeti, iptal butonu, “Tümünü gör” ve “Görev yok” yerine duran sahte görev adı gösterilmiyor (rightPanel.js + ideMode.js).
 - **Özelleştirmeler sekmesi sahte değerleri temizlendi**: “.rules” durumu çalışma alanında `.rules` gerçekten var mı diye okunarak “Aktif (.rules bulundu) / .rules yok” rozeti gösterir; “7 Beceri Yüklü” → “Yerleşik”; “Eklenti Pazarı” çekmecesi hardcoded 4 “Aktif” modül yerine gerçek `luxPlugins.list()` kaydını (yoksa “Yüklü eklenti bulunmuyor”) gösterir.
 
 ### Fixed
 
+- **Electron deprecation uyarıları**: test betiklerinde (`e2e_runtime`, `i18n_runtime_probe`, `settings_audit_e2e`, `smoke_harness`, `visual_regression`) `console-message` imzası yeni `Event<WebContentsConsoleMessageEventParams>` biçimine taşındı (`level >= 3` → `level === 'error'`); `safeStorage.isEncryptionAvailable()` (deprecated sync) `isAsyncEncryptionAvailable()`'a taşındı — `src/main/secrets_vault.js` async memoize edildi (secrets-set/get/status/rotate) ve `voice-synthesize` kasa anahtarını `new Promise` executor'ı senkron olduğundan handler girişinde önceden çözüyor.
 - Bilinmeyen ayarlar sekmesi yer tutucusu (“Bu bölümün ayarları ayrı olarak tasarlanacaktır”) nötr bir mesaja çevrildi (“Bu bölüm şu anda kullanılamıyor”).
+- i18n exact haritasına “Görev yok” / “Çalışan görev” eklendi (`residualTurkish` boş kalır).
 
 ## [1.6.0] — 2026-11-13
 

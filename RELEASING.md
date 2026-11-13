@@ -8,7 +8,7 @@ Releases are **tag-driven**. The maintainer cuts a tag; CI builds Windows + Linu
 # 1) bump version in package.json (+ package-lock.json), update CHANGELOG.md
 npm version 1.4.0 --no-git-tag-version   # or edit by hand
 # 2) full local battery MUST be green (single command)
-npm run verify   # = test + lint + prettier + CSS drift + smoke + e2e
+npm run verify   # = test + lint + prettier + CSS drift + smoke + e2e + settings audit + i18n probe + visual (TR/EN)
 # 3) commit, tag, push
 git commit -am "release: v1.4.0"
 git tag v1.4.0
@@ -63,5 +63,5 @@ Default: crash dumps stay **local** (`app.getPath('crashDumps')`, path logged at
 - [ ] Version bumped in `package.json` **and** `package-lock.json`
 - [ ] `CHANGELOG.md` updated (`Unreleased` → version + date)
 - [ ] `npm run css:build` produced **no diff** (or the diff is committed)
-- [ ] Full battery green (`npm run verify` — test / e2e / smoke / lint / CSS drift)
+- [ ] Full battery green (`npm run verify` — test / lint / prettier / CSS drift / e2e / smoke / settings audit / i18n probe / visual TR+EN)
 - [ ] Release notes mention user-visible changes, known issues, and the unsigned-build caveat if applicable

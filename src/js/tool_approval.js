@@ -32,17 +32,25 @@ function requestToolExecutionApproval(toolName, args) {
       settled = true;
       try {
         if (guardTimer) clearTimeout(guardTimer);
-      } catch (_) {}
+      } catch (e) {
+        window.luxDebug?.("tool_approval.js:35", e);
+      }
       try {
         if (onKey) document.removeEventListener("keydown", onKey, true);
-      } catch (_) {}
+      } catch (e) {
+        window.luxDebug?.("tool_approval.js:38", e);
+      }
       try {
         if (overlay) overlay.remove();
-      } catch (_) {}
+      } catch (e) {
+        window.luxDebug?.("tool_approval.js:41", e);
+      }
       if (ok && remember) {
         try {
           window.appStore?.setPermission?.("auto_approve_commands", true);
-        } catch (_) {}
+        } catch (e) {
+          window.luxDebug?.("tool_approval.js:45", e);
+        }
       }
       resolve(Boolean(ok));
     };
@@ -149,7 +157,9 @@ function requestToolExecutionApproval(toolName, args) {
       document.body.appendChild(overlay);
       try {
         denyBtn.focus();
-      } catch (_) {}
+      } catch (e) {
+        window.luxDebug?.("tool_approval.js:152", e);
+      }
     } catch (err) {
       console.error("Onay diyaloğu açılamadı:", err);
       resolve(false);

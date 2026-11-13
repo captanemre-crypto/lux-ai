@@ -23,7 +23,9 @@
           });
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("plugin_system.js:26", e);
+    }
   }
 
   function saveStoredPlugins() {
@@ -38,7 +40,9 @@
         dependencies: p.dependencies || []
       }));
       localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("plugin_system.js:41", e);
+    }
   }
 
   // Ensure slot container exists in sidebar
@@ -187,7 +191,9 @@
     saveStoredPlugins();
     try {
       window.luxAPI?.plugins?.remove?.(cleanId);
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("plugin_system.js:190", e);
+    }
     return true;
   }
 

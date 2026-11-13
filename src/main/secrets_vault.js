@@ -19,6 +19,21 @@ function createSecretsVault({ userDataDir, safeStorage, ipcMain }) {
   const SECRETS_FILE = path.join(userDataDir, 'lux_secrets.json');
   const VAULT_VERSION = 2; // v1: düz { id: record }; v2: { __vaultVersion, createdAt, rotatedAt, entries }
 
+  // Electron'da isEncryptionAvailable() sync API'si deprecated — async doğrulama
+  // bir kez yapılıp önbelleğe alınır; kasa işlemleri sık ama bu tek bir Promise.
+  let encryptionAvailableCache = null;
+  async function encryptionAvailable() {
+    if (encryptionAvailableCache === null) {
+      try {
+        encryptionAvailableCache = Boolean(await safeStorage.isAsyncEncryptionAvailable());
+      } catch (_) {
+        logger.debug('isAsyncEncryptionAvailable başarısız; safeStorage devre dışı', undefined, 'secrets');
+        encryptionAvailableCache = false;
+      }
+    }
+    return encryptionAvailableCache;
+  }
+
   function getSecretsFallbackKey() {
     const seed = [
       process.env.USERNAME || process.env.USER || '',
@@ -81,10 +96,10 @@ function createSecretsVault({ userDataDir, safeStorage, ipcMain }) {
     });
   }
 
-  function encryptSecret(plain) {
+  async function encryptSecret(plain) {
     const text = String(plain || '');
     if (!text) return '';
-    if (safeStorage.isEncryptionAvailable()) {
+    if (await encryptionAvailable()) {
       return { scheme: 'safeStorage', data: safeStorage.encryptString(text).toString('base64') };
     }
     const iv = crypto.randomBytes(12);
@@ -96,11 +111,11 @@ function createSecretsVault({ userDataDir, safeStorage, ipcMain }) {
     };
   }
 
-  function decryptSecret(record) {
+  async function decryptSecret(record) {
     if (!record || !record.data) return '';
     try {
       if (record.scheme === 'safeStorage') {
-        if (!safeStorage.isEncryptionAvailable()) return '';
+        if (!(await encryptionAvailable())) return '';
         return safeStorage.decryptString(Buffer.from(record.data, 'base64'));
       }
       if (record.scheme === 'aes-256-gcm') {
@@ -115,7 +130,7 @@ function createSecretsVault({ userDataDir, safeStorage, ipcMain }) {
     return '';
   }
 
-  ipcMain.handle('secrets-set', (event, id, plainKey) => {
+  ipcMain.handle('secrets-set', async (event, id, plainKey) => {
     try {
       id = asId(id, 'id');
     } catch (e) {
@@ -129,28 +144,28 @@ function createSecretsVault({ userDataDir, safeStorage, ipcMain }) {
       writeSecretsFile(store);
       return { success: true, cleared: true };
     }
-    store[id] = encryptSecret(trimmed);
+    store[id] = await encryptSecret(trimmed);
     const ok = writeSecretsFile(store);
     return { success: ok, scheme: store[id]?.scheme || null };
   });
 
-  ipcMain.handle('secrets-get', (event, id) => {
+  ipcMain.handle('secrets-get', async (event, id) => {
     try {
       id = asId(id, 'id');
     } catch (e) {
       return { success: false, error: e.message };
     }
     const store = readSecretsFile();
-    const value = decryptSecret(store[id]);
+    const value = await decryptSecret(store[id]);
     return { success: Boolean(value), value };
   });
 
-  ipcMain.handle('secrets-status', () => {
+  ipcMain.handle('secrets-status', async () => {
     const doc = readVaultDoc();
     const ids = Object.keys(doc.entries);
     return {
       success: true,
-      scheme: safeStorage.isEncryptionAvailable() ? 'safeStorage' : 'aes-256-gcm',
+      scheme: (await encryptionAvailable()) ? 'safeStorage' : 'aes-256-gcm',
       count: ids.length,
       ids,
       vaultVersion: doc.version,
@@ -162,18 +177,18 @@ function createSecretsVault({ userDataDir, safeStorage, ipcMain }) {
 
   // Kasayı yeniden şifrele: tüm kayıtlar çözülüp güncel şema/anahtarla tekrar yazılır.
   // Herhangi bir kayıt çözülemezse kasa DEĞİŞTİRİLMEZ (veri kaybı yok).
-  ipcMain.handle('secrets-rotate', () => {
+  ipcMain.handle('secrets-rotate', async () => {
     const doc = readVaultDoc();
     const ids = Object.keys(doc.entries);
     const next = {};
     const failed = [];
     for (const id of ids) {
-      const plain = decryptSecret(doc.entries[id]);
+      const plain = await decryptSecret(doc.entries[id]);
       if (!plain) {
         failed.push(id);
         continue;
       }
-      next[id] = encryptSecret(plain);
+      next[id] = await encryptSecret(plain);
     }
     if (failed.length) {
       return { success: false, error: `Çözülemeyen anahtar(lar): ${failed.join(', ')}. Kasa değiştirilmedi.`, failed };

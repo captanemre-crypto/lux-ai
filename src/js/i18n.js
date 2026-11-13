@@ -322,8 +322,14 @@
   try {
     const saved = window.localStorage ? window.localStorage.getItem("lux-locale") : null;
     if (saved && Object.prototype.hasOwnProperty.call(LOCALES, saved)) current = saved;
-  } catch (_) {
+    try {
+      if (typeof document !== "undefined") document.documentElement.lang = current;
+    } catch (_) {
+      /* lang atama kritik değil */
+    }
+  } catch (e) {
     /* private mode vb. — varsayılanla devam */
+    window.luxDebug?.("i18n.js:325", e);
   }
 
   function t(key, params) {
@@ -342,17 +348,25 @@
     current = next;
     try {
       window.localStorage?.setItem("lux-locale", next);
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("i18n.js:345", e);
+    }
     try {
       document.documentElement.lang = next;
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("i18n.js:348", e);
+    }
     try {
       applyLuxI18n(document);
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("i18n.js:351", e);
+    }
     try {
       if (next === "en") localizeElementTree(document.documentElement);
       else restoreOriginals(document.documentElement);
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("i18n.js:355", e);
+    }
     ensureObserver();
     return true;
   }
@@ -378,7 +392,9 @@
 
   try {
     applyLuxI18n(document);
-  } catch (_) {}
+  } catch (e) {
+    window.luxDebug?.("i18n.js:381", e);
+  }
 
   // ---- Retrofit TR→EN (çalışma zamanı) ----
   // Statik data-i18n kapsamı dışındaki TÜM kullanıcıya dönük metinler (JS şablonlarıyla
@@ -461,7 +477,9 @@
         for (const attr of Object.keys(rec)) el.setAttribute(attr, rec[attr]);
         originalAttrs.delete(el);
       }
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("i18n.js:464", e);
+    }
   }
 
   function localizeElementTree(root) {
@@ -483,7 +501,9 @@
         const els = root.querySelectorAll("[" + attr + "]");
         els.forEach((el) => localizeAttribute(el, attr));
       }
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("i18n.js:486", e);
+    }
   }
 
   let observer = null;
@@ -501,13 +521,17 @@
         }
       });
       observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ATTRS });
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("i18n.js:504", e);
+    }
   }
 
   if (current === "en" && typeof document !== "undefined") {
     try {
       localizeElementTree(document.documentElement);
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("i18n.js:510", e);
+    }
     ensureObserver();
   }
 

@@ -658,7 +658,9 @@ window.abortGeneration = function (interrupted = false, opts = {}) {
   if (opts.stopSpeech !== false) {
     try {
       window.stopSpeaking?.();
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("chat.js:661", e);
+    }
   }
   if (currentStreamingTimer) {
     clearInterval(currentStreamingTimer);
@@ -667,7 +669,9 @@ window.abortGeneration = function (interrupted = false, opts = {}) {
   if (currentAbortController) {
     try {
       currentAbortController.abort(new DOMException(interrupted ? "Söz kesildi" : "Kullanıcı durdurdu", "AbortError"));
-    } catch (_) {}
+    } catch (e) {
+      window.luxDebug?.("chat.js:670", e);
+    }
     currentAbortController = null;
   }
   window.isGenerating = false;

@@ -130,8 +130,9 @@
     }
     try {
       window.appStore?.triggerSystemNotification?.(manual ? "Otomasyon elle çalıştırıldı" : "Otomasyon çalıştı", auto?.title || task);
-    } catch (_) {
+    } catch (e) {
       /* bildirim kapalıysa sessiz geç */
+      window.luxDebug?.("automation_scheduler.js:133", e);
     }
     window.dispatchEvent(new CustomEvent("lux-automation-ran", { detail: { id: auto?.id, at: Date.now(), manual } }));
   }
@@ -159,8 +160,9 @@
     if (dirty) {
       try {
         window.appStore?.saveState?.();
-      } catch (_) {
+      } catch (e) {
         /* kaydetme hatası zamanlayıcıyı durdurmasın */
+        window.luxDebug?.("automation_scheduler.js:162", e);
       }
     }
   }

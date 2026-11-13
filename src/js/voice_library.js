@@ -477,10 +477,14 @@
       previewAudio.onpause = null;
       try {
         previewAudio.pause();
-      } catch (_) {}
+      } catch (e) {
+        window.luxDebug?.("voice_library.js:480", e);
+      }
       try {
         previewAudio.removeAttribute("src");
-      } catch (_) {}
+      } catch (e) {
+        window.luxDebug?.("voice_library.js:483", e);
+      }
       previewAudio = null;
     }
     resetAllPreviewButtons();
@@ -506,12 +510,16 @@
     if (window.currentVoiceAudio && window.currentVoiceAudio !== previewAudio) {
       try {
         window.currentVoiceAudio.pause();
-      } catch (_) {}
+      } catch (e) {
+        window.luxDebug?.("voice_library.js:509", e);
+      }
     }
     if (window.appStore?._sampleAudioPlayer) {
       try {
         window.appStore._sampleAudioPlayer.pause();
-      } catch (_) {}
+      } catch (e) {
+        window.luxDebug?.("voice_library.js:514", e);
+      }
       window.appStore._sampleAudioPlayer = null;
     }
 
@@ -616,7 +624,9 @@
         if (seq !== previewSeq) {
           try {
             audio.pause();
-          } catch (_) {}
+          } catch (e) {
+            window.luxDebug?.("voice_library.js:619", e);
+          }
           return;
         }
       } catch (playErr) {

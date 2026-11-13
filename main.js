@@ -1288,6 +1288,17 @@ ipcMain.handle('voice-transcribe', async (event, audioBase64, language = 'tr-TR'
 ipcMain.handle(
   'voice-synthesize',
   async (event, text, voice = 'Arlo', speed = 1.0, mode = 'auto', cloneRefPath = '', options = {}) => {
+    // Kasadan çözülecek OpenRouter anahtarını önceden çöz — new Promise executor'ı
+    // senkron çalıştığından decryptSecret'ın async doğasını burada await'liyoruz.
+    let prefetchedVaultVoiceKey = '';
+    if (/^OpenRouter-/i.test(String(voice || ''))) {
+      try {
+        const secretStore = readSecretsFile();
+        prefetchedVaultVoiceKey = String((await decryptSecret(secretStore['voice-openrouter'])) || '').trim();
+      } catch (_) {
+        logger.debug('kasa anahtarı okunamadı', undefined, 'secrets');
+      }
+    }
     return new Promise((resolve) => {
       let settled = false;
       const finish = (payload) => {
@@ -1325,13 +1336,8 @@ ipcMain.handle(
           options?.openrouterApiKey || options?.apiKey || process.env.OPENROUTER_API_KEY || ''
         ).trim();
         if (!resolvedApiKey && isOpenRouterVoice) {
-          // 1) Şifreli anahtar kasası (safeStorage) — her durumda dene
-          try {
-            const secretStore = readSecretsFile();
-            resolvedApiKey = String(decryptSecret(secretStore['voice-openrouter']) || '').trim();
-          } catch (_) {
-            logger.debug('kasa anahtarı okunamadı', undefined, 'secrets');
-          }
+          // 1) Şifreli anahtar kasası — handler girişinde önceden çözüldü (executor senkron)
+          if (prefetchedVaultVoiceKey) resolvedApiKey = prefetchedVaultVoiceKey;
           // 2) Kalıcı durum dosyası — { state, updatedAt } veya düz şekil dene
           if (!resolvedApiKey && fs.existsSync(DATA_FILE)) {
             try {

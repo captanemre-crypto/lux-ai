@@ -63,7 +63,9 @@
         stop() {
           try {
             source.stop();
-          } catch (_) {}
+          } catch (e) {
+            window.luxDebug?.("audio_cache.js:66", e);
+          }
         }
       };
       source.onended = () => {
