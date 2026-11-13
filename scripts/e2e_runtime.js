@@ -27,7 +27,9 @@ app.getVersion = () => appPkg.version;
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const TMP_WORK = path.join(ROOT_DIR, '.e2e-tmp');
-fs.rmSync(TMP_WORK, { recursive: true, force: true });
+try {
+  fs.rmSync(TMP_WORK, { recursive: true, force: true, maxRetries: 3 });
+} catch (_) {}
 fs.mkdirSync(path.join(TMP_WORK, 'gitrepo'), { recursive: true });
 
 // Temp git deposu (git-diff IPC'si için)
@@ -391,9 +393,11 @@ app.whenReady().then(() => {
 
     const payload = { ok, inPage, consoleErrors: consoleErrors.slice(0, 10) };
     console.log('E2E_RESULT ' + JSON.stringify(payload, null, 2));
-    fs.rmSync(TMP_WORK, { recursive: true, force: true });
     try {
-      fs.rmSync(tmpUserData, { recursive: true, force: true });
+      fs.rmSync(TMP_WORK, { recursive: true, force: true, maxRetries: 3 });
+    } catch (_) {}
+    try {
+      fs.rmSync(tmpUserData, { recursive: true, force: true, maxRetries: 3 });
     } catch (_) {}
     app.exit(ok ? 0 : 1);
   }, 6000);
