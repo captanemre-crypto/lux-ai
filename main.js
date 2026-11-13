@@ -59,7 +59,9 @@ function resolveModelsRoot() {
   for (const c of candidates) {
     try {
       if (fs.existsSync(c)) return c;
-    } catch (_) {}
+    } catch (_) {
+      logger.debug('model dizini adayı denetlenemedi', undefined, 'models-dir');
+    }
   }
   return path.join(app.getPath('userData'), 'models');
 }
@@ -94,7 +96,9 @@ function checkOllamaListening() {
           if (Array.isArray(parsed.models)) {
             models = parsed.models.map((m) => m.name || m.model).filter(Boolean);
           }
-        } catch (_) {}
+        } catch (_) {
+          logger.debug('ses servisi keşif yanıtı ayrıştırılamadı', undefined, 'voice');
+        }
         resolve({ listening, modelsCount: models.length, models });
       });
     });
@@ -102,7 +106,9 @@ function checkOllamaListening() {
     req.on('timeout', () => {
       try {
         req.destroy();
-      } catch (_) {}
+      } catch (_) {
+        logger.debug('ses keşif isteği sonlandırılamadı', undefined, 'voice');
+      }
       resolve({ listening: false, modelsCount: 0, models: [] });
     });
   });
@@ -131,7 +137,9 @@ function resolveOllamaExecutable() {
         .filter(Boolean)[0];
       if (first) return first;
     }
-  } catch (_) {}
+  } catch (_) {
+    logger.debug('PATH yorumlayıcı sorgusu başarısız', undefined, 'voice');
+  }
   return null;
 }
 
@@ -159,11 +167,15 @@ async function ensureOllamaRunningInner() {
             windowsHide: true,
             timeout: 1500
           });
-        } catch (_) {}
+        } catch (_) {
+          logger.debug('ollama taskkill başarısız', undefined, 'ollama');
+        }
       }
       try {
         managedOllamaProcess.kill();
-      } catch (_) {}
+      } catch (_) {
+        logger.debug('ollama kapatılamadı', undefined, 'ollama');
+      }
       managedOllamaProcess = null;
       await new Promise((r) => setTimeout(r, 300));
     } else {
@@ -286,7 +298,9 @@ function createWindow() {
       try {
         const localP = decodeURIComponent(new URL(url).pathname).replace(/^\/([a-zA-Z]:)/, '$1');
         shell.openPath(localP);
-      } catch (_) {}
+      } catch (_) {
+        logger.debug('will-navigate dosyası açılamadı', undefined, 'nav');
+      }
     }
     return { action: 'deny' };
   });
@@ -303,7 +317,9 @@ function createWindow() {
         try {
           const localP = decodeURIComponent(new URL(url).pathname).replace(/^\/([a-zA-Z]:)/, '$1');
           shell.openPath(localP);
-        } catch (_) {}
+        } catch (_) {
+          logger.debug('will-navigate (2) dosyası açılamadı', undefined, 'nav');
+        }
       }
     }
   });
@@ -312,7 +328,9 @@ function createWindow() {
 process.on('uncaughtException', (err) => {
   try {
     logger.warn(`[process] yakalanmamış istisna: ${err && err.stack ? err.stack : err}`, undefined, 'process');
-  } catch (_) {}
+  } catch (_) {
+    logger.debug('[process] log yazılamadı', undefined, 'process');
+  }
 });
 process.on('unhandledRejection', (reason) => {
   try {
@@ -321,7 +339,9 @@ process.on('unhandledRejection', (reason) => {
       undefined,
       'process'
     );
-  } catch (_) {}
+  } catch (_) {
+    logger.debug('[process] rejection log yazılamadı', undefined, 'process');
+  }
 });
 
 // IPC çağrısının bizim pencereden geldiğini doğrular (tek pencereli uygulama).
@@ -330,6 +350,7 @@ function isAppMainSender(event) {
   try {
     return Boolean(mainWindow && !mainWindow.isDestroyed() && event && event.sender === mainWindow.webContents);
   } catch (_) {
+    logger.debug('gönderen doğrulaması başarısız', undefined, 'security');
     return false;
   }
 }
@@ -661,7 +682,9 @@ ipcMain.handle('fs-write-file', async (event, filePath, content, options = {}) =
       if (existed) {
         try {
           orig = fs.readFileSync(absPath, 'utf-8');
-        } catch (_) {}
+        } catch (_) {
+          logger.debug('düzenleme anlık görüntüsü okunamadı', undefined, 'edit-snapshot');
+        }
       }
       fileEditSnapshots.set(absPath, {
         originalContent: orig,
@@ -743,6 +766,7 @@ ipcMain.handle('fs-move-path', async (event, srcPath, destPath, options = {}) =>
     try {
       fs.renameSync(absSrc, absDest);
     } catch (_) {
+      logger.debug('rename başarısız, kopyalamaya düşülüyor', undefined, 'fs-move');
       fs.cpSync(absSrc, absDest, { recursive: true });
       fs.rmSync(absSrc, { recursive: true, force: true });
     }
@@ -835,7 +859,9 @@ ipcMain.handle('terminal-execute', (event, command, cwd, timeoutMs = 90000) => {
     const releaseChild = () => {
       try {
         activeTerminalChildren.delete(child);
-      } catch (_) {}
+      } catch (_) {
+        logger.debug('terminal kayıt defterinden düşülemedi', undefined, 'terminal');
+      }
     };
 
     let output = '';
@@ -849,7 +875,9 @@ ipcMain.handle('terminal-execute', (event, command, cwd, timeoutMs = 90000) => {
         releaseChild();
         try {
           child.kill();
-        } catch (_) {}
+        } catch (_) {
+          logger.debug('terminal zaman aşımı kill başarısız', undefined, 'terminal');
+        }
         resolve({
           runId,
           code: 124,
@@ -954,7 +982,9 @@ function resolveVoicePython() {
         cachedVoicePython = { cmd: probe.stdout.trim(), prefixArgs: [] };
         return cachedVoicePython;
       }
-    } catch (_) {}
+    } catch (_) {
+      logger.debug('python adayı doğrulanamadı', undefined, 'voice');
+    }
   }
   // 3) PATH üzerindeki yorumlayıcılar (Linux/macOS dahil)
   for (const cmd of ['python3.12', 'python3', 'python']) {
@@ -968,7 +998,9 @@ function resolveVoicePython() {
         cachedVoicePython = { cmd, prefixArgs: [] };
         return cachedVoicePython;
       }
-    } catch (_) {}
+    } catch (_) {
+      logger.debug('python adayı doğrulanamadı', undefined, 'voice');
+    }
   }
   console.warn(
     '[voice] Python yorumlayıcısı bulunamadı. scripts/requirements-voice.txt ve LUX_PYTHON değişkenine bakın.'
@@ -1064,7 +1096,9 @@ ipcMain.handle('voice-cancel', async (event, targetId) => {
       voiceCallbacks.delete(idToCancel);
       try {
         cb({ success: false, cancelled: true, error: 'İptal edildi' });
-      } catch (_) {}
+      } catch (_) {
+        logger.debug('voice iptal geri çağrısı hata verdi', undefined, 'voice');
+      }
     }
     // Servis çalışmıyorsa SAKIN başlatma — iptal isteği için Python açmak anlamsız.
     if (!voiceProcess || voiceProcess.killed) {
@@ -1127,18 +1161,22 @@ ipcMain.handle('voice-model-status', async () => {
               break;
             }
           } catch (_) {
+            logger.debug('bozuk whisper cache girdisi yok sayıldı', undefined, 'voice');
             /* bozuk cache girdisi — yok say */
           }
         }
         if (whisperCached) break;
       } catch (_) {
+        logger.debug('hub kökü okunamadı, diğerine bakılıyor', undefined, 'voice');
         /* hub kökü okunamadı — diğerine bak */
       }
     }
     let piperVoices = 0;
     try {
       piperVoices = fs.readdirSync(path.join(modelsRoot, 'piper')).filter((f) => /\.onnx$/i.test(f)).length;
-    } catch (_) {}
+    } catch (_) {
+      logger.debug('piper ses dizini listelenemedi', undefined, 'voice');
+    }
     const kokoroDir = path.join(modelsRoot, 'kokoro');
     const kokoroPresent =
       fs.existsSync(path.join(kokoroDir, 'kokoro-v1.0.onnx')) && fs.existsSync(path.join(kokoroDir, 'voices-v1.0.bin'));
@@ -1203,7 +1241,9 @@ ipcMain.handle('voice-transcribe', async (event, audioBase64, language = 'tr-TR'
         if (tempWav) {
           try {
             if (fs.existsSync(tempWav)) fs.unlinkSync(tempWav);
-          } catch (e) {}
+          } catch (_) {
+            logger.debug('geçici wav silinemedi (timeout)', undefined, 'voice');
+          }
         }
         resolve({ success: false, error: 'Transcription timed out' });
       }, 60000);
@@ -1213,7 +1253,9 @@ ipcMain.handle('voice-transcribe', async (event, audioBase64, language = 'tr-TR'
         if (tempWav) {
           try {
             if (fs.existsSync(tempWav)) fs.unlinkSync(tempWav);
-          } catch (e) {}
+          } catch (_) {
+            logger.debug('geçici wav silinemedi (yanıt)', undefined, 'voice');
+          }
         }
         resolve(response);
       });
@@ -1249,7 +1291,9 @@ ipcMain.handle(
           if (!p) continue;
           try {
             if (fs.existsSync(p)) fs.unlinkSync(p);
-          } catch (_) {}
+          } catch (_) {
+            logger.debug('ses geçici dosyası silinemedi', undefined, 'voice');
+          }
         }
       };
       try {
@@ -1276,7 +1320,9 @@ ipcMain.handle(
           try {
             const secretStore = readSecretsFile();
             resolvedApiKey = String(decryptSecret(secretStore['voice-openrouter']) || '').trim();
-          } catch (_) {}
+          } catch (_) {
+            logger.debug('kasa anahtarı okunamadı', undefined, 'secrets');
+          }
           // 2) Kalıcı durum dosyası — { state, updatedAt } veya düz şekil dene
           if (!resolvedApiKey && fs.existsSync(DATA_FILE)) {
             try {
@@ -1289,7 +1335,9 @@ ipcMain.handle(
                 );
                 resolvedApiKey = String(orModel?.apiKey || '').trim();
               }
-            } catch (_) {}
+            } catch (_) {
+              logger.debug('kalıcı durumdan anahtar okunamadı', undefined, 'secrets');
+            }
           }
         }
 
@@ -1401,7 +1449,9 @@ app.whenReady().then(() => {
 app.on('before-quit', () => {
   try {
     logger.flush();
-  } catch (_) {}
+  } catch (_) {
+    logger.debug('logger tampona alınamadı (before-quit)', undefined, 'logger');
+  }
   if (stateWriteTimer) {
     clearTimeout(stateWriteTimer);
     flushStateWrite();
@@ -1409,21 +1459,29 @@ app.on('before-quit', () => {
   if (voiceProcess && !voiceProcess.killed) {
     try {
       voiceProcess.stdin.write(JSON.stringify({ action: 'shutdown', id: 0 }) + '\n');
-    } catch (_) {}
+    } catch (_) {
+      logger.debug('voice shutdown mesajı yazılamadı', undefined, 'voice');
+    }
     if (process.platform === 'win32' && voiceProcess.pid) {
       try {
         spawnSync('taskkill', ['/pid', String(voiceProcess.pid), '/T', '/F'], { windowsHide: true, timeout: 1500 });
-      } catch (_) {}
+      } catch (_) {
+        logger.debug('voice taskkill başarısız', undefined, 'voice');
+      }
     }
     try {
       voiceProcess.kill();
-    } catch (e) {}
+    } catch (_) {
+      logger.debug('voice öldürülemedi', undefined, 'voice');
+    }
     voiceProcess = null;
   }
   for (const child of Array.from(activeTerminalChildren)) {
     try {
       child.kill();
-    } catch (_) {}
+    } catch (_) {
+      logger.debug('terminal öldürülemedi (before-quit)', undefined, 'terminal');
+    }
   }
   activeTerminalChildren.clear();
   if (managedOllamaProcess && !managedOllamaProcess.killed) {
@@ -1433,11 +1491,15 @@ app.on('before-quit', () => {
           windowsHide: true,
           timeout: 1500
         });
-      } catch (_) {}
+      } catch (_) {
+        logger.debug('ollama taskkill başarısız (before-quit)', undefined, 'ollama');
+      }
     }
     try {
       managedOllamaProcess.kill();
-    } catch (e) {}
+    } catch (_) {
+      logger.debug('ollama kapatılamadı (before-quit)', undefined, 'ollama');
+    }
     managedOllamaProcess = null;
   }
 });
@@ -1467,7 +1529,9 @@ function broadcastUpdateStatus(payload) {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('update-status', payload);
     }
-  } catch (_) {}
+  } catch (_) {
+    logger.debug('update-status gönderilemedi', undefined, 'updater');
+  }
 }
 
 function wireAutoUpdater() {
@@ -1501,7 +1565,9 @@ function wireAutoUpdater() {
 app.whenReady().then(() => {
   try {
     wireAutoUpdater();
-  } catch (_) {}
+  } catch (_) {
+    logger.debug('updater kurulamadı', undefined, 'updater');
+  }
 });
 
 ipcMain.handle('update-check-now', async () => {
@@ -1716,7 +1782,9 @@ ipcMain.handle('backup-import', async (event, password) => {
     if (fs.existsSync(DATA_FILE)) {
       try {
         fs.copyFileSync(DATA_FILE, `${DATA_FILE}.bak-${Date.now()}`);
-      } catch (_) {}
+      } catch (_) {
+        logger.debug('.bak kopyası alınamadı', undefined, 'backup');
+      }
     }
     fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
     const tmp = `${DATA_FILE}.tmp`;

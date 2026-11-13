@@ -1,4 +1,5 @@
 // Lux Unlimited Agent IPCs (Web, Görsel, Ekran, PC Kontrol) — main.js'ten ayrıştırıldı.
+const logger = require('../logger');
 const path = require('path');
 const fs = require('fs');
 
@@ -50,7 +51,9 @@ function registerAgentIpc({
       if (offWin && !offWin.isDestroyed()) {
         try {
           offWin.destroy();
-        } catch (_) {}
+        } catch (_) {
+          logger.debug('offscreen pencere kapatılamadı', undefined, 'agent');
+        }
       }
     }
   }
@@ -166,7 +169,9 @@ function registerAgentIpc({
             };
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        logger.debug('ekran yakalama denemesi başarısız', undefined, 'agent');
+      }
 
       const psRes = await agentCaps.captureScreenWithPowershell(outPath);
       if (psRes.success && fs.existsSync(outPath)) {

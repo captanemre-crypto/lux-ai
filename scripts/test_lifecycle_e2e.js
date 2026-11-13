@@ -498,7 +498,11 @@ async function main() {
       'i18n.js',
       'tool_approval.js',
       'agent_context.js',
-      'agent_workspace.js'
+      'agent_workspace.js',
+      'chat_shared.js',
+      'chat_render.js',
+      'chat_tools.js',
+      'chat_voice.js'
     ]) {
       const pos = html.indexOf(`js/${dep}`);
       if (pos === -1) throw new Error(`index.html'de eksik script: ${dep}`);
@@ -577,7 +581,12 @@ async function main() {
   });
 
   await test('21. Yüksek riskli araç onay kapısı (auto_approve_commands)', () => {
-    const chat = read('src/js/chat.js') + '\n' + read('src/js/tool_approval.js');
+    const chat =
+      ['chat_shared.js', 'chat_render.js', 'chat_tools.js', 'chat_voice.js', 'chat.js']
+        .map((f) => read('src/js/' + f))
+        .join('\n') +
+      '\n' +
+      read('src/js/tool_approval.js');
     const store = read('src/js/store.js');
     const assert = (cond, msg) => {
       if (!cond) throw new Error(msg);

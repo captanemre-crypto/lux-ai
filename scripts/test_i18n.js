@@ -15,7 +15,7 @@ const ROOT = path.resolve(__dirname, '..');
 const I18N_FILE = path.join(ROOT, 'src', 'js', 'i18n.js');
 const SCAN_DIRS = [path.join(ROOT, 'src', 'js')];
 const SCAN_FILES = [path.join(ROOT, 'src', 'index.html')];
-const SKIP_FILES = new Set(['marked.umd.js', 'compiled_tailwind.css', 'i18n.js']);
+const SKIP_FILES = new Set(['marked.umd.js', 'compiled_tailwind.css', 'i18n.js', 'i18n_en_map.js']);
 
 function extractDict(src, locale) {
   // tr: { düğümünü bul, sonra dengeli parantez sayacı ile objenin sonunu bul

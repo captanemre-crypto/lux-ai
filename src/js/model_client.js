@@ -6,6 +6,14 @@
 // kazanır, chat.js'ten ÖNCE yüklenir. (buildAgentSystemParts, executeToolCallsBatch
 // gibi döngü yardımcıları hâlâ chat.js'tedir ve çalışma anında globalden çözülür.)
 
+function luxEn() {
+  try {
+    return typeof window !== "undefined" && Boolean(window.LuxI18n) && window.LuxI18n.locale === "en";
+  } catch (_) {
+    return false;
+  }
+}
+
 function getActiveModel() {
   const models = window.appStore.getModels();
   if (!Array.isArray(models) || models.length === 0) return null;
@@ -56,10 +64,12 @@ async function callSingleModel(model, text, messages, assistantMsg) {
   const perms = window.appStore?.getPermissions?.() || {};
   const isLocal = isLocalModelEndpoint(model);
   if (isLocal && perms.network_localhost === false) {
-    throw new Error("Yerel ağ izni (network_localhost) kapatılmış");
+    throw new Error(luxEn() ? "Local network permission (network_localhost) is disabled" : "Yerel ağ izni (network_localhost) kapatılmış");
   }
   if (!isLocal && perms.network_internet === false) {
-    throw new Error("İnternet erişim izni (network_internet) kapatılmış");
+    throw new Error(
+      luxEn() ? "Internet access permission (network_internet) is disabled" : "İnternet erişim izni (network_internet) kapatılmış"
+    );
   }
 
   const isOpenRouter = model?.provider === "OpenRouter" || /openrouter\.ai/i.test(model?.endpoint || "");
@@ -73,7 +83,7 @@ async function callSingleModel(model, text, messages, assistantMsg) {
   const isMockKey = effectiveKey && (effectiveKey.includes("demoKey") || effectiveKey.includes("••••"));
 
   if ((!isLocal && !effectiveKey) || (!effectiveKey && !model?.endpoint) || isMockKey) {
-    throw new Error("Yapılandırılmış gerçek API anahtarı yok");
+    throw new Error(luxEn() ? "Configured real API key is missing" : "Yapılandırılmış gerçek API anahtarı yok");
   }
 
   const resolvedModel = effectiveKey ? { ...model, apiKey: effectiveKey } : model;
@@ -97,8 +107,12 @@ function classifyModelApiError(err, activeModel) {
     if (m) status = Number(m[1]);
   }
   const isOpenRouter = activeModel?.provider === "OpenRouter" || /openrouter\.ai/i.test(activeModel?.endpoint || "");
-  const isMissingKey = msg === "Yapılandırılmış gerçek API anahtarı yok" || msg === "API Anahtarı eksik";
-  const isPermissionBlocked = /izni\s*\([^)]+\)\s*kapatılmış/i.test(msg);
+  const isMissingKey =
+    msg === "Yapılandırılmış gerçek API anahtarı yok" ||
+    msg === "API Anahtarı eksik" ||
+    msg === "Configured real API key is missing" ||
+    msg === "API key missing";
+  const isPermissionBlocked = /izni\s*\([^)]+\)\s*kapatılmış|permission\s*\([^)]+\)\s*(is\s*)?(disabled|blocked|denied)/i.test(msg);
   const isDailyOrCreditQuota = /free-models-per-day|daily\s*limit|credits|insufficient|quota.*exhausted/i.test(msg);
   const isRateLimit = status === 429 || /rate.?limit/i.test(msg);
   const isAuthOrBilling = status === 401 || status === 402 || status === 403 || /invalid.*api.?key|unauthorized|authentication/i.test(msg);
@@ -121,38 +135,57 @@ function classifyModelApiError(err, activeModel) {
 
 function formatModelApiErrorMessage(err, activeModel) {
   const info = classifyModelApiError(err, activeModel);
-  const modelLabel = activeModel?.name || "Seçili model";
+  const en = luxEn();
+  const modelLabel = activeModel?.name || (en ? "Selected model" : "Seçili model");
   const modelIdTag = activeModel?.modelId ? ` (\`${activeModel.modelId}\`)` : "";
 
   if (info.isPermissionBlocked) {
-    return `⚠ İşlem güvenlik izni nedeniyle durduruldu: \`${info.msg}\`. **Ayarlar → İzinler** bölümünden kontrol edebilirsin.`;
+    return en
+      ? `⚠ Operation stopped by a security permission: \`${info.msg}\`. Check **Settings → Permissions**.`
+      : `⚠ İşlem güvenlik izni nedeniyle durduruldu: \`${info.msg}\`. **Ayarlar → İzinler** bölümünden kontrol edebilirsin.`;
   }
   if (info.isMissingKey) {
-    return `⚠ **${modelLabel}** seçili ama API anahtarı henüz girilmemiş. **Ayarlar → Modeller**'den anahtarını ekleyebilir ya da sol alttan yerel **Ollama** modeline geçebilirsin.`;
+    return en
+      ? `⚠ **${modelLabel}** is selected but no API key has been entered yet. Add a key in **Settings → Models**, or switch to a local **Ollama** model from the bottom-left.`
+      : `⚠ **${modelLabel}** seçili ama API anahtarı henüz girilmemiş. **Ayarlar → Modeller**'den anahtarını ekleyebilir ya da sol alttan yerel **Ollama** modeline geçebilirsin.`;
   }
   if (info.isRateLimit && info.isOpenRouter && info.isDailyOrCreditQuota) {
-    return `⚠ **${modelLabel}**${modelIdTag} ücretsiz günlük istek limitine (**HTTP 429**) ulaştı (OpenRouter free katmanı: günde 50 istek).\n\nSol alttan yerel **Ollama** veya **Google Gemini** modeline geçebilir ya da OpenRouter hesabına bakiye ekleyebilirsin.`;
+    return en
+      ? `⚠ **${modelLabel}**${modelIdTag} hit the free daily request limit (**HTTP 429**) (OpenRouter free tier: 50 requests/day).\n\nSwitch to a local **Ollama** or **Google Gemini** model from the bottom-left, or top up your OpenRouter balance.`
+      : `⚠ **${modelLabel}**${modelIdTag} ücretsiz günlük istek limitine (**HTTP 429**) ulaştı (OpenRouter free katmanı: günde 50 istek).\n\nSol alttan yerel **Ollama** veya **Google Gemini** modeline geçebilir ya da OpenRouter hesabına bakiye ekleyebilirsin.`;
   }
   if (info.isRateLimit) {
-    return `⚠ **${modelLabel}**${modelIdTag} istek sınırına (**HTTP 429 — Rate Limit**) takıldı: \`${info.msg}\`. Kısa süre bekleyip tekrar deneyebilir veya sol alttan başka bir model seçebilirsin.`;
+    return en
+      ? `⚠ **${modelLabel}**${modelIdTag} hit the rate limit (**HTTP 429 — Rate Limit**): \`${info.msg}\`. Wait a moment and retry, or pick another model from the bottom-left.`
+      : `⚠ **${modelLabel}**${modelIdTag} istek sınırına (**HTTP 429 — Rate Limit**) takıldı: \`${info.msg}\`. Kısa süre bekleyip tekrar deneyebilir veya sol alttan başka bir model seçebilirsin.`;
   }
   if (info.isAuthOrBilling) {
-    const codeStr = info.status ? `HTTP ${info.status}` : "Yetkilendirme";
-    return `⚠ **${modelLabel}** bağlantı hatası (**${codeStr}**): \`${info.msg}\`. **Ayarlar → Modeller** kısmından API anahtarını/bakiyeni kontrol et.`;
+    const codeStr = info.status ? `HTTP ${info.status}` : en ? "Authorization" : "Yetkilendirme";
+    return en
+      ? `⚠ **${modelLabel}** connection error (**${codeStr}**): \`${info.msg}\`. Check the API key/balance in **Settings → Models**.`
+      : `⚠ **${modelLabel}** bağlantı hatası (**${codeStr}**): \`${info.msg}\`. **Ayarlar → Modeller** kısmından API anahtarını/bakiyeni kontrol et.`;
   }
   if (info.isRetiredOrMissingModel) {
-    return `⚠ Seçili model**${modelIdTag}** sağlayıcı tarafında bulunamadı veya kullanımdan kaldırıldı (**HTTP 404**): \`${info.msg}\`. **Ayarlar → Modeller**'den güncel bir model seçebilirsin.`;
+    return en
+      ? `⚠ The selected model**${modelIdTag}** was not found or has been retired on the provider side (**HTTP 404**): \`${info.msg}\`. Pick a current model in **Settings → Models**.`
+      : `⚠ Seçili model**${modelIdTag}** sağlayıcı tarafında bulunamadı veya kullanımdan kaldırıldı (**HTTP 404**): \`${info.msg}\`. **Ayarlar → Modeller**'den güncel bir model seçebilirsin.`;
   }
   if (info.isTimeout) {
-    return `⚠ **${modelLabel}**${modelIdTag} yanıt süresi sınırını aştı (**Zaman Aşımı**). Bağlantını kontrol edip tekrar deneyebilir ya da daha hızlı bir model seçebilirsin.`;
+    return en
+      ? `⚠ **${modelLabel}**${modelIdTag} exceeded the response time limit (**Timeout**). Check your connection and retry, or pick a faster model.`
+      : `⚠ **${modelLabel}**${modelIdTag} yanıt süresi sınırını aştı (**Zaman Aşımı**). Bağlantını kontrol edip tekrar deneyebilir ya da daha hızlı bir model seçebilirsin.`;
   }
   const codeBadge = info.status ? ` (**HTTP ${info.status}**)` : "";
-  return `⚠ **${modelLabel}**${modelIdTag} şu an yanıt veremedi${codeBadge}: \`${info.msg || "Bilinmeyen bağlantı hatası"}\`.`;
+  return en
+    ? `⚠ **${modelLabel}**${modelIdTag} could not respond right now${codeBadge}: \`${info.msg || "Unknown connection error"}\`.`
+    : `⚠ **${modelLabel}**${modelIdTag} şu an yanıt veremedi${codeBadge}: \`${info.msg || "Bilinmeyen bağlantı hatası"}\`.`;
 }
 
 async function callModelWithFallback(activeModel, text, messages, assistantMsg) {
   if (!activeModel) {
-    return "Şu an kayıtlı veya seçili bir LLM modelin yok. Ayarlar → Modeller üzerinden istediğin bir modeli ekleyip seçebilirsin.";
+    return luxEn()
+      ? "You don't have a saved or selected LLM model right now. Add or select one in Settings → Models."
+      : "Şu an kayıtlı veya seçili bir LLM modelin yok. Ayarlar → Modeller üzerinden istediğin bir modeli ekleyip seçebilirsin.";
   }
   try {
     return await callSingleModel(activeModel, text, messages, assistantMsg);
@@ -189,7 +222,9 @@ async function callModelWithFallback(activeModel, text, messages, assistantMsg) 
           if (assistantMsg) {
             assistantMsg.__streamReset?.();
             assistantMsg.modelName = `${localModel.name} (Otomatik Yedek)`;
-            assistantMsg.stepLabel = `⚡ ${activeModel.name} erişilemedi, yerel ${localModel.name} modeline geçildi.`;
+            assistantMsg.stepLabel = luxEn()
+              ? `⚡ ${activeModel.name} unreachable, switched to local ${localModel.name}.`
+              : `⚡ ${activeModel.name} erişilemedi, yerel ${localModel.name} modeline geçildi.`;
             renderChat();
           }
           return await callSingleModel(localModel, text, messages, assistantMsg);
@@ -212,7 +247,9 @@ async function callModelWithFallback(activeModel, text, messages, assistantMsg) 
         modelId: activeModel.modelId || ""
       };
       assistantMsg.content = "";
-      assistantMsg.stepLabel = `⚠ ${activeModel.name} hatası${errInfo.status ? ` (HTTP ${errInfo.status})` : ""}`;
+      assistantMsg.stepLabel = luxEn()
+        ? `⚠ ${activeModel.name} error${errInfo.status ? ` (HTTP ${errInfo.status})` : ""}`
+        : `⚠ ${activeModel.name} hatası${errInfo.status ? ` (HTTP ${errInfo.status})` : ""}`;
     }
     return formatModelApiErrorMessage(err, activeModel);
   }
@@ -242,7 +279,7 @@ function buildGeminiGenerationConfig(modelCode, disableThinking = true) {
 
 async function callGeminiAPIOnce(model, contents, systemPrompt, streamOpts = {}) {
   const apiKey = model.apiKey;
-  if (!apiKey) throw Object.assign(new Error("API Anahtarı eksik"), { status: 401 });
+  if (!apiKey) throw Object.assign(new Error(luxEn() ? "API key missing" : "API Anahtarı eksik"), { status: 401 });
   const modelCode = resolveGeminiModelCode(model.modelId);
   const timeoutMs = streamOpts.timeoutMs || 45000;
 
@@ -281,7 +318,7 @@ async function callGeminiAPIOnce(model, contents, systemPrompt, streamOpts = {})
           .map((p) => p.text)
           .join("");
         if (text) streamOpts.onToken?.(text, text);
-        return { text: text || "Boş yanıt alındı." };
+        return { text: text || (luxEn() ? "Empty response received." : "Boş yanıt alındı.") };
       }
 
       const reader = res.body.getReader();
@@ -334,9 +371,9 @@ async function callGeminiAPIOnce(model, contents, systemPrompt, streamOpts = {})
         }
       }
 
-      return { text: fullText || "Boş yanıt alındı." };
+      return { text: fullText || (luxEn() ? "Empty response received." : "Boş yanıt alındı.") };
     } catch (err) {
-      if (req.didTimeout()) throw new Error("Gemini isteği zaman aşımına uğradı");
+      if (req.didTimeout()) throw new Error(luxEn() ? "Gemini request timed out" : "Gemini isteği zaman aşımına uğradı");
       throw err;
     } finally {
       req.cleanup();
@@ -383,19 +420,23 @@ async function callGeminiWithAgentLoop(model, prompt, history, assistantMsg) {
       const cleaned = cleanAssistantFinalText(reply);
       if (cleaned) return cleaned;
       if (Array.isArray(assistantMsg?.toolSteps) && assistantMsg.toolSteps.length > 0) {
-        return "İşlemleri tamamladım.";
+        return luxEn() ? "Done — all steps completed." : "İşlemleri tamamladım.";
       }
-      return reply ? cleanAssistantFinalText(reply) : "İşlem tamamlandı.";
+      return reply ? cleanAssistantFinalText(reply) : luxEn() ? "Action completed." : "İşlem tamamlandı.";
     }
 
     contents.push({ role: "model", parts: [{ text: reply }] });
     const batchResults = await executeToolCallsBatch(xmlCalls, assistantMsg, (tc) => ({ name: tc.name, args: tc.args }));
-    const toolResults = batchResults.map((r) => `Araç (${r.name}) sonucu:\n${r.execRes.resultText}`);
+    const toolResults = batchResults.map(
+      (r) => `${luxEn() ? "Tool" : "Araç"} (${r.name}) ${luxEn() ? "result" : "sonucu"}:\n${r.execRes.resultText}`
+    );
     contents.push({
       role: "user",
       parts: [
         {
-          text: `${toolResults.join("\n\n")}\n\nBu gerçek araç çıktılarına dayanarak kullanıcıya samimi 'sen' diliyle, doğal ve net Türkçe yanıt ver.`
+          text: luxEn()
+            ? `${toolResults.join("\n\n")}\n\nBased on these real tool outputs, give the user a warm, casual, clear answer in natural English.`
+            : `${toolResults.join("\n\n")}\n\nBu gerçek araç çıktılarına dayanarak kullanıcıya samimi 'sen' diliyle, doğal ve net Türkçe yanıt ver.`
         }
       ]
     });
@@ -407,7 +448,7 @@ async function callGeminiWithAgentLoop(model, prompt, history, assistantMsg) {
     timeoutMs,
     onToken: assistantMsg?.__onStreamToken
   });
-  return cleanAssistantFinalText(finalReply) || "İşlemleri tamamladım.";
+  return cleanAssistantFinalText(finalReply) || (luxEn() ? "Done — all steps completed." : "İşlemleri tamamladım.");
 }
 
 async function fetchOllamaNativeChat(ollamaBaseUrl, payload, timeoutMs = 150000, streamOpts = {}) {
@@ -528,7 +569,7 @@ async function fetchOllamaNativeChat(ollamaBaseUrl, payload, timeoutMs = 150000,
       ]
     };
   } catch (err) {
-    if (req.didTimeout()) throw new Error("Model yanıtı zaman aşımına uğradı");
+    if (req.didTimeout()) throw new Error(luxEn() ? "Model response timed out" : "Model yanıtı zaman aşımına uğradı");
     throw err;
   } finally {
     req.cleanup();
@@ -588,7 +629,7 @@ async function fetchOpenAIChatCompletion(endpoint, headers, bodyObj, timeoutMs =
         return;
       }
       if (parsed?.error) {
-        const e = new Error(parsed.error.message || "Upstream akış hatası");
+        const e = new Error(parsed.error.message || (luxEn() ? "Upstream stream error" : "Upstream akış hatası"));
         e.status = Number(parsed.error.code) || 502;
         throw e;
       }
@@ -647,7 +688,7 @@ async function fetchOpenAIChatCompletion(endpoint, headers, bodyObj, timeoutMs =
       ]
     };
   } catch (err) {
-    if (req.didTimeout()) throw new Error("Model yanıtı zaman aşımına uğradı");
+    if (req.didTimeout()) throw new Error(luxEn() ? "Model response timed out" : "Model yanıtı zaman aşımına uğradı");
     throw err;
   } finally {
     req.cleanup();
@@ -705,7 +746,10 @@ async function callOpenAICompatibleAPI(model, prompt, history, assistantMsg) {
       prompt
     );
   const skipCalibration =
-    isGroundedTurn || /(?:^|\s)size\b.*?(kullanma|deme|söyleme|yasak|istemiyorum)|resmi\s*(konuşma|olma)/i.test(userQuestionOnly);
+    isGroundedTurn ||
+    /(?:^|\s)size\b.*?(kullanma|deme|söyleme|yasak|istemiyorum)|resmi\s*(konuşma|olma)|(?:^|\s)(?:do not|don't)\s+(?:use|say|be).*?formal|formal\s*(?:language|speech|tone|address)|no\s+formal/i.test(
+      userQuestionOnly
+    );
 
   const hasToolsBridge = Boolean(window.luxAPI?.fs || window.luxAPI?.agent);
   const preGroundedAlready = Array.isArray(assistantMsg?.toolSteps) && assistantMsg.toolSteps.length > 0;
@@ -731,11 +775,18 @@ async function callOpenAICompatibleAPI(model, prompt, history, assistantMsg) {
     }
   ];
   if (!skipCalibration && !useNativeTools && !shouldAttachToolsForPrompt(prompt, history) && history.length === 0) {
-    // Single neutral Turkish tone-calibration pair on brand-new casual turns
-    messages.push(
-      { role: "user", content: "selam naber" },
-      { role: "assistant", content: "Selam! Buralardayım, işlemciler serin keyifler yerinde 😄 Sende durumlar nasıl?" }
-    );
+    // Single neutral tone-calibration pair on brand-new casual turns
+    if (luxEn()) {
+      messages.push(
+        { role: "user", content: "hey what's up" },
+        { role: "assistant", content: "Hey! All good here — keeping the fans cool and the vibes warm 😄 How about you?" }
+      );
+    } else {
+      messages.push(
+        { role: "user", content: "selam naber" },
+        { role: "assistant", content: "Selam! Buralardayım, işlemciler serin keyifler yerinde 😄 Sende durumlar nasıl?" }
+      );
+    }
   }
   const historyLimit = isLocalCpu ? -4 : -12;
   const rollup = window.LuxContextRollup?.withRollupContext
@@ -745,7 +796,8 @@ async function callOpenAICompatibleAPI(model, prompt, history, assistantMsg) {
   rollup.kept.forEach((m) => {
     if (m.content) {
       const raw = String(m.content);
-      const clipped = isLocalCpu && raw.length > 650 ? raw.slice(0, 650) + "\n...[kısaltıldı]" : raw;
+      const clippedLabel = luxEn() ? "[truncated]" : "[kısaltıldı]";
+      const clipped = isLocalCpu && raw.length > 650 ? raw.slice(0, 650) + `\n...${clippedLabel}` : raw;
       messages.push({
         role: m.role === "user" ? "user" : "assistant",
         content: clipped
@@ -755,8 +807,12 @@ async function callOpenAICompatibleAPI(model, prompt, history, assistantMsg) {
   messages.push({ role: "user", content: effectivePrompt });
 
   const MAX_TOOL_STEPS = 12;
-  const isCodeOrDesignBuild = /(?:tasarla|kod|html|css|js|script|sayfa|web\s*site|açılış\s*sayfası|kur|oluştur)/i.test(userQuestionOnly);
-  const isCreativeText = !isCodeOrDesignBuild && /(?:ninni|metin|makale|hikaye|şiir)/i.test(userQuestionOnly);
+  const isCodeOrDesignBuild =
+    /(?:tasarla|kod|html|css|js|script|sayfa|web\s*site|açılış\s*sayfası|kur|oluştur|code|html|css|page|website|landing|app|build|create|design)/i.test(
+      userQuestionOnly
+    );
+  const isCreativeText =
+    !isCodeOrDesignBuild && /(?:ninni|metin|makale|hikaye|şiir|lullaby|text|article|essay|story|poem|song)/i.test(userQuestionOnly);
   const streamOpts = { onToken: assistantMsg?.__onStreamToken };
 
   const runLoop = async (activeModelId) => {
@@ -827,10 +883,14 @@ async function callOpenAICompatibleAPI(model, prompt, history, assistantMsg) {
       if (xmlCalls.length > 0) {
         messages.push({ role: "assistant", content: rawText });
         const batchResults = await executeToolCallsBatch(xmlCalls, assistantMsg, (tc) => ({ name: tc.name, args: tc.args }));
-        const summaries = batchResults.map((r) => `Araç (${r.name}) sonucu:\n${r.execRes.resultText}`);
+        const summaries = batchResults.map(
+          (r) => `${luxEn() ? "Tool" : "Araç"} (${r.name}) ${luxEn() ? "result" : "sonucu"}:\n${r.execRes.resultText}`
+        );
         messages.push({
           role: "user",
-          content: `${summaries.join("\n\n")}\n\nYukarıdaki gerçek araç çıktılarına dayanarak kullanıcıya samimi, doğal ve net bir Türkçe yanıt ver.`
+          content: luxEn()
+            ? `${summaries.join("\n\n")}\n\nBased on the real tool outputs above, give the user a warm, natural, clear answer in English.`
+            : `${summaries.join("\n\n")}\n\nYukarıdaki gerçek araç çıktılarına dayanarak kullanıcıya samimi, doğal ve net bir Türkçe yanıt ver.`
         });
         continue;
       }
@@ -841,11 +901,11 @@ async function callOpenAICompatibleAPI(model, prompt, history, assistantMsg) {
         return assistantMsg.toolSteps.map((s) => `- **${s.name}**: ${s.summary}`).join("\n");
       }
       if (isOpenRouter && activeModelId !== "openrouter/free") {
-        const emptyErr = new Error("OpenRouter upstream boş yanıt döndürdü");
+        const emptyErr = new Error(luxEn() ? "OpenRouter upstream returned an empty response" : "OpenRouter upstream boş yanıt döndürdü");
         emptyErr.status = 502;
         throw emptyErr;
       }
-      return "İşlemi tamamladım.";
+      return luxEn() ? "Done." : "İşlemi tamamladım.";
     }
 
     // Final synthesis after max tool steps
@@ -855,7 +915,7 @@ async function callOpenAICompatibleAPI(model, prompt, history, assistantMsg) {
     if (isLocalCpu) finalPayload.max_tokens = 2048;
     const finalData = await fetchOpenAIChatCompletion(endpoint, headers, finalPayload, requestTimeoutMs, streamOpts);
     const finalText = finalData?.choices?.[0]?.message?.content || "";
-    return cleanAssistantFinalText(finalText) || "İşlemleri tamamladım.";
+    return cleanAssistantFinalText(finalText) || (luxEn() ? "Done — all steps completed." : "İşlemleri tamamladım.");
   };
 
   // Skip already rate-limited OpenRouter :free model during 60s cooldown window
@@ -866,7 +926,9 @@ async function callOpenAICompatibleAPI(model, prompt, history, assistantMsg) {
       console.info(`⚡ OpenRouter cooldown active for ${targetModelId}, routing via openrouter/free`);
       const orCoolReply = await runLoop("openrouter/free");
       if (assistantMsg) {
-        assistantMsg.stepLabel = `⚡ ${targetModelId} geçici limitli olduğu için Auto-Free kullanıldı.`;
+        assistantMsg.stepLabel = luxEn()
+          ? `⚡ ${targetModelId} is temporarily rate-limited — Auto-Free was used.`
+          : `⚡ ${targetModelId} geçici limitli olduğu için Auto-Free kullanıldı.`;
       }
       return orCoolReply;
     }
@@ -894,7 +956,9 @@ async function callOpenAICompatibleAPI(model, prompt, history, assistantMsg) {
         if (fbText) {
           model.modelId = "oc/flint-40b-free";
           window.appStore?.updateModel?.(model.id, { modelId: "oc/flint-40b-free" });
-          return `${fbText}\n\n> 💡 **9Router Otomatik Kurtarma:** Seçili model (\`${targetModelId}\`) sunucu tarafında yanıt vermediği (\`${err.message}\`) için sorgunuz otomatik olarak kararlı çalışan **\`oc/flint-40b-free\`** modeline yönlendirildi.`;
+          return luxEn()
+            ? `${fbText}\n\n> 💡 **9Router Auto-Recovery:** The selected model (\`${targetModelId}\`) did not respond on the server side (\`${err.message}\`), so your query was automatically routed to the stable **\`oc/flint-40b-free\`** model.`
+            : `${fbText}\n\n> 💡 **9Router Otomatik Kurtarma:** Seçili model (\`${targetModelId}\`) sunucu tarafında yanıt vermediği (\`${err.message}\`) için sorgunuz otomatik olarak kararlı çalışan **\`oc/flint-40b-free\`** modeline yönlendirildi.`;
         }
       } catch (fbErr) {
         if (!window.isGenerating || fbErr?.name === "AbortError") throw fbErr;
@@ -920,7 +984,9 @@ async function callOpenAICompatibleAPI(model, prompt, history, assistantMsg) {
         const orAutoReply = await runLoop("openrouter/free");
         if (assistantMsg) {
           assistantMsg.modelName = assistantMsg.modelName || "OpenRouter · Auto-Free";
-          assistantMsg.stepLabel = `⚡ ${targetModelId} yoğun olduğu için OpenRouter Auto-Free üzerinden yanıtlandı.`;
+          assistantMsg.stepLabel = luxEn()
+            ? `⚡ ${targetModelId} is busy — answered via OpenRouter Auto-Free.`
+            : `⚡ ${targetModelId} yoğun olduğu için OpenRouter Auto-Free üzerinden yanıtlandı.`;
         }
         return orAutoReply;
       } catch (orFbErr) {
@@ -983,7 +1049,7 @@ async function callAnthropicAPIOnce(model, messages, systemPartsOrText, streamOp
     const contentType = (res.headers.get("content-type") || "").toLowerCase();
     if (!contentType.includes("text/event-stream") || !res.body?.getReader) {
       const data = await res.json();
-      const text = data.content?.[0]?.text || "Boş yanıt alındı.";
+      const text = data.content?.[0]?.text || (luxEn() ? "Empty response received." : "Boş yanıt alındı.");
       if (text) streamOpts.onToken?.(text, text);
       return text;
     }
@@ -1015,9 +1081,9 @@ async function callAnthropicAPIOnce(model, messages, systemPartsOrText, streamOp
       }
     }
 
-    return fullText || "Boş yanıt alındı.";
+    return fullText || (luxEn() ? "Empty response received." : "Boş yanıt alındı.");
   } catch (err) {
-    if (req.didTimeout()) throw new Error("Anthropic isteği zaman aşımına uğradı");
+    if (req.didTimeout()) throw new Error(luxEn() ? "Anthropic request timed out" : "Anthropic isteği zaman aşımına uğradı");
     throw err;
   } finally {
     req.cleanup();
@@ -1059,10 +1125,14 @@ async function callAnthropicWithAgentLoop(model, prompt, history, assistantMsg) 
 
     messages.push({ role: "assistant", content: reply });
     const batchResults = await executeToolCallsBatch(xmlCalls, assistantMsg, (tc) => ({ name: tc.name, args: tc.args }));
-    const toolResults = batchResults.map((r) => `Araç (${r.name}) sonucu:\n${r.execRes.resultText}`);
+    const toolResults = batchResults.map(
+      (r) => `${luxEn() ? "Tool" : "Araç"} (${r.name}) ${luxEn() ? "result" : "sonucu"}:\n${r.execRes.resultText}`
+    );
     messages.push({
       role: "user",
-      content: `${toolResults.join("\n\n")}\n\nBu sonuca dayanarak kullanıcıya samimi, doğal ve net Türkçe yanıt ver.`
+      content: luxEn()
+        ? `${toolResults.join("\n\n")}\n\nBased on this result, give the user a warm, natural, clear answer in English.`
+        : `${toolResults.join("\n\n")}\n\nBu sonuca dayanarak kullanıcıya samimi, doğal ve net Türkçe yanıt ver.`
     });
   }
 
@@ -1081,6 +1151,28 @@ function generateNaturalResponse(prompt, model) {
     .split(/\n---\n\[/)[0]
     .trim();
   const p = cleanPrompt.toLowerCase();
+
+  if (luxEn()) {
+    if (/^(hi|hello|hey|yo|hiya|howdy)(\s|$|!|,)/.test(p) || p === "hi" || p === "hey" || p === "hello") {
+      return "Hey! Coffee in hand, ready to roll 😄 What are we tinkering with today?";
+    }
+    if (/good\s*(morning|afternoon|evening|night)/.test(p)) {
+      return "Good day to you too! Where do we pick things up — code or conversation?";
+    }
+    if (/(how are you|what'?s up|how'?s it going|how you doing)/.test(p)) {
+      return "Running smooth — even the fans are humming along happily! How about you, what's on your mind today?";
+    }
+    if (/(formal|formality|honorifics|respectful tone)/.test(p) && /(don'?t use|avoid|skip|stop|no)/.test(p)) {
+      return "Deal — formality is off the table. We're fully casual from here on out.";
+    }
+    if (p.includes("test") || p.includes("1 2 3 4") || p.includes("sound test")) {
+      return "Sound test passed — coming through crystal clear on my end. Keep going!";
+    }
+    if (/(can you hear me|do you hear me|am i coming through|is my voice coming)/.test(p)) {
+      return "Crystal clear! It's like you're sitting right across from me — go ahead.";
+    }
+    return `You said "${cleanPrompt}", but the selected model is unreachable right now. Check your model connection in Settings or the model picker at the bottom-left, and we'll pick right back up!`;
+  }
 
   if (
     p === "selam" ||

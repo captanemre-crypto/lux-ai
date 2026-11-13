@@ -25,7 +25,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:i18n": "node scripts/test_i18n.js",
-    "test:visual": "node node_modules/electron/cli.js scripts/visual_regression.js"
+    "test:visual": "node node_modules/electron/cli.js scripts/visual_regression.js",
+    "test:i18n:runtime": "xvfb-run -a node node_modules/electron/cli.js scripts/i18n_runtime_probe.js"
   },
   "keywords": [
     "lux-ai",

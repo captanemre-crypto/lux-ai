@@ -85,8 +85,14 @@ function log(level, scope, message, extra) {
   }
 }
 
+const DEBUG_ENABLED = !!(process.env.LUX_DEBUG && process.env.LUX_DEBUG !== '0');
+
 module.exports = {
   LOG_DIR,
+  // LUX_DEBUG=1 iken app.log'a yazar; varsayılan olarak tamamen sessizdir.
+  debug: (msg, extra, scope) => {
+    if (DEBUG_ENABLED) log('debug', scope, msg, extra);
+  },
   info: (msg, extra, scope) => log('info', scope, msg, extra),
   warn: (msg, extra, scope) => log('warn', scope, msg, extra),
   error: (msg, extra, scope) => log('error', scope, msg, extra),

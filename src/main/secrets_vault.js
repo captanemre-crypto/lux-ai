@@ -2,6 +2,7 @@
 // Makine anahtar zinciri varsa safeStorage kullanılır; yoksa userData'ya özgü
 // türetilmiş anahtarla AES-256-GCM. Kayıtlar v2 sürümlü belgede tutulur
 // (bkz. VAULT_VERSION); v1 düz dosya yükseltme okumada sessizce yapılır.
+const logger = require('../logger');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
@@ -43,6 +44,7 @@ function createSecretsVault({ userDataDir, safeStorage, ipcMain }) {
       // v1 (eski) biçim: doğrudan { id: record } haritası — sessizce okunur, bir sonraki yazmada v2'ye taşınır
       return { version: 1, entries: raw && typeof raw === 'object' ? raw : {}, createdAt: null, rotatedAt: null };
     } catch (_) {
+      logger.debug('kasa okunamadı, boş kasa dönülüyor', undefined, 'secrets');
       return { version: VAULT_VERSION, entries: {}, createdAt: null, rotatedAt: null };
     }
   }

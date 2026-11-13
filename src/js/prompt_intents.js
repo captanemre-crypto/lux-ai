@@ -86,6 +86,14 @@ function stripLeadingLocationAndFillers(text) {
   return out.replace(/^(?:ve|ile|de|da|bir|yeni|diye)\s+/i, "").trim();
 }
 
+function luxSiteEn() {
+  try {
+    return typeof window !== "undefined" && Boolean(window.LuxI18n) && window.LuxI18n.locale === "en";
+  } catch (_) {
+    return false;
+  }
+}
+
 function sanitizeLocalEntryName(rawName) {
   return String(rawName || "")
     .trim()
@@ -490,6 +498,51 @@ function extractExplicitDesktopFolderName(userText) {
 }
 
 function buildStarterWebFiles(userText, folderName) {
+  const en = luxSiteEn();
+  const S = en
+    ? {
+        htmlLang: "en",
+        navFeatures: "Features",
+        navExperience: "Experience",
+        navContact: "Get in Touch",
+        badge: "✨ Custom Design",
+        heroSub: "A modern, fast and responsive web experience designed from scratch by Lux AI, powered by Lux.",
+        ctaPrimary: "Start Exploring",
+        ctaGhost: "Shift the Atmosphere",
+        card1Title: "Modern Interface",
+        card1Body: "Glass-effect cards, fluid transitions, and an easy-on-the-eyes dark/warm color balance.",
+        card2Title: "Responsive Design",
+        card2Body: "Grid architecture that adapts automatically to desktop, tablet, and mobile screens.",
+        card3Title: "Ready Out of the Box",
+        card3Body: "Pure HTML5 and CSS3 layers — runs with zero extra setup.",
+        showcaseTitle: "Highlighted Details",
+        showcaseBanner: "Page active — click the buttons to try the live interaction.",
+        footerSuffix: "· Built with Lux AI",
+        altOn: "Golden amber atmosphere mode enabled!",
+        altOff: "Switched back to the sapphire night atmosphere."
+      }
+    : {
+        htmlLang: "tr",
+        navFeatures: "Özellikler",
+        navExperience: "Deneyim",
+        navContact: "Bize Ulaş",
+        badge: "✨ Özel Tasarım",
+        heroSub: "Lux gücündeki Lux AI tarafından sıfırdan tasarlanan modern, hızlı ve duyarlı web deneyimi.",
+        ctaPrimary: "Keşfetmeye Başla",
+        ctaGhost: "Atmosferi Değiştir",
+        card1Title: "Modern Arayüz",
+        card1Body: "Cam efektli kartlar, akıcı geçişler ve göz yormayan koyu/sıcak renk dengesi.",
+        card2Title: "Duyarlı Tasarım",
+        card2Body: "Masaüstü, tablet ve mobil ekranlara otomatik uyum sağlayan grid mimarisi.",
+        card3Title: "Anında Hazır",
+        card3Body: "Temiz HTML5 ve CSS3 katmanı sayesinde hiçbir ek kurulum gerektirmeden çalışır.",
+        showcaseTitle: "Öne Çıkan Detaylar",
+        showcaseBanner: "Sayfa aktif — butonlara tıklayarak canlı etkileşimi test edebilirsin.",
+        footerSuffix: "· Lux AI ile oluşturuldu",
+        altOn: "Altın kehribar atmosfer modu etkinleştirildi!",
+        altOff: "Safir gece atmosfer moduna dönüldü."
+      };
+
   const topic =
     String(userText || "")
       .replace(/masaüstü(?:nde|ne)?|desktop|klasör(?:ü|ünü|ünde)?|oluşturup|oluştur|içine|kur|yap|tasarla/gi, " ")
@@ -498,7 +551,7 @@ function buildStarterWebFiles(userText, folderName) {
   const titleText = escapeHtml(topic.slice(0, 64));
 
   const html = `<!DOCTYPE html>
-<html lang="tr">
+<html lang="${S.htmlLang}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -509,48 +562,48 @@ function buildStarterWebFiles(userText, folderName) {
   <header class="topbar">
     <div class="brand">⚡ Lux Studio</div>
     <nav>
-      <a href="#ozellikler">Özellikler</a>
-      <a href="#galeri">Deneyim</a>
-      <a href="#iletisim" class="cta-sm">Bize Ulaş</a>
+      <a href="#ozellikler">${S.navFeatures}</a>
+      <a href="#galeri">${S.navExperience}</a>
+      <a href="#iletisim" class="cta-sm">${S.navContact}</a>
     </nav>
   </header>
 
   <main>
     <section class="hero">
-      <span class="badge">✨ Özel Tasarım</span>
+      <span class="badge">${S.badge}</span>
       <h1>${titleText}</h1>
-      <p>Lux gücündeki Lux AI tarafından sıfırdan tasarlanan modern, hızlı ve duyarlı web deneyimi.</p>
+      <p>${S.heroSub}</p>
       <div class="actions">
-        <a href="#ozellikler" class="btn-primary">Keşfetmeye Başla</a>
-        <button id="theme-pulse-btn" class="btn-ghost" type="button">Atmosferi Değiştir</button>
+        <a href="#ozellikler" class="btn-primary">${S.ctaPrimary}</a>
+        <button id="theme-pulse-btn" class="btn-ghost" type="button">${S.ctaGhost}</button>
       </div>
     </section>
 
     <section id="ozellikler" class="grid">
       <article class="card">
-        <h3>Modern Arayüz</h3>
-        <p>Cam efektli kartlar, akıcı geçişler ve göz yormayan koyu/sıcak renk dengesi.</p>
+        <h3>${S.card1Title}</h3>
+        <p>${S.card1Body}</p>
       </article>
       <article class="card">
-        <h3>Duyarlı Tasarım</h3>
-        <p>Masaüstü, tablet ve mobil ekranlara otomatik uyum sağlayan grid mimarisi.</p>
+        <h3>${S.card2Title}</h3>
+        <p>${S.card2Body}</p>
       </article>
       <article class="card">
-        <h3>Anında Hazır</h3>
-        <p>Temiz HTML5 ve CSS3 katmanı sayesinde hiçbir ek kurulum gerektirmeden çalışır.</p>
+        <h3>${S.card3Title}</h3>
+        <p>${S.card3Body}</p>
       </article>
     </section>
 
     <section id="galeri" class="showcase">
       <div class="showcase-box">
-        <h2>Öne Çıkan Detaylar</h2>
-        <p id="status-banner">Sayfa aktif — butonlara tıklayarak canlı etkileşimi test edebilirsin.</p>
+        <h2>${S.showcaseTitle}</h2>
+        <p id="status-banner">${S.showcaseBanner}</p>
       </div>
     </section>
   </main>
 
   <footer id="iletisim">
-    <small>${escapeHtml(folderName)} · Lux AI ile oluşturuldu</small>
+    <small>${escapeHtml(folderName)} ${S.footerSuffix}</small>
   </footer>
 
   <script>
@@ -562,8 +615,8 @@ function buildStarterWebFiles(userText, folderName) {
       document.body.classList.toggle("alt-accent", alt);
       if (banner) {
         banner.textContent = alt
-          ? "Altın kehribar atmosfer modu etkinleştirildi!"
-          : "Safir gece atmosfer moduna dönüldü.";
+          ? "${S.altOn}"
+          : "${S.altOff}";
       }
     });
   </script>

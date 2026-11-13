@@ -1,5 +1,6 @@
 // Git Diff & Code Review IPCs — main.js'ten ayrıştırıldı.
 // Gerçek git depolarında git, yoksa oturum içi anlık görüntüler üzerinde diff üretir.
+const logger = require('../logger');
 const path = require('path');
 const fs = require('fs');
 const { asString, asOptions, MAX_PATH, MAX_QUERY } = require('./validate');
@@ -55,7 +56,9 @@ function registerGitIpc({ ipcMain, getWorkspaceDir, buildUnifiedLineDiff, fileEd
                 ...fLines.slice(0, 120).map((l) => `+${l}`)
               ].join('\n');
             }
-          } catch (_) {}
+          } catch (_) {
+            logger.debug('untracked dosya diff taslağı oluşturulamadı', undefined, 'git');
+          }
         } else {
           const diffRes = await runExecFile('git', ['diff', '--no-color', '--', relPath], targetCwd);
           let dText = diffRes.stdout;
@@ -94,7 +97,9 @@ function registerGitIpc({ ipcMain, getWorkspaceDir, buildUnifiedLineDiff, fileEd
       if (existsNow) {
         try {
           curContent = fs.readFileSync(absPath, 'utf-8');
-        } catch (_) {}
+        } catch (_) {
+          logger.debug('mevcut dosya içeriği okunamadı', undefined, 'git');
+        }
       }
       const { additions, deletions, diffText } = buildUnifiedLineDiff(relPath, snap.originalContent, curContent);
       if (additions > 0 || deletions > 0) {

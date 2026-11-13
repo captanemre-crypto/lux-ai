@@ -35,29 +35,30 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
             class="agy-button agy-button-sm inline-flex items-center font-medium transition-colors select-none outline-none cursor-pointer justify-center disabled:opacity-50 bg-transparent text-muted-foreground hover:text-foreground hover:bg-secondary h-7 text-sm rounded-md gap-1.5 px-2.5 select-none lux-menu-btn"
             data-menu="menu-lux-ai"
             data-testid="title-menu-bar-item"
+            data-i18n="app.name"
           >
             Lux AI
           </button>
           <div id="menu-lux-ai" class="lux-dropdown-menu">
             <div class="lux-dropdown-item" data-action="openSettingsModal">
-              <span>Tercihler...</span>
+              <span data-i18n="menu.preferences">Tercihler...</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+,</span>
             </div>
             <div class="lux-dropdown-item" data-action="devtoolsToggle">
-              <span>Geliştirici Araçları</span>
+              <span data-i18n="menu.devtools">Geliştirici Araçları</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+Shift+I</span>
             </div>
             <div class="lux-dropdown-item" data-action="reloadWindow">
-              <span>Pencereyi Yenile</span>
+              <span data-i18n="menu.reload">Pencereyi Yenile</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+R</span>
             </div>
             <div class="lux-dropdown-divider"></div>
             <div class="lux-dropdown-item" data-action="openAboutModal">
-              <span>Lux AI Hakkında</span>
+              <span data-i18n="menu.about">Lux AI Hakkında</span>
             </div>
             <div class="lux-dropdown-divider"></div>
             <div class="lux-dropdown-item text-red-400 hover:text-red-300" data-action="windowClose">
-              <span>Lux AI'dan Çıkış</span>
+              <span data-i18n="menu.quit">Lux AI'dan Çıkış</span>
               <span class="text-[10px] text-muted-foreground">Alt+F4</span>
             </div>
           </div>
@@ -69,21 +70,22 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
             class="agy-button agy-button-sm inline-flex items-center font-medium transition-colors select-none outline-none cursor-pointer justify-center disabled:opacity-50 bg-transparent text-muted-foreground hover:text-foreground hover:bg-secondary h-7 text-sm rounded-md gap-1.5 px-2.5 select-none lux-menu-btn"
             data-menu="menu-workspace"
             data-testid="title-menu-bar-item"
+            data-i18n="menu.workspace"
           >
             Çalışma Alanı
           </button>
           <div id="menu-workspace" class="lux-dropdown-menu">
             <div class="lux-dropdown-item" data-action="newConversation">
-              <span>Yeni Sohbet</span>
+              <span data-i18n="menu.newConversation">Yeni Sohbet</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+N</span>
             </div>
             <div class="lux-dropdown-item" data-action="toggleIdeSplitAndRender">
-              <span>Proje Klasörü Aç...</span>
+              <span data-i18n="menu.openFolder">Proje Klasörü Aç...</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+O</span>
             </div>
             <div class="lux-dropdown-divider"></div>
             <div class="lux-dropdown-item" data-action="clearActiveChat">
-              <span>Geçerli Sohbeti Temizle</span>
+              <span data-i18n="menu.clearCurrentChat">Geçerli Sohbeti Temizle</span>
             </div>
           </div>
         </div>
@@ -94,33 +96,34 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
             class="agy-button agy-button-sm inline-flex items-center font-medium transition-colors select-none outline-none cursor-pointer justify-center disabled:opacity-50 bg-transparent text-muted-foreground hover:text-foreground hover:bg-secondary h-7 text-sm rounded-md gap-1.5 px-2.5 select-none lux-menu-btn"
             data-menu="menu-view"
             data-testid="title-menu-bar-item"
+            data-i18n="menu.view"
           >
             Görünüm
           </button>
           <div id="menu-view" class="lux-dropdown-menu">
             <div class="lux-dropdown-item" data-action="toggleSidebarAndRender">
-              <span>Kenar Çubuğunu Aç/Kapat</span>
+              <span data-i18n="menu.toggleSidebar">Kenar Çubuğunu Aç/Kapat</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+B</span>
             </div>
             <div class="lux-dropdown-item" data-action="toggleRightPanelAndRender">
-              <span>Genel Bakış Panelini Aç/Kapat</span>
+              <span data-i18n="menu.toggleOverview">Genel Bakış Panelini Aç/Kapat</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+J</span>
             </div>
             <div class="lux-dropdown-item" data-action="toggleIdeSplitAndRender">
-              <span>Bölünmüş IDE Modu</span>
+              <span data-i18n="menu.splitMode">Bölünmüş IDE Modu</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+I</span>
             </div>
             <div class="lux-dropdown-divider"></div>
             <div class="lux-dropdown-item" data-action="zoomIn">
-              <span>Yakınlaştır</span>
+              <span data-i18n="menu.zoomIn">Yakınlaştır</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+=</span>
             </div>
             <div class="lux-dropdown-item" data-action="zoomOut">
-              <span>Uzaklaştır</span>
+              <span data-i18n="menu.zoomOut">Uzaklaştır</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+-</span>
             </div>
             <div class="lux-dropdown-item" data-action="resetZoom">
-              <span>Yakınlaştırmayı Sıfırla</span>
+              <span data-i18n="menu.zoomReset">Yakınlaştırmayı Sıfırla</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+0</span>
             </div>
           </div>
@@ -132,20 +135,21 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
             class="agy-button agy-button-sm inline-flex items-center font-medium transition-colors select-none outline-none cursor-pointer justify-center disabled:opacity-50 bg-transparent text-muted-foreground hover:text-foreground hover:bg-secondary h-7 text-sm rounded-md gap-1.5 px-2.5 select-none lux-menu-btn"
             data-menu="menu-window"
             data-testid="title-menu-bar-item"
+            data-i18n="menu.window"
           >
             Pencere
           </button>
           <div id="menu-window" class="lux-dropdown-menu">
             <div class="lux-dropdown-item" data-action="windowMinimize">
-              <span>Simge Durumuna Küçült</span>
+              <span data-i18n="menu.minimize">Simge Durumuna Küçült</span>
               <span class="text-[10px] text-muted-foreground">Ctrl+M</span>
             </div>
             <div class="lux-dropdown-item" data-action="windowMaximize">
-              <span>Ekranı Kapla</span>
+              <span data-i18n="menu.maximize">Ekranı Kapla</span>
             </div>
             <div class="lux-dropdown-divider"></div>
             <div class="lux-dropdown-item text-red-400" data-action="windowClose">
-              <span>Pencereyi Kapat</span>
+              <span data-i18n="menu.closeWindow">Pencereyi Kapat</span>
             </div>
           </div>
         </div>
@@ -164,10 +168,12 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
           <button
             type="button"
             aria-label="Yeni Sohbet"
+            data-i18n-aria-label="menu.newConversation"
             id="btn-app-logo"
             data-testid="app-icon-new-conversation-button"
             class="shrink-0 pl-1 pr-1 flex items-center text-foreground cursor-pointer outline-none"
             title="Yeni Sohbet Başlat"
+            data-i18n-title="toolbar.newConversationTooltip"
           >
             <svg viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg" width="22" height="22">
               <path
@@ -182,7 +188,9 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
             id="btn-toggle-sidebar"
             class="agy-button h-7 w-7 shrink-0 flex items-center justify-center rounded-lg bg-transparent text-secondary-foreground hover:text-foreground hover:bg-secondary cursor-pointer"
             aria-label="Kenar Çubuğunu Aç/Kapat"
+            data-i18n-aria-label="menu.toggleSidebar"
             title="Kenar Çubuğunu Aç/Kapat (Ctrl+B)"
+            data-i18n-title="toolbar.sidebarTooltip"
             data-testid="sidebar-toggle"
           >
             <span class="relative flex items-center justify-center" style="width: 18px; height: 18px">
@@ -199,7 +207,9 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
             id="btn-nav-back"
             class="agy-button h-7 w-7 shrink-0 flex items-center justify-center rounded-lg bg-transparent text-secondary-foreground hover:text-foreground hover:bg-secondary cursor-pointer"
             aria-label="Geri Git"
+            data-i18n-aria-label="toolbar.back"
             title="Geri Git"
+            data-i18n-title="toolbar.back"
           >
             <span class="relative flex items-center justify-center" style="width: 18px; height: 18px">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor">
@@ -212,7 +222,9 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
             disabled
             class="agy-button h-7 w-7 shrink-0 flex items-center justify-center rounded-lg bg-transparent text-secondary-foreground/30 pointer-events-none"
             aria-label="İleri Git"
+            data-i18n-aria-label="toolbar.forward"
             title="İleri Git"
+            data-i18n-title="toolbar.forward"
           >
             <span class="relative flex items-center justify-center" style="width: 18px; height: 18px">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 -960 960 960" fill="currentColor">
@@ -226,7 +238,9 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
             id="btn-search-palette"
             class="agy-button h-7 w-7 shrink-0 flex items-center justify-center rounded-lg bg-transparent text-secondary-foreground hover:text-foreground hover:bg-secondary cursor-pointer"
             aria-label="Sohbetlerde Ara"
+            data-i18n-aria-label="toolbar.search"
             title="Sohbetlerde Ara (Ctrl+P)"
+            data-i18n-title="toolbar.searchHint"
             data-testid="sidebar-search-button"
           >
             <span class="relative flex items-center justify-center" style="width: 18px; height: 18px">
@@ -300,7 +314,9 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
                 class="agy-button h-7 w-7 shrink-0 flex items-center justify-center rounded-lg bg-transparent text-secondary-foreground hover:text-foreground hover:bg-secondary cursor-pointer lux-menu-btn"
                 data-menu="menu-more-actions"
                 aria-label="Diğer İşlemler"
+                data-i18n-aria-label="toolbar.moreActions"
                 title="Diğer İşlemler"
+                data-i18n-title="toolbar.moreActions"
                 data-testid="titlebar-more-actions"
               >
                 <span class="relative flex items-center justify-center" style="width: 18px; height: 18px">
@@ -313,22 +329,22 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
               </button>
               <div id="menu-more-actions" class="lux-dropdown-menu" style="right: 0; left: auto; min-width: 210px">
                 <div class="lux-dropdown-item" data-action="openModelParamsModal">
-                  <span>Model Parametreleri</span>
-                  <span class="text-[10px] text-muted-foreground">Yapılandır</span>
+                  <span data-i18n="menu.modelParams">Model Parametreleri</span>
+                  <span class="text-[10px] text-muted-foreground" data-i18n="menu.modelParamsHint">Yapılandır</span>
                 </div>
                 <div class="lux-dropdown-item" data-action="exportChatMarkdown">
-                  <span>Markdown Olarak Dışa Aktar</span>
+                  <span data-i18n="menu.exportMd">Markdown Olarak Dışa Aktar</span>
                 </div>
                 <div class="lux-dropdown-item" data-action="exportChatJson">
-                  <span>JSON Olarak Dışa Aktar</span>
+                  <span data-i18n="menu.exportJson">JSON Olarak Dışa Aktar</span>
                 </div>
                 <div class="lux-dropdown-divider"></div>
                 <div class="lux-dropdown-item text-red-400" data-action="clearActiveChat">
-                  <span>Sohbeti Temizle</span>
+                  <span data-i18n="menu.clearChat">Sohbeti Temizle</span>
                 </div>
                 <div class="lux-dropdown-divider"></div>
                 <div class="lux-dropdown-item" data-action="openSettingsModal">
-                  <span>Ayarlar</span>
+                  <span data-i18n="common.settings">Ayarlar</span>
                   <span class="text-[10px] text-muted-foreground">Ctrl+,</span>
                 </div>
               </div>
@@ -348,7 +364,9 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
               id="btn-toggle-right-panel"
               class="agy-button h-7 w-7 shrink-0 flex items-center justify-center rounded-lg bg-secondary text-secondary-foreground hover:text-foreground cursor-pointer transition-colors"
               aria-label="Genel Bakış Panelini Aç/Kapat"
+              data-i18n-aria-label="menu.toggleOverview"
               title="Genel Bakış Panelini Aç/Kapat"
+              data-i18n-title="menu.toggleOverview"
               data-testid="toggle-overview-panel"
             >
               <span class="relative flex items-center justify-center" style="width: 18px; height: 18px">
@@ -365,7 +383,9 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
               id="btn-toggle-split-window"
               class="agy-button h-7 w-7 shrink-0 flex items-center justify-center rounded-lg bg-transparent text-secondary-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors"
               aria-label="Bölünmüş Pencereyi Aç/Kapat"
+              data-i18n-aria-label="toolbar.splitTooltip"
               title="Bölünmüş Pencereyi Aç/Kapat"
+              data-i18n-title="toolbar.splitTooltip"
               data-testid="toggle-split-window"
             >
               <span class="relative flex items-center justify-center" style="width: 18px; height: 18px">
@@ -394,7 +414,9 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
             class="agy-button agy-button-custom inline-flex items-center font-medium transition-colors select-none outline-none cursor-pointer bg-muted border border-border text-secondary-foreground hover:text-foreground agy-scroll-bottom h-8 w-8 rounded-full text-foreground hover:bg-secondary flex items-center justify-center shadow-lg"
             style="display: none"
             aria-label="Aşağı Kaydır"
+            data-i18n-aria-label="toolbar.scrollBottom"
             title="Aşağı Kaydır"
+            data-i18n-title="toolbar.scrollBottom"
             data-action="scrollToBottom"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 -960 960 960" fill="currentColor">
@@ -423,6 +445,7 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
                     id="btn-hud-voice-select"
                     class="text-[11px] text-muted-foreground hover:text-foreground bg-white/5 hover:bg-white/10 px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1 cursor-pointer transition-colors ml-1"
                     title="Ses Karakterini Değiştir"
+                    data-i18n-title="voice.changeCharacter"
                   >
                     <span class="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>
                     <span id="hud-voice-current-name">Fola</span>
@@ -440,6 +463,7 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
                     id="btn-voice-mic-toggle"
                     class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors"
                     title="Mikrofon (Aç/Kapat)"
+                    data-i18n-title="voice.micToggle"
                   >
                     <svg id="icon-mic-active" class="w-4 h-4" viewBox="0 -960 960 960" fill="currentColor">
                       <path
@@ -468,6 +492,7 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
                     id="btn-voice-speaker-toggle"
                     class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors"
                     title="Hoparlör (Aç/Kapat)"
+                    data-i18n-title="voice.speakerToggle"
                   >
                     <svg id="icon-speaker-active" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
@@ -495,6 +520,7 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
                       id="btn-voice-speed-toggle"
                       class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors flex items-center gap-0.5"
                       title="Ses Hızı"
+                      data-i18n-title="voice.speed"
                     >
                       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10" />
@@ -532,6 +558,7 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
                     id="btn-voice-minimize"
                     class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors"
                     title="Küçült / Genişlet"
+                    data-i18n-title="voice.toggleCollapse"
                   >
                     <svg id="icon-voice-min" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <polyline points="6 9 12 15 18 9" />
@@ -544,6 +571,7 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
                     id="btn-voice-end"
                     class="bg-[#EA4335] hover:bg-[#d93025] text-white rounded-full px-3 py-1 text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm ml-1 select-none"
                     title="Sesli Oturumu Kapat"
+                    data-i18n-title="voice.endSession"
                   >
                     <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                       <line x1="18" y1="6" x2="6" y2="18" />
@@ -557,7 +585,7 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
               <!-- Listening Transcript Area -->
               <div id="voice-hud-body" class="py-3 min-h-[56px] flex items-center justify-between gap-4">
                 <p id="voice-hud-transcript" class="text-sm md:text-base text-muted-foreground font-normal leading-relaxed m-0 select-none">
-                  Dinliyor. Herhangi bir şey sorun.
+                  <span data-i18n="voice.listening">Dinliyor. Herhangi bir şey sorun.</span>
                 </p>
 
                 <!-- Subtle Animated Waveform in HUD -->
@@ -586,6 +614,7 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
                       id="composer-textarea"
                       class="w-full bg-transparent text-foreground placeholder:text-muted-foreground/60 text-sm leading-6 p-2 outline-none resize-none min-h-[44px] max-h-[220px]"
                       placeholder="Herhangi bir şey sorun, @ ile bahsedin, / ile işlem seçin"
+                      data-i18n-placeholder="composer.placeholder"
                     ></textarea>
                   </div>
 
@@ -600,7 +629,9 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
                         <button
                           id="btn-add-context"
                           aria-label="Bağlam ekle"
+                          data-i18n-aria-label="toolbar.attachContext"
                           title="Bağlam ekle (+)"
+                          data-i18n-title="toolbar.attachContextHint"
                           class="p-1.5 rounded-full text-secondary-foreground hover:bg-secondary cursor-pointer lux-menu-btn"
                           data-menu="menu-add-context"
                           type="button"
@@ -617,17 +648,17 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
                           style="bottom: 100%; top: auto; margin-bottom: 8px; min-width: 190px"
                         >
                           <div class="lux-dropdown-item" data-action="pickFileContext">
-                            <span>Dosya Ekle...</span>
+                            <span data-i18n="toolbar.attachFile">Dosya Ekle...</span>
                             <span class="text-[10px] text-muted-foreground">Ekle</span>
                           </div>
                           <div class="lux-dropdown-item" data-action="pickFolderContext">
-                            <span>Klasör Ekle...</span>
+                            <span data-i18n="toolbar.attachFolder">Klasör Ekle...</span>
                           </div>
                           <div class="lux-dropdown-item" data-action="captureScreenshotContext">
-                            <span>Ekran Görüntüsü Al</span>
+                            <span data-i18n="toolbar.screenshot">Ekran Görüntüsü Al</span>
                           </div>
                           <div class="lux-dropdown-item" data-action="addTerminalContext">
-                            <span>Terminal Çıktısını Ekle</span>
+                            <span data-i18n="toolbar.attachTerminal">Terminal Çıktısını Ekle</span>
                           </div>
                         </div>
                       </div>
@@ -640,6 +671,7 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
                           class="flex cursor-pointer items-center h-7 gap-1 rounded-full pl-2 pr-1.5 text-xs text-secondary-foreground outline-none hover:bg-secondary transition-colors lux-menu-btn"
                           data-menu="menu-composer-model"
                           title="Yapay zeka modelini seçin"
+                          data-i18n-title="toolbar.modelSelect"
                         >
                           <span id="composer-model-label">Gemini 3.8 Flash High</span>
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 -960 960 960" fill="currentColor">
@@ -685,6 +717,7 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
                           class="flex cursor-pointer items-center h-7 gap-1 rounded-full pl-2 pr-1.5 text-xs text-secondary-foreground outline-none hover:bg-secondary transition-colors lux-menu-btn"
                           data-menu="menu-composer-mode"
                           title="Çalışma modunu seçin"
+                          data-i18n-title="toolbar.modeSelect"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 -960 960 960" fill="currentColor">
                             <path
@@ -712,7 +745,9 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
                         id="btn-composer-mic"
                         type="button"
                         aria-label="Ses kaydı al"
+                        data-i18n-aria-label="composer.dictateAria"
                         title="Sesle Yaz (Dikte)"
+                        data-i18n-title="composer.dictate"
                         class="flex items-center rounded-full transition-colors cursor-pointer w-7 h-7 justify-center p-1.5 bg-transparent hover:bg-secondary"
                       >
                         <svg
@@ -734,11 +769,13 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
                         id="voice-live-container"
                         class="relative flex h-7 rounded-full text-xs font-medium bg-foreground text-background hover:opacity-85 cursor-pointer transition-transform active:scale-95"
                         title="Sesli Canlı Sohbet (Voice Mode)"
+                        data-i18n-title="composer.voiceMode"
                       >
                         <button
                           id="btn-voice-live"
                           type="button"
                           aria-label="Sesli modu başlat"
+                          data-i18n-aria-label="composer.startVoice"
                           class="h-7 w-7 rounded-full flex items-center justify-center cursor-pointer select-none outline-none"
                         >
                           <svg width="18" height="18" viewBox="0 -960 960 960" fill="none" class="w-[18px] h-[18px]">
@@ -756,7 +793,9 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
                         id="btn-input-cancel"
                         type="button"
                         aria-label="Gönder"
+                        data-i18n-aria-label="composer.send"
                         title="Gönder (Enter)"
+                        data-i18n-title="composer.sendTitle"
                         class="bg-secondary hover:opacity-90 w-7 h-7 rounded-full cursor-pointer flex items-center justify-center transition-colors ml-1"
                       >
                         <svg
@@ -801,6 +840,7 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
     <script src="js/icons.js"></script>
     <script src="js/audio_cache.js"></script>
     <script src="js/store.js"></script>
+    <script src="js/i18n_en_map.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/speech_text.js"></script>
@@ -812,6 +852,10 @@ object-src 'none'; base-uri 'none'; form-action 'none'"
     <script src="js/tool_approval.js"></script>
     <script src="js/agent_context.js"></script>
     <script src="js/agent_workspace.js"></script>
+    <script src="js/chat_shared.js"></script>
+    <script src="js/chat_render.js"></script>
+    <script src="js/chat_tools.js"></script>
+    <script src="js/chat_voice.js"></script>
     <script src="js/chat.js"></script>
     <script src="js/rightPanel.js"></script>
     <script src="js/ideMode.js"></script>
