@@ -63,7 +63,7 @@ jobs:
         run: node node_modules/electron/cli.js scripts/e2e_runtime.js
 
       - name: Python kurulumu
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
